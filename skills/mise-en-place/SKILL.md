@@ -204,7 +204,8 @@ a synthesis and a report on something that needs decomposing. The user decides.
 **Reader's checklist**: Is `outcome` falsifiable, or does it merely sound good? Does
 `kill_criterion` name a condition that would actually stop the change, or one that can
 never occur? Does any requirement encode a mechanism rather than an observable result?
-Does any term contradict `CONTEXT.md`?
+Does any term contradict `CONTEXT.md`? Is any in-scope uncertainty still too vague to
+state as a question?
 
 ### plan
 
@@ -260,6 +261,10 @@ prove it? Is a seam missing - a place the change should be observable and is not
 
 Every phase has one, `tasks` included. It holds only what the user judged unresolved -
 never a doubt the reader raised, which belongs in the report and dies with the invocation.
+
+The three exits below presume the uncertainty is stateable as a question. One that is not
+is not an `open_question` - it is a gap in the report, and it recurs every invocation until
+the phase gets sharp enough to name it.
 
 A question that cannot be settled has exactly three exits:
 
