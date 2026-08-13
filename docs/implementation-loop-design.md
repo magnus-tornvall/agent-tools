@@ -464,7 +464,105 @@ resolved or handed to the user, and it is never resolved by invention.
 
 ---
 
-## 5. Comparison
+## 5. Surfaces, contracts, and lenses
+
+Section 4 answers *what the loop does*. This section answers two questions it left open: is the
+state one artifact all the way through, and how is the contract shared across many skills when
+implementation is a broad and specialised skillset — frontend, backend, design, process,
+accessibility, optimisation — each of which someone may want to tune separately at implement,
+review, and evaluate.
+
+### 5.1 One identity, three surfaces
+
+The state is **not** one artifact with different parts consumed at different times. It is one
+*change* written across three surfaces, separated by lifetime and by who may write. Conflating
+them is what produces G1.
+
+| surface | holds | written by | lifetime | during the loop |
+|---|---|---|---|---|
+| **decision** — `change.md`, `tasks/*.md` | outcome, requirements, approach, constraints, scope, checks | `mise-en-place`, gated by the user | the change | **read-only** |
+| **run** — `<change dir>/runs/<branch>/`, or git trailers under design B | baseline, position, attempts, verdicts, escalations | the loop | one execution | append-only |
+| **findings** — `<change dir>/findings/` | objections with reproductions, measurements, lens output | review and evaluate | outlives the run, may outlive the change | append-only |
+
+What is genuinely constant is the **join key**: the change directory name, the `R` ids, the `T`
+ids. Everything references those, and that is the "same throughout" the intuition is reaching
+for. Everything else is a different document on a different clock.
+
+The test for which surface something belongs on is **lifetime, not topic**. An attempt count
+dies with the run. An accessibility measurement or a performance budget outlives it and should
+feed the next change, which is why findings is a surface and not a section of the run log.
+
+**Consequence: the loop can be a pure reader of the decision surface.** Once run state has a
+home, `status: todo → done` is a convenience mirror of something the run ledger already knows,
+and `baseline` was always run state parked in `change.md` for want of anywhere better. A loop
+that writes neither is still inside `HANDOFF.md`, which grants two writes rather than requiring
+them. The payoff is that the decision surface has exactly one writer, ever — so no agent output
+is ever laundered as an approved user decision, and commitment 2 of §2.2 holds mechanically
+rather than by good behaviour.
+
+### 5.2 Sharing the contract across skills
+
+Three layers, in increasing order of enforcement. The split is the one this repository already
+believes in: `validate.ts` exists because prose is advisory and degrades with volume.
+
+**Identity, by convention.** Directory name and id prefixes. Nothing enforces it; nothing needs
+to.
+
+**Shape, by CLI — not by import.** One `contract.ts` exposing `read | check | record`, invoked
+as a command and returning JSON:
+
+```
+bun skills/_contract/contract.ts read <change dir>
+→ { id, items: [{ id, claim, check, bounds, stops }], acceptance, context }
+```
+
+Every stage skill calls it instead of parsing YAML. A CLI rather than a shared module because it
+gives no import coupling, no language coupling, and no installation-path fragility — a skill
+written for a different agent runtime consumes the same JSON. This is §3's projection, made
+executable.
+
+It also versions without a version field: **tolerant reader, strict writer.** `read` ignores
+unknown fields and returns null for missing ones; consumers escalate on null rather than
+crashing. Reshape `change.md` and the loop degrades to asking more questions, which is Rule 2.
+
+**Judgement, by prose, referenced once.** A single `SURFACES.md` that every `SKILL.md` points at
+rather than restates, loaded at level 3 of progressive disclosure.
+
+The guard is `mise-en-place`'s own posture: nothing can *prevent* a skill from writing the
+decision surface directly, so the CLI is the sanctioned path and `validate.ts` exits 2 on a
+result that violates it. The script catches what is mechanically decidable; the user catches the
+rest.
+
+### 5.3 Breadth: stage, lens, tuning
+
+Six domains across three stages is eighteen skills, which is unmaintainable. The decomposition
+that avoids it uses three orthogonal knobs:
+
+- **Stage is the skill.** `implement`, `review`, `evaluate`. Each owns the protocol — what to
+  read, what to write, when to stop — and the protocol is invariant across every domain. Three
+  skills, and a new one is rare.
+- **Lens is a reference file.** `lenses/accessibility.md`, `lenses/backend-performance.md`,
+  loaded on demand. A lens contributes exactly three things and never touches the protocol:
+  **checks** it adds to the projection, a **review checklist**, and an **evaluate probe**. Adding
+  a domain is one markdown file.
+- **Model and effort are agent-definition frontmatter.** Separate from both, so retuning which
+  model reviews accessibility never means editing a protocol or a contract.
+
+**Lens selection is derived, not declared.** Deriving it from the diff's paths and extensions
+avoids adding a required field to the artifact — the moment a task must carry `lens: a11y`, the
+loop depends on the exact contract again, against Rule 1. Allow an override, and bias toward
+over-selecting: loading the a11y lens on a backend task costs a little context and yields
+nothing, while missing it on a frontend task ships a real defect. The cost is asymmetric, so
+over-select.
+
+Where the domain knowledge actually earns its keep is worth naming, because it is not where
+people expect. **Implementation is more uniform than it looks** — it is bounded by `scope` and
+decided by a check. Review and evaluate are where a lens pays, because "did the outcome happen"
+is domain-specific in a way that "write the code inside these paths" is not.
+
+---
+
+## 6. Comparison
 
 | | A — the check | B — the repository | C — the disagreement |
 |---|---|---|---|
@@ -485,7 +583,7 @@ three commitments in 2.2.
 
 ---
 
-## 6. Recommendation
+## 7. Recommendation
 
 **Build B as the chassis. Put A's adjudication inside its step. Hold C in reserve as a tier.**
 
@@ -514,7 +612,7 @@ Two things to build regardless of which design wins, both from section 2.3:
 
 ---
 
-## 7. Not in scope here
+## 8. Not in scope here
 
 Named so they are neither forgotten nor accidentally solved twice.
 
