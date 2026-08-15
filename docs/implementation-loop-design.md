@@ -4,10 +4,12 @@ What the downstream half of `mise-en-place` should look like. Three designs, not
 the loop's organising principle is a genuine choice and the three choices below are not
 variations of each other.
 
-**Scope.** This document is research and design. It implements nothing. It also proposes no
-change to `mise-en-place` or `HANDOFF.md` — every design here is built so it does not need
-one. Section 2.3 names what a loop would want that the handoff does not give it, and each
-design then says how it lives without it.
+**Scope.** This document is research and design. It implements nothing. Sections 1–5 propose no
+change to `mise-en-place` or `HANDOFF.md` — every design there is built so it does not need one,
+and §2.3 names what a loop would want that the handoff does not give it. Section 6 is the one
+exception and says so: a budget is a judgement only the user can make, at a gate only
+`mise-en-place` owns, so it adds one optional field. A loop reading an artifact without it falls
+back to a declared default.
 
 **On the citations.** External sources were reached through search. The network in this
 session blocks direct fetches of arxiv.org and anthropic.com, so the numbers below are as
@@ -562,7 +564,110 @@ is domain-specific in a way that "write the code inside these paths" is not.
 
 ---
 
-## 6. Comparison
+## 6. Budgets and the stop
+
+Section 4 gives each design a stop condition and leaves two things unresolved: who *enforces*
+the stop, and how many attempts the loop is entitled to before the change is abandoned rather
+than retried. Both are settled here, and the second is a user decision made at the approval
+gate.
+
+### 6.1 Budget is decision state; spend is run state
+
+They are different objects, and conflating them is what makes a budget leak.
+
+- **The budget** — the allowance — is authored and approved by the user at the gate. Decision
+  surface. It sits beside `escalate_if`, which is the same kind of thing: runtime control the
+  user writes at design time.
+- **The spend** — attempts consumed — is run state. Trailers under design B.
+
+Two numbers, and reintroduction is the second:
+
+```yaml
+plan:
+  budget:
+    attempts_per_task: 2     # retries before this item escalates
+    replans: 1               # times this change may return to plan before it is killed
+```
+
+Exhausting `attempts_per_task` escalates one item. Exhausting `replans` kills the change.
+
+**This gives `kill_criterion` its first runtime trigger.** Today it is a field nobody evaluates —
+a sentence written at spec time that no component ever checks. A replan budget makes the kill
+procedural, and there are then two kill paths: substantive (the criterion is observed to hold)
+and procedural (the change has been re-planned more times than the user was willing to fund).
+`kill_criterion` is what the user reads when deciding whether to accept a procedural kill.
+
+`mise-en-place` must not invent a budget any more than any other field. The clean route is a
+declared default, shown at the approval presentation, which the user overrides or accepts —
+approving *is* setting it.
+
+**Approve time is the moment of least information about execution difficulty.** The user knows
+how uncertain the design is, not how hard the code will be, so the budget is a bet on design
+uncertainty and not an effort estimate. That is also what a derived default should key off: the
+number of `escalate_if` entries and the number of `open_questions` that converted into them. A
+change with five converted questions has earned more replans than one with none.
+
+An `open_question` that keeps forcing replans is evidence it was misclassified — exit 3 when it
+was really exit 2. Surface that at the kill. It is not a fourth exit.
+
+### 6.2 The loop is not trusted to stop itself
+
+Every stop condition in section 4 is evaluated by the loop, which means a drifting agent can
+rationalise past it — and F1 says that is exactly what agents do at the moment of completion. So
+the stop becomes a gate the loop passes through, not a decision it makes.
+
+A validator runs at the top of every iteration, mirroring `validate.ts`:
+
+| exit | meaning |
+| --- | --- |
+| 0 | proceed |
+| 1 | nothing to advance — the queue is empty or blocked |
+| 2 | stop. Not negotiable, and not repairable by the agent |
+
+What belongs in it is decided by the criterion `mise-en-place` already applies: mechanically
+decidable, or it is not a check.
+
+| condition | decided by |
+| --- | --- |
+| budget exhausted | validator |
+| a `forbidden` path appears in the diff | validator |
+| tree not green at a task boundary | validator |
+| `acceptance` failed with all items done | validator |
+| an `escalate_if` prose condition holds | agent judgement |
+| `kill_criterion` observed | agent judgement |
+
+**The only way past a hard stop is a new approval** — the user raises the budget and re-approves.
+Never the agent deciding it has earned one more attempt. This is the first point at which
+commitment 2 of §2.2 is mechanical rather than conventional.
+
+Two mechanics it needs. A forceful stop must finish its revert before stopping, or it breaks the
+ratchet and leaves a dirty tree. And exit 2 here means something stronger than in `validate.ts`,
+where exit 2 is "fix it and re-run" — the two should not share vocabulary.
+
+### 6.3 When there is no git repository
+
+Design B's ledger is commit trailers, but the reason to choose B was a property, not a
+mechanism: state readable by agents and scripts, and no files left in the repo that nobody reads
+once the change ships. The property survives without git. State lives where the work lives:
+
+| environment | ledger | dies with |
+| --- | --- | --- |
+| git repository | commit trailers | the branch |
+| no git | a run file beside the work | the work |
+| no durable store | session only | the session |
+
+`aos record attempt --item T2` picks the backend; no `SKILL.md` learns which. That is the payoff
+of making the contract a command rather than a file format — swapping the ledger is not a
+contract change.
+
+The third row is the honest one. With no durable store the budget is best-effort within a
+session and a crash resets the spend, so the validator must report that at startup rather than
+let the user believe a budget is binding when it is not. A budget that silently does not bind is
+worse than no budget.
+
+---
+
+## 7. Comparison
 
 | | A — the check | B — the repository | C — the disagreement |
 |---|---|---|---|
@@ -583,7 +688,7 @@ three commitments in 2.2.
 
 ---
 
-## 7. Recommendation
+## 8. Recommendation
 
 **Build B as the chassis. Put A's adjudication inside its step. Hold C in reserve as a tier.**
 
@@ -612,7 +717,7 @@ Two things to build regardless of which design wins, both from section 2.3:
 
 ---
 
-## 8. Not in scope here
+## 9. Not in scope here
 
 Named so they are neither forgotten nor accidentally solved twice.
 
