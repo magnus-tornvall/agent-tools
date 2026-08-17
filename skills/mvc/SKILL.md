@@ -92,6 +92,27 @@ After the answers: write each into `settled` with its `rules_out`, delete every 
 entry the answers made moot, add what they opened, increment `budget.round`, and save.
 Then run the script and report.
 
+**An unanswered question is not a spent slot.** A batch of four that comes back with three
+answers still increments `budget.round` - a round is spent by the writing, not by the asking -
+but the survivor stays in `open` with its id and costs nothing. The next batch is built by
+re-ranking the whole frontier and filling to four, so a carried question competes with what the
+three answers just opened rather than holding a reserved seat. Frequently it loses, or the
+answers made it moot and it is deleted; either is the ranking working. Re-asked, it is re-asked
+verbatim under its original id, because a reworded question is a different question and the
+silence was about this one.
+
+Ask why it was skipped in the same reply that reports the round, once per round and never
+again within it, and take the answer as the routing: unclear means clarify
+off-budget and re-ask in the same round, since clarification never spends the budget;
+premature means it is not yet a question and leaves `open`; do-not-care means the stance
+stands and it goes to `settled` as answered. Silence to that too is a real signal - carry
+it and move on, and never withhold the round's other answers waiting for it.
+
+There is no attempt counter, and a question carries no memory of how often it was skipped.
+The three-round ceiling already bounds re-asking at three, the ranking usually drops it
+sooner, and a tally would be conversation state in a skill whose state lives in `mvc.md` - a
+resumed grill would read a number it never wrote.
+
 An answered question becomes a `settled` entry with a **fresh `D` id, never reused**,
 and its `open` entry is deleted in the same edit. The `Q` number is not carried over -
 ids are one namespace, and the traceability is the question text preserved in `settled.q`,
@@ -417,6 +438,8 @@ carry. Do not restate the fields in prose.
 - Does not raise its own `ceiling`, and does not start a fourth round. Exhaustion is
   reported, and an unresolvable frontier means the change wants splitting.
 - Does not ask more than four questions in a round, or ask two whose answers interact.
+- Does not reserve a slot for an unanswered question, reword it when re-asking, or track how
+  often one was skipped.
 - Does not present a stance as a recommendation, state one without its reasoning, or pair
   one with a list of options.
 - Does not let something into `in` after round 1 without a `widened` entry.
