@@ -42,10 +42,16 @@ The same loop, whichever phase the change is in.
 Which directory this is operating on is a fact, so look it up - never ask. First hit wins:
 
 1. **An argument.** Either a path - `/mise-en-place docs/changes/2026-08-10-csp-header` - or a
-   bare slug resolved within `<changes dir>`: `/mise-en-place csp-header`. Always wins, even
+   bare slug resolved within `<changes dir>`: `/mise-en-place csp-header`. A path to a *file*
+   under `<changes dir>` resolves to the directory holding it: the change is wherever the
+   artifact the user pointed at lives, whatever that artifact is. Always wins, even
    over a better-matching candidate. An argument that resolves to no directory is an
    error: say so and stop. It is not a request to create one - a typed path that does not
    exist is a typo, and creating a change from it buries the mistake in a directory name.
+
+   A resolved directory with no `change.md` is **adopted**, not recreated: write `change.md`
+   into it and keep its existing name. Another skill got there first, and its date and slug
+   are the change's identity now.
 2. **A change already on disk.** Read `change.md` in every `<changes dir>/*/` and match
    against the prompt, in this order:
    - an exact slug match wins outright;
@@ -71,12 +77,21 @@ approved phase. A new change starts at `phase: spec` with all approvals `false`.
 
 ### 2. Synthesize
 
-Fill every field of the current phase that the conversation, the repository, or an
-existing `CONTEXT.md` and `docs/adr/` already determine.
+Fill every field of the current phase that the conversation, the repository, an
+existing `CONTEXT.md` and `docs/adr/`, or another artifact in `<change dir>` already
+determine.
 
 A field is written only where the evidence for it can be named: a `path:line` anchor, a
-`path::symbol`, an ADR number, or a quote of what the user said. No evidence, no write -
-the field stays empty and becomes part of the gap in step 4.
+`path::symbol`, an ADR number, a quote of what the user said, or a quote of a field in
+another artifact in `<change dir>`. No evidence, no write - the field stays empty and
+becomes part of the gap in step 4.
+
+Another artifact carries its own gate, and an ungated one is a draft. If it declares an
+approval state and that state is false, it is not evidence: report that it is unfinished
+and leave the fields it would have filled as gaps. Reading a value off an unapproved
+artifact is inventing a field with extra steps - a position someone wrote down is not a
+decision the user made. Its wording is also not a schema: a field there whose meaning
+differs from the field here is restated against this phase's rules, never copied across.
 
 This is a discipline over what may be written, not a schema. There is no evidence field,
 because a script can check that such a field is *filled* and never that it is *true* - and
