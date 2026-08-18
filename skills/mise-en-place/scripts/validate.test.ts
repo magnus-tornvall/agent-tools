@@ -62,13 +62,11 @@ function run(dir: string): { code: number; out: string } {
 }
 
 const change = (o: {
-  phase: string;
   approvals?: Record<string, boolean>;
   spec?: string;
   plan?: string;
   tasksOpen?: string;
-}) => `
-phase: ${o.phase}
+} = {}) => `
 approvals:
   spec: ${o.approvals?.spec ?? false}
   plan: ${o.approvals?.plan ?? false}
@@ -82,76 +80,83 @@ const cases: Array<[name: string, dir: () => string, code: number, expect?: stri
   // ---- gaps: the normal mid-phase state -----------------------------------------------
   [
     "empty spec is a gap",
-    () => fixture(change({ phase: "spec", spec: "\n  open_questions: []" })),
+    () => fixture(change({ spec: "\n  open_questions: []" })),
     1,
     "spec.outcome is empty",
   ],
-  ["a filled spec holds", () => fixture(change({ phase: "spec" })), 0],
+  ["a filled spec and plan holds", () => fixture(change()), 0],
   [
     "an open question blocks its phase",
-    () => fixture(change({ phase: "spec", spec: `${SPEC.replace("open_questions: []", 'open_questions: ["which policy?"]')}` })),
+    () => fixture(change({ spec: `${SPEC.replace("open_questions: []", 'open_questions: ["which policy?"]')}` })),
     1,
     "spec.open_questions: which policy?",
   ],
   [
-    "plan phase with no tasks yet holds",
-    () => fixture(change({ phase: "plan", approvals: { spec: true } })),
+    "an empty kill_criterion warns but holds",
+    () => fixture(change({ spec: SPEC.replace(/  kill_criterion: .*\n/, "") })),
     0,
+    "kill_criterion is empty",
   ],
   [
-    "tasks phase with an empty tasks/ is a gap",
-    () => fixture(change({ phase: "tasks", approvals: { spec: true, plan: true } })),
+    "a spec alone is not nagged about plan fields, but says the plan is missing",
+    () => fixture(change({ plan: "\n  open_questions: []" })),
+    0,
+    "was the plan attempted",
+  ],
+  [
+    "a plan holding only an open question still blocks",
+    () => fixture(change({ plan: '\n  open_questions: ["which middleware?"]' })),
+    1,
+    "plan.open_questions: which middleware?",
+  ],
+  [
+    "a tasks open question still blocks with no tasks written",
+    () => fixture(change({ tasksOpen: '"how is this verified?"' })),
+    1,
+    "tasks.open_questions: how is this verified?",
+  ],
+  [
+    "an approved plan with an empty tasks/ is a gap",
+    () => fixture(change({ approvals: { spec: true, plan: true } })),
     1,
     "tasks/ holds no tasks",
   ],
   [
-    "a full change holds",
-    () =>
-      fixture(change({ phase: "tasks", approvals: { spec: true, plan: true } }), { "T1.md": TASK }),
+    "a whole change written in one pass, nothing approved yet, holds",
+    () => fixture(change(), { "T1.md": TASK }),
     0,
   ],
   [
     "a task with no scope is a gap",
     () =>
-      fixture(change({ phase: "tasks", approvals: { spec: true, plan: true } }), {
-        "T1.md": TASK.replace('scope: ["src/app.ts"]\n', ""),
-      }),
+      fixture(change(), { "T1.md": TASK.replace('scope: ["src/app.ts"]\n', "") }),
     1,
     "scope is empty",
   ],
   [
     "an uncovered requirement is a gap",
-    () =>
-      fixture(change({ phase: "tasks", approvals: { spec: true, plan: true } }), {
-        "T1.md": TASK.replace("satisfies: [R1]", "satisfies: []"),
-      }),
+    () => fixture(change(), { "T1.md": TASK.replace("satisfies: [R1]", "satisfies: []") }),
     1,
     "R1 is satisfied by no task",
   ],
 
   // ---- gates ---------------------------------------------------------------------------
   [
-    "phase past an unapproved gate is a defect",
-    () => fixture(change({ phase: "tasks" }), { "T1.md": TASK }),
-    2,
-    "phase is tasks but approvals.spec is not true",
-  ],
-  [
     "an approval under a revoked one is a defect",
-    () => fixture(change({ phase: "tasks", approvals: { spec: true, tasks: true } })),
+    () => fixture(change({ approvals: { spec: true, tasks: true } })),
     2,
     "approvals.tasks is true but approvals.plan is not",
   ],
   [
-    "a non-terminal phase already approved is a defect",
-    () => fixture(change({ phase: "spec", approvals: { spec: true } })),
-    2,
-    "advance phase",
+    "re-entry - plan revoked, spec still approved - holds",
+    () => fixture(change({ approvals: { spec: true } })),
+    0,
   ],
   [
-    "re-entry - plan revoked, phase back to plan - holds",
-    () => fixture(change({ phase: "plan", approvals: { spec: true } })),
+    "a leftover phase field warns but holds",
+    () => fixture(`phase: spec\n${change()}`),
     0,
+    "`phase` is no longer used",
   ],
 
   // ---- malformed: must be 2, never 1 ---------------------------------------------------
@@ -167,16 +172,10 @@ const cases: Array<[name: string, dir: () => string, code: number, expect?: stri
     "no YAML frontmatter",
   ],
   [
-    "an unknown phase is a defect",
-    () => fixture(change({ phase: "design" })),
-    2,
-    "phase must be one of",
-  ],
-  [
     "a mapping where a list belongs is a defect, not a gap",
     () =>
       fixture(
-        change({ phase: "plan", approvals: { spec: true }, plan: PLAN.replace('touchpoints: ["src/app.ts"]', "touchpoints:\n    a: 1") }),
+        change({ plan: PLAN.replace('touchpoints: ["src/app.ts"]', "touchpoints:\n    a: 1") }),
       ),
     2,
     "plan.touchpoints must be a list",
@@ -184,14 +183,14 @@ const cases: Array<[name: string, dir: () => string, code: number, expect?: stri
   [
     "a string where a list belongs is a defect, not a gap",
     () =>
-      fixture(change({ phase: "spec", spec: SPEC.replace(/requirements:[\s\S]*?open_questions/, 'requirements: "R1 the header is set"\n  open_questions') })),
+      fixture(change({ spec: SPEC.replace(/requirements:[\s\S]*?open_questions/, 'requirements: "R1 the header is set"\n  open_questions') })),
     2,
     "spec.requirements must be a list",
   ],
   [
     "a task id that is not T-digits is a defect",
     () =>
-      fixture(change({ phase: "tasks", approvals: { spec: true, plan: true } }), {
+      fixture(change(), {
         "T1.md": TASK.replace("id: T1", "id: first"),
       }),
     2,
@@ -200,7 +199,7 @@ const cases: Array<[name: string, dir: () => string, code: number, expect?: stri
   [
     "a depends_on cycle is a defect",
     () =>
-      fixture(change({ phase: "tasks", approvals: { spec: true, plan: true } }), {
+      fixture(change(), {
         "T1.md": TASK.replace("depends_on: []", "depends_on: [T2]"),
         "T2.md": TASK.replace("id: T1", "id: T2").replace("depends_on: []", "depends_on: [T1]"),
       }),
@@ -210,7 +209,7 @@ const cases: Array<[name: string, dir: () => string, code: number, expect?: stri
   [
     "a verify placeholder is a defect",
     () =>
-      fixture(change({ phase: "tasks", approvals: { spec: true, plan: true } }), {
+      fixture(change(), {
         "T1.md": TASK.replace('verify: "npm test"', 'verify: "curl <your-host>"'),
       }),
     2,
@@ -220,7 +219,7 @@ const cases: Array<[name: string, dir: () => string, code: number, expect?: stri
     "a touchpoint that does not resolve is a defect",
     () =>
       fixture(
-        change({ phase: "plan", approvals: { spec: true }, plan: PLAN.replace("src/app.ts", "src/nope.ts") }),
+        change({ plan: PLAN.replace("src/app.ts", "src/nope.ts") }),
       ),
     2,
     "does not resolve",
@@ -228,7 +227,7 @@ const cases: Array<[name: string, dir: () => string, code: number, expect?: stri
   [
     "forbidden with an anchor is a defect",
     () =>
-      fixture(change({ phase: "tasks", approvals: { spec: true, plan: true } }), {
+      fixture(change(), {
         "T1.md": TASK.replace(
           "depends_on: []",
           'forbidden:\n  - path: "src/routes.ts::handler"\n    reason: "middleware-level"\ndepends_on: []',
@@ -242,7 +241,7 @@ const cases: Array<[name: string, dir: () => string, code: number, expect?: stri
   [
     "a verify that already passes warns but holds",
     () =>
-      fixture(change({ phase: "tasks", approvals: { spec: true, plan: true } }), {
+      fixture(change(), {
         "T1.md": TASK.replace("verify_result: fail", "verify_result: pass"),
       }),
     0,

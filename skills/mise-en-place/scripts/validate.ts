@@ -1,15 +1,15 @@
 #!/usr/bin/env bun
 //
-// Phase-aware structural check for a `mise-en-place` change directory. Run at every phase,
-// not once at the end: the whole point is to report current state and what is needed to
-// move forward, which is only useful while fields are still empty.
+// Structural check for a `mise-en-place` change directory. There is no phase to pass in:
+// how far to check is derivable from the directory itself, so a half-written change is
+// reported at its own frontier and a whole one is checked whole.
 //
 // Two kinds of output, deliberately separated:
-//   gaps    - a field the phase needs and does not have yet. Normal mid-phase state.
+//   gaps    - a field the change needs and does not have yet. Normal mid-write state.
 //   defects - a factual or structural error. Not a gap; nothing downstream can proceed.
 //
-// Usage: bun validate.ts <change dir> [--phase spec|plan|tasks]
-// Exit 0 = phase invariants hold, 1 = gaps remain, 2 = malformed or unusable.
+// Usage: bun validate.ts <change dir>
+// Exit 0 = invariants hold, 1 = gaps remain, 2 = malformed or unusable.
 
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { basename, join } from "node:path";
@@ -106,7 +106,7 @@ function capitalisedNouns(text: string): string[] {
 if (typeof Bun === "undefined" || !("YAML" in Bun)) die("needs bun >= 1.2 (Bun.YAML)");
 
 const dir = process.argv[2];
-if (!dir) die("usage: validate.ts <change dir> [--phase spec|plan|tasks]");
+if (!dir) die("usage: validate.ts <change dir>");
 const changeFile = join(dir, "change.md");
 if (!existsSync(changeFile)) die(`${changeFile} not found`);
 
@@ -116,15 +116,38 @@ const plan = change.plan ?? {};
 const approvals = change.approvals ?? {};
 const requirements = arr(spec.requirements, "spec.requirements");
 
-const flagIndex = process.argv.indexOf("--phase");
-const phase = String(flagIndex > -1 ? process.argv[flagIndex + 1] : change.phase ?? "") as Phase;
-if (!PHASES.includes(phase)) die(`phase must be one of ${PHASES.join(", ")}, got "${phase}"`);
+if (change.phase !== undefined) warnings.push("`phase` is no longer used - remove it");
 
-// Phases up to and including the current one. An approved phase is still checked - a
-// later phase can invalidate an earlier one, and finding that here beats finding it in
-// the implementation loop.
-const active = PHASES.slice(0, PHASES.indexOf(phase) + 1);
+// Discovered here rather than with the task checks: how far to check depends on whether
+// tasks exist at all.
+const tasksDir = join(dir, "tasks");
+const taskFiles = existsSync(tasksDir)
+  ? readdirSync(tasksDir).filter((f) => f.endsWith(".md")).sort()
+  : [];
+
+// How far to check. A phase is active once it has content of its own or the gate before it
+// is given - so a cold change is reported at its first empty phase and never nagged about
+// fields nobody has reached, while an approved one is re-checked whole: a later phase can
+// invalidate an earlier one, and finding that here beats finding it in the loop.
+// An open question counts as content: it is the one thing in a phase that blocks a gate,
+// so a phase holding nothing but a question must still be checked or the question is
+// silently ignored.
+const PLAN_FIELDS = ["approach", "touchpoints", "constraints", "acceptance", "escalate_if", "open_questions"];
+const frontier =
+  taskFiles.length || approvals.plan === true || !empty((change.tasks ?? {}).open_questions)
+    ? 2
+    : PLAN_FIELDS.some((k) => !empty(plan[k])) || approvals.spec === true
+      ? 1
+      : 0;
+const active = PHASES.slice(0, frontier + 1);
 const checking = (p: Phase) => active.includes(p);
+
+// The script cannot tell a plan nobody could write from a plan nobody attempted - both are
+// an empty mapping. Only the user can, so say which one this looks like rather than exit 0
+// on a change that stopped one phase short for no stated reason.
+if (frontier === 0 && !empty(spec.outcome) && !empty(spec.requirements)) {
+  warnings.push("spec is filled but plan is empty - was the plan attempted, or is there no evidence for it yet?");
+}
 
 // Approvals cascade. An approval standing downstream of a revoked one is state no reader
 // can interpret: it claims the tasks were approved against a plan that was withdrawn.
@@ -132,17 +155,6 @@ for (let i = 1; i < PHASES.length; i++) {
   if (approvals[PHASES[i]] === true && approvals[PHASES[i - 1]] !== true) {
     defects.push(`approvals.${PHASES[i]} is true but approvals.${PHASES[i - 1]} is not`);
   }
-}
-if (approvals[phase] === true && phase !== PHASES[PHASES.length - 1]) {
-  defects.push(`phase is ${phase} but approvals.${phase} is already true - advance phase`);
-}
-
-// The mirror of the cascade: a `phase` set past a gate that was never given. Without this
-// a hand-edited `phase: tasks` with no approvals is checked and can be approved, skipping
-// both upstream gates. Fix by setting `phase` back to the first unapproved phase - never
-// by approving on the user's behalf.
-for (const p of PHASES.slice(0, PHASES.indexOf(phase))) {
-  if (approvals[p] !== true) defects.push(`phase is ${phase} but approvals.${p} is not true`);
 }
 
 // open_questions blocks its own phase's approval and nothing else. Empty at approval by
@@ -152,13 +164,6 @@ for (const p of active) {
   for (const q of arr(holder.open_questions, `${p}.open_questions`)) gaps.push(`${p}.open_questions: ${q}`);
 }
 
-// Discovered before the plan checks, because whether an empty `constraints` matters
-// depends on how many tasks could disagree about it.
-const tasksDir = join(dir, "tasks");
-const taskFiles = existsSync(tasksDir)
-  ? readdirSync(tasksDir).filter((f) => f.endsWith(".md")).sort()
-  : [];
-
 // ---- spec ----------------------------------------------------------------------------
 
 // A requirement naming a file or a technology is an approach decision wearing a
@@ -167,8 +172,13 @@ const APPROACH_SHAPED = /(\b[\w.-]+\/[\w.-]+)|(\.\w{2,4}\b)/;
 
 if (checking("spec")) {
   if (empty(spec.outcome)) gaps.push("spec.outcome is empty");
-  if (empty(spec.kill_criterion)) gaps.push("spec.kill_criterion is empty");
   if (empty(spec.requirements)) gaps.push("spec.requirements is empty - nothing to deliver");
+  // Blocking on this manufactures one. A change small enough to have no condition that
+  // would stop it is common, and an invented kill criterion is worse than an absent one:
+  // it reads as a decision the user made. The checklist asks whether it can ever fire.
+  if (empty(spec.kill_criterion)) {
+    warnings.push("spec.kill_criterion is empty - is there a condition that would stop this?");
+  }
   // A change with no non-goals is possible. A change where nobody considered scope is
   // more common, so this is the user's to dismiss rather than the script's to allow.
   if (empty(spec.non_goals)) warnings.push("spec.non_goals is empty - was scope considered?");
@@ -338,10 +348,10 @@ if (defects.length) {
 }
 
 if (gaps.length) {
-  console.log(`\nneeded to approve ${phase}:`);
+  console.log(`\nneeded to approve ${active[active.length - 1]}:`);
   for (const g of gaps) console.log(`  - ${g}`);
   process.exit(1);
 }
 
-console.log(`${phase} invariants hold - ready for the user to approve.`);
+console.log(`${active.join(", ")} invariants hold - ready for the user to approve.`);
 process.exit(0);

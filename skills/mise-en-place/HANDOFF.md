@@ -69,6 +69,6 @@ Stopping means stopping. It does not mean adapting the plan and continuing.
 ## Back to `mise-en-place`
 
 A task can prove the plan wrong. The loop does not re-plan; it stops. Re-planning is the
-user setting `approvals.plan: false` - which cascades to `approvals.tasks: false` - and
-`phase: plan`, then invoking `mise-en-place` again. An approval standing downstream of a
+user setting `approvals.plan: false` - which cascades to `approvals.tasks: false` - then
+invoking `mise-en-place` again. An approval standing downstream of a
 revoked one is malformed state.

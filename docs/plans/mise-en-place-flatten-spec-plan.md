@@ -1,7 +1,23 @@
 # Flattening spec → plan in mise-en-place
 
-Status: proposed, not implemented. Written 2026-08-18, out of the review that
-produced the leaner `skills/mvc/SKILL.md`.
+Status: implemented 2026-08-18, and further than this document proposed. Written out of
+the review that produced the leaner `skills/mvc/SKILL.md`.
+
+What shipped, after grilling the premise a second time:
+
+- One invocation writes spec, plan *and* tasks, and one approval covers all three. This
+  document stopped at spec+plan; the `tasks` gate turned out to be the most tedious of the
+  three, and its content is script-checked except for `verify` and `verify_result`.
+- Tasks are presented as one row per task - `goal`, `verify`, `verify_result` - not as
+  files. Rubber-stamping was a presentation problem, not a gate problem.
+- `spec.kill_criterion` demoted from gap to warning. Forcing it on a small change
+  manufactures one, and a manufactured criterion is the forgery the skill exists to stop.
+- The `phase` field is deleted. With one approval it was derivable from the flags, and it
+  was the sole source of two defect classes.
+- No size floor. It depends too much on the change and the context for any threshold to
+  survive, and the items above make small changes cheap without one.
+
+The reasoning below stands as written; only the recommendation was overtaken.
 
 The premise under review: *"spec → plan often feels like theatre; mise-en-place should
 be able to flatten them into one round."*

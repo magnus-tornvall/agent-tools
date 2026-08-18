@@ -1,6 +1,6 @@
 ---
 name: mise-en-place
-description: Construct a change directory - specification, plan, tasks - by synthesizing what the conversation, the repository and existing docs already determine, validating the result, and reporting what is still missing. It does not interview; it names the gap and stops, and the user closes it however they like. Each phase is gated by the user. The approved result hands off to an implementation loop. Use to open a change, and to resume or re-enter one whose plan a task proved wrong.
+description: Construct a change directory - specification, plan, tasks - by synthesizing what the conversation, the repository and existing docs already determine, validating the result, and reporting what is still missing. It does not interview; it names the gap and stops, and the user closes it however they like. One approval covers the whole change. The approved result hands off to an implementation loop. Use to open a change, and to resume or re-enter one whose plan a task proved wrong.
 disable-model-invocation: true
 ---
 
@@ -35,7 +35,11 @@ user's; branching belongs to the implementation loop.
 
 ## Every invocation
 
-The same loop, whichever phase the change is in.
+The same loop, however far along the change is. One invocation writes as much of the change
+as the evidence supports - spec, plan and tasks - and asks for one approval covering all of
+it. The three phases stay separate groups of fields with separate approval flags, because a
+task can prove the plan wrong without reopening the goal. What they no longer have is
+separate rounds of presenting and waiting.
 
 ### 1. Find the change, then read its state
 
@@ -72,14 +76,23 @@ the same reason - excluding it is exactly how the duplicate gets created.
 There is no way to force a new change past a match. If step 2 matched wrongly, that is
 exactly the ambiguity it already routes to the user.
 
-Then read `change.md`. Its `phase` and `approvals` are the truth - never restart an
-approved phase. A new change starts at `phase: spec` with all approvals `false`.
+Then read `change.md`. Its `approvals` are the truth - never rewrite the fields of an
+approved phase. There is no `phase` field: the frontier is the first phase whose approval is
+false, which is derivable, and a stored copy of it is a second place to be wrong. A new
+change starts with all approvals `false`.
 
 ### 2. Synthesize
 
-Fill every field of the current phase that the conversation, the repository, an
-existing `CONTEXT.md` and `docs/adr/`, or another artifact in `<change dir>` already
-determine.
+Fill every field of `spec`, then `plan`, then `tasks` that the conversation, the repository,
+an existing `CONTEXT.md` and `docs/adr/`, or another artifact in `<change dir>` already
+determine. Stop at the first phase whose fields the evidence cannot fill: everything
+downstream of a gap is written against a guess, and a plan built on an invented outcome is
+worse than no plan. That phase's gap is the report.
+
+Stopping early is a claim that the evidence ran out, and the script cannot check it - an
+unattempted phase and an unfillable one are both an empty mapping. It warns when the spec is
+complete and the plan is empty; say in the report which of the two it is, because a user who
+is not told assumes the phase was tried.
 
 A field is written only where the evidence for it can be named: a `path:line` anchor, a
 `path::symbol`, an ADR number, a quote of what the user said, or a quote of a field in
@@ -118,22 +131,22 @@ machinery, same order.
 bun <skill dir>/scripts/validate.ts <change dir>
 ```
 
-`<skill dir>` is the directory holding this file. The script reads `phase` from
-`change.md`, checks that phase and every phase upstream of it, and exits:
+`<skill dir>` is the directory holding this file. It takes no phase argument: a phase is
+checked once it has content of its own or the gate before it is given, so a change stopped
+at a gap is not also nagged about fields nobody has reached. It exits:
 
 | exit | meaning | what to do |
 | --- | --- | --- |
-| 0 | phase invariants hold | go to step 5 |
+| 0 | invariants hold | go to step 5 |
 | 1 | not ready | its output is the gap; go to step 4 |
 | 2 | malformed | a factual or structural defect, not a gap. Fix it, then re-run here |
 
 Report every line the script prints, including warnings. Silence is not a pass. If `bun`
 is not installed, stop and say so - do not review the rules by eye instead.
 
-The gate is checked in both directions and both misalignments are exit 2: an approval
-standing under a revoked one, and a `phase` set past a gate that was never given. The fix
-for the second is always to set `phase` back to the first unapproved phase - never to
-supply the missing approval, which is the user's and no one else's.
+An approval standing under a revoked one is exit 2: it claims tasks approved against a plan
+that was withdrawn. The fix is the cascade in [Re-entry](#re-entry) - never supplying the
+missing approval, which is the user's and no one else's.
 
 The script also warns on a capitalised term in a requirement that no `CONTEXT.md` defines,
 and on any word the glossary lists under `_Avoid_`. That check is deliberately partial: it
@@ -148,7 +161,8 @@ The gap has two halves.
 **What the script found** - missing fields, uncovered requirements, non-empty
 `open_questions`. Mechanical and complete.
 
-**What only a reader finds** - run the checklist for the current phase below. Its output
+**What only a reader finds** - run the checklist below for every phase this invocation
+wrote, and no others: a checklist run against fields nobody has filled yet invents work. Its output
 goes into the report and nowhere else. It may not write a field value, may not set an
 approval, and may not be written into `open_questions`: that list is state, it blocks a
 gate, and state records the user's judgement, not the reader's. A doubt raised by whatever
@@ -185,23 +199,35 @@ from the user to a regex.
 
 ### 5. The user approves
 
-Present the phase's fields, each with where it came from - the quote, the anchor, the ADR
-number - and every warning the script printed. Synthesis-first means the user is auditing
-writing they did not do, and provenance is what makes that an audit rather than a skim. It
-is also the only enforcement the evidence discipline gets, since deliberately no script
-checks it.
+One presentation, covering every phase this invocation wrote, and every warning the script
+printed. Synthesis-first means the user is auditing writing they did not do, and provenance
+is what makes that an audit rather than a skim. It is also the only enforcement the evidence
+discipline gets, since deliberately no script checks it.
+
+- **spec and plan**: each field with where it came from - the quote, the anchor, the ADR
+  number.
+- **tasks**: one row per task - `goal`, `satisfies`, `verify`, `verify_result` - and nothing
+  else. Those four are what only the user can judge: the script counts that every
+  requirement is claimed by some task, never that *this* task could deliver *that*
+  requirement, and it can run no `verify` for itself. Ids, anchor resolution and the
+  `depends_on` DAG it has already decided, and re-reading them is the part that turns a gate
+  into a skim - a row that looks wrong is a cue to open that file, not a reason to print
+  them all. `scope` and `depends_on` are one ask away when a row invites the question.
 
 The user approves; this skill never does.
 
-On approval set that phase's `approvals` entry to `true` and advance `phase` in the same
-edit. Written separately they can be interrupted between the two writes, and both halves
-are defects on their own: an approval on a non-terminal current phase, and a `phase` past a
-gate not yet given. If a later phase exists, return to step 2 for it - an approval is
-progress, and stopping to make the user re-type the command buys nothing, so one invocation
-may carry all three gates. At `tasks` there is no later phase, so only the approval is
-written: `phase` stays `tasks`, and `phase: tasks` with
-`approvals.tasks: true` is the terminal state - the change is ready for handoff and a
-further invocation has nothing to advance.
+One approval covers everything presented: set each of those phases' `approvals` entries to
+`true` in a single edit. The flags stay separate because they are invalidated separately - a
+task can prove the plan wrong while the outcome still stands - but they are *given*
+together, because it is one person deciding one thing in one sitting, and a second "do you
+approve?" for the same act of thinking is theatre that trains the reflex to say yes.
+
+`approvals.tasks: true` is the terminal state: the change is ready for handoff and a further
+invocation has nothing to advance.
+
+If the user approves some of what was presented and not the rest, set only the flags they
+gave - the cascade in the script makes the rest unrepresentable anyway - and return to
+step 2 for what they rejected.
 
 ## Phases
 
@@ -212,9 +238,16 @@ Fields: `outcome`, `kill_criterion`, `non_goals`, `requirements`.
 No requirement names a technology or a file. That is an approach decision wearing a
 requirement's clothes, and it belongs to the plan.
 
-More than about seven requirements usually means two changes. If the prompt describes
-several independent subsystems, say so before any of this and help split it - do not spend
-a synthesis and a report on something that needs decomposing. The user decides.
+`kill_criterion` warns when empty rather than blocking. Plenty of changes have no condition
+that would stop them, and a criterion written to clear a gate is worse than an absent one -
+it reads as a decision the user made. Leave it empty rather than manufacture one; the
+checklist asks whether the one that is there can ever fire.
+
+More than about seven requirements usually means two changes. Check this before writing any
+`plan` field: the split is cheap to act on while only the spec exists and expensive once an
+approach has been paid for. If the prompt describes several independent subsystems, say so
+before any of this and help split it - do not spend a synthesis and a report on something
+that needs decomposing. The user decides.
 
 **Reader's checklist**: Is `outcome` falsifiable, or does it merely sound good? Does
 `kill_criterion` name a condition that would actually stop the change, or one that can
@@ -313,7 +346,9 @@ file is off-limits, the constraint is probably wrong.
 ## Re-entry
 
 A task can prove the plan wrong. Set `approvals.plan: false`, which cascades to
-`approvals.tasks: false`, set `phase: plan`, and invoke again. The specification survives.
+`approvals.tasks: false`, and invoke again. The specification survives - that is what stops
+a replan from quietly renegotiating the goal, and it is why the flags stay separate even
+though one approval gives them all.
 Revoking `approvals.spec` cascades to both others. The cascade is not optional - an
 approval standing downstream of a revoked one is malformed state, and the script exits 2
 on it.
@@ -322,8 +357,7 @@ on it.
 
 ```yaml
 ---
-phase: spec               # spec | plan | tasks
-approvals:
+approvals:                # given together; revoked separately, see Re-entry
   spec: false
   plan: false
   tasks: false
@@ -331,6 +365,7 @@ approvals:
 spec:
   outcome: "Every HTML response carries a Content-Security-Policy header."
   kill_criterion: "If the policy cannot be expressed without unsafe-inline, stop and re-scope."
+                          # empty is fine when nothing would stop the change
   non_goals:
     - "Not adding CSP reporting."
     - "Not touching the existing security headers middleware ordering."
