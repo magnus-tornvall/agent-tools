@@ -1,6 +1,6 @@
 ---
 name: mvc
-description: Initiate a minimal viable change by grilling the user down a design tree until its shape is settled - what ships, what is deferred, what is out, and what each decision ruled out. Use before a change is planned, when what it is has not yet been pinned down.
+description: Initiate a minimal viable change by grilling the user down a design tree until its shape is settled - what ships, what does not and why, what would kill it, and what each decision ruled out. Use before a change is planned, when what it is has not yet been pinned down.
 disable-model-invocation: true
 ---
 
@@ -14,8 +14,8 @@ Minimal is the constraint, not the aspiration. Every item that ships must be loa
 on the outcome. Three rounds is the budget, so that "we'll decide later" costs something.
 
 State lives in the conversation. A grill that loses its context restarts rather than
-resumes - that is the trade for owning no file. `mise-en-place` is the skill that persists
-a shape; this one only settles it.
+resumes - that is the trade for owning no file. Settling the shape is this skill's; making
+it durable is not.
 
 This skill touches no git and writes no file.
 
@@ -95,8 +95,8 @@ back on.
 ### Pushing back
 
 - **A settled decision reopened.** Ask what changed. Nothing changed, it stays settled.
-- **An answer that widens the change.** Route it through widening below, or defer it. Never
-  let it into what ships quietly.
+- **An answer that widens the change.** Route it through widening below, or make it a
+  non-goal. Never let it into what ships quietly.
 - **A better option exists.** Say which and why, once - then it is the user's call, and a
   reaffirmed decision is closed. Re-arguing it is not grilling, it is stalling. "Once" caps
   what is volunteered, not what is asked for: pressed, explain as fully as it takes.
@@ -110,7 +110,7 @@ is information. Each survivor takes one of three exits:
 
 1. **The user answers it off-budget** - volunteered, not asked by a round. Costs nothing,
    because the ceiling bounds what this skill asks for, not what the user offers.
-2. **It is deferred**, with a reason, and stops blocking.
+2. **It becomes a non-goal**, deferred with a reason, and stops blocking.
 3. **Neither.** The change is too big to define in three rounds; report that and propose
    the split.
 
@@ -137,21 +137,19 @@ unreachable as drawn. Forbidding it would not prevent the growth, only the recor
 Sorting these is the judgement the grill exists to produce.
 
 **Ships.** The test is deletion: remove the item and the outcome no longer holds. Anything
-whose absence merely makes the result slower, uglier, or less pleasant is deferred. A
+whose absence merely makes the result slower, uglier, or less pleasant is a non-goal. A
 shipping list where every item survives deletion is not an MVC.
 
-**Deferred.** Something a reasonable reader would expect in scope, and the reason it isn't.
-The ledger exists to stop re-litigation, not to inventory everything imaginable - if nobody
-would have asked for it, leave it out.
+**Non-goals.** One list from the start. Every entry carries either a **boundary** - never
+this change, and the line that separates them - or a **deferral reason** - not now, and
+why. Which one it carries is the entry's type, and an entry carrying neither is not a
+non-goal, it is an omission.
 
-**Out.** A boundary, not a delay. Something adjacent that will never be this change, and
-the line that separates them. If it might happen later it is deferred; that distinction is
-the whole reason both exist.
-
-Deferred and out are one list on the way out - `non_goals`, each entry saying which it is
-and why. The distinction earns its keep during the grill, where a delay and a boundary get
-argued differently; downstream, both are things this change does not do, and inventing a
-second field for the ledger would be a slot nothing reads.
+The two types are argued differently, which is why the type is written down rather than
+inferred. A boundary prunes: it kills a branch and every question hanging off it, which is
+the most frontier a single answer can clear. A deferral only parks - the item leaves what
+ships, its subtree stays alive. The list exists to stop re-litigation, not to inventory
+everything imaginable; if nobody would have asked for it, leave it out.
 
 **The kill criterion.** One condition that would stop the change rather than reshape it -
 the grill owes an answer to "what would make you abandon this?", and the answer is usually
@@ -169,8 +167,8 @@ thing that enforces *minimal*.
 
 Probe every shipping item in one batch: drop this - does the outcome still hold?
 
-- **It still holds.** The item was never load-bearing. It moves to deferred, with the
-  reason it survived this long.
+- **It still holds.** The item was never load-bearing. It becomes a non-goal, deferred
+  with the reason it survived this long.
 - **The outcome fails.** It stays, and how the outcome breaks is the record.
 - **Cannot tell.** The frontier reopens. The shape was out of questions, not settled - and
   if the budget is also spent, the split signal fires here instead of at exhaustion.
@@ -184,11 +182,10 @@ The pass is off-budget: fixed form, yes or no, on material the user already sett
 
 ## Reporting the shape
 
-Close by stating the settled shape in `mise-en-place`'s spec vocabulary - `outcome`,
-`kill_criterion`, `non_goals`, `requirements` - so the handoff is a copy rather than a
-translation. What ships becomes `requirements`; deferred and out become `non_goals`, each
-with its reason. What each decision ruled out has no field: carry it as prose, which is
-what a change's body is for.
+Close by naming the shape in the fields a specification is written in - `outcome`,
+`kill_criterion`, `non_goals`, `requirements` - so whatever consumes it copies rather than
+translates. What ships becomes `requirements`, the non-goals carry across as written. What
+each decision ruled out belongs to no field: carry it as prose.
 
 Every part comes with where it came from. The user is auditing a shape they did not write,
 and provenance is what makes that an audit rather than a skim.
