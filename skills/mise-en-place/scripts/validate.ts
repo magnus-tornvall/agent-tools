@@ -41,6 +41,11 @@ function anchorPath(anchor: string): string {
   return anchor.split("::")[0].replace(/:\d+(-\d+)?$/, "");
 }
 
+/** A command that cannot be pasted and run decides nothing. */
+function placeholder(v: unknown): boolean {
+  return /<[^>]+>|\byour\b/i.test(String(v));
+}
+
 function empty(v: unknown): boolean {
   return v == null || (typeof v === "string" && !v.trim()) || (Array.isArray(v) && !v.length);
 }
@@ -128,7 +133,7 @@ const taskFiles = existsSync(tasksDir)
 // How far to check. A phase is active once it has content of its own or the gate before it
 // is given - so a cold change is reported at its first empty phase and never nagged about
 // fields nobody has reached, while an approved one is re-checked whole: a later phase can
-// invalidate an earlier one, and finding that here beats finding it in the loop.
+// invalidate an earlier one, and finding that here beats finding it during implementation.
 // An open question counts as content: it is the one thing in a phase that blocks a gate,
 // so a phase holding nothing but a question must still be checked or the question is
 // silently ignored.
@@ -157,8 +162,8 @@ for (let i = 1; i < PHASES.length; i++) {
   }
 }
 
-// open_questions blocks its own phase's approval and nothing else. Empty at approval by
-// definition, so it never reaches the handoff.
+// open_questions blocks its own phase's approval and nothing else, and is empty at approval
+// by definition.
 for (const p of active) {
   const holder = p === "tasks" ? change.tasks ?? {} : p === "spec" ? spec : plan;
   for (const q of arr(holder.open_questions, `${p}.open_questions`)) gaps.push(`${p}.open_questions: ${q}`);
@@ -223,9 +228,10 @@ if (checking("spec")) {
 if (checking("plan")) {
   if (empty(plan.approach)) gaps.push("plan.approach is empty");
   if (empty(plan.touchpoints)) gaps.push("plan.touchpoints is empty");
-  if (empty(plan.escalate_if)) gaps.push("plan.escalate_if is empty - nothing stops the loop");
+  if (empty(plan.escalate_if)) gaps.push("plan.escalate_if is empty - no stated failure mode");
   // acceptance may legitimately be empty: no single command decides every change.
   if (empty(plan.acceptance)) warnings.push("plan.acceptance is empty - no change-level check");
+  else if (placeholder(plan.acceptance)) defects.push("plan.acceptance contains a placeholder");
   // constraints coordinates tasks. With one task there is nothing to coordinate, so an
   // empty list is only suspicious once two tasks could decide the same thing differently.
   if (empty(plan.constraints) && taskFiles.length > 1) {
@@ -260,32 +266,9 @@ if (checking("tasks")) {
     for (const t of tasks) {
       const where = basename(t.file);
 
+      // Whether the goal is falsifiable is the reader's call: the script can see that the
+      // field is filled, never that its content could be observed false.
       if (empty(t.goal)) gaps.push(`${where}: goal is empty`);
-
-      // The loop writes `done`. A task born done is skipped by it - same forgery family
-      // as a verify that already passes. Legitimate only when re-entering mid-change,
-      // which is why it warns rather than blocks.
-      if (!["todo", "done"].includes(String(t.status))) {
-        defects.push(`${where}: status must be todo or done, got "${t.status}"`);
-      } else if (t.status === "done" && approvals.tasks !== true) {
-        warnings.push(`${where}: status is done before the tasks were approved`);
-      }
-
-      // A verify that cannot decide by exit status cannot gate anything.
-      if (empty(t.verify)) gaps.push(`${where}: verify is empty`);
-      else if (/<[^>]+>|\byour\b/i.test(String(t.verify))) {
-        defects.push(`${where}: verify contains a placeholder`);
-      }
-
-      if (!["pass", "fail", "unrun"].includes(String(t.verify_result))) {
-        gaps.push(`${where}: verify_result must be pass, fail or unrun`);
-      }
-      // Recorded before the change is implemented, so `pass` means the check does not
-      // test the change, or the task is a no-op. Louder forgery than `unrun`.
-      if (t.verify_result === "pass") {
-        warnings.push(`${where}: verify already passes - it may not test the change`);
-      }
-      if (t.verify_result === "unrun") warnings.push(`${where}: verify was never run`);
 
       for (const dep of arr(t.depends_on, `${where}: depends_on`)) {
         if (!ids.has(String(dep))) defects.push(`${where}: depends_on ${dep} is not a task`);
@@ -302,7 +285,7 @@ if (checking("tasks")) {
       }
     }
 
-    // A cycle deadlocks the loop with no error of its own.
+    // A cycle has no valid execution order, and says so nowhere on its own.
     const byId = new Map(tasks.map((t) => [String(t.id), t]));
     const state = new Map<string, number>(); // 1 = visiting, 2 = done
     (function walkAll() {

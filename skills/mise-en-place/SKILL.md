@@ -1,129 +1,102 @@
 ---
 name: mise-en-place
-description: Construct a change directory - specification, plan, tasks - by synthesizing what the conversation, the repository and existing docs already determine, validating the result, and reporting what is still missing. It does not interview; it names the gap and stops, and the user closes it however they like. One approval covers the whole change. The approved result hands off to an implementation loop. Use to open a change, and to resume or re-enter one whose plan a task proved wrong.
+description: Construct a change directory - spec, plan, tasks - from what the conversation, the repository and existing docs already determine, validate it, and report what is still missing. Does not interview; it names the gap and stops, and the user closes it however they like. One approval covers the whole change. Use to open a change, or to re-enter one whose plan a task proved wrong.
 disable-model-invocation: true
 ---
 
 # mise-en-place
 
-A constructor for one contract: a change directory an implementation loop can execute
-unattended. Every invocation does the same three things in the same order - synthesize
-from context, validate, report what is needed to continue.
+Constructs one artifact: a change directory - spec, plan, tasks - that someone who was not in
+this conversation can execute. Every invocation does the same three things in the same order:
+synthesize from context, validate, report what is missing.
 
-It forces the artifact and nothing else. How a gap gets closed - an interview, a
-conversation, a hand-edit, a skill - is the user's choice, and this skill makes none of
-it. The conversation already holds most of the answers; what it does not hold becomes a
-report, not a question this skill asks.
+It forces the artifact and nothing else. How a gap gets closed - interview, conversation,
+hand-edit, another skill - is the user's choice. The conversation already holds most of the
+answers; what it does not becomes a report, not a question this skill asks.
 
 State lives in the artifact, never in the conversation. That is what makes an invocation
 resumable after context is lost.
 
 ## Where things go
 
-Resolve the changes directory once, before anything else:
+Resolve the changes directory first: default `docs/changes/`, overridden by a line matching
+`changes dir: <path>` in the project's `CLAUDE.md`.
 
-- default `docs/changes/`
-- overridden by a line matching `changes dir: <path>` in the project's `CLAUDE.md`
+A change lives at `<changes dir>/YYYY-MM-DD-<slug>/` - today's date, a 2-4 word kebab-case
+slug. That is `<change dir>`; it holds `change.md` and a `tasks/` directory. The directory
+name is the change's only identity - no `id` field duplicates it.
 
-The change lives at `<changes dir>/YYYY-MM-DD-<slug>/`, where the date is today and the
-slug is 2-4 kebab-case words. That directory is `<change dir>`. It holds `change.md` and
-a `tasks/` directory. The directory name is the change's only identity - no `id` field
-duplicates it.
-
-This skill touches no git. It creates no branch and makes no commit. Committing is the
-user's; branching belongs to the implementation loop.
+This skill touches no git. No branch, no commit.
 
 ## Every invocation
 
-The same loop, however far along the change is. One invocation writes as much of the change
-as the evidence supports - spec, plan and tasks - and asks for one approval covering all of
-it. The three phases stay separate groups of fields with separate approval flags, because a
-task can prove the plan wrong without reopening the goal. What they no longer have is
+One invocation writes as much of the change as the evidence supports - spec, plan and tasks -
+and asks for one approval covering all of it. The phases keep separate approval flags because
+a task can prove the plan wrong without reopening the outcome. What they do not have is
 separate rounds of presenting and waiting.
 
-### 1. Find the change, then read its state
+### 1. Find the change
 
-Which directory this is operating on is a fact, so look it up - never ask. First hit wins:
+Which directory this operates on is a fact - look it up, never ask. First hit wins:
 
-1. **An argument.** Either a path - `/mise-en-place docs/changes/2026-08-10-csp-header` - or a
-   bare slug resolved within `<changes dir>`: `/mise-en-place csp-header`. A path to a *file*
-   under `<changes dir>` resolves to the directory holding it: the change is wherever the
-   artifact the user pointed at lives, whatever that artifact is. Always wins, even
-   over a better-matching candidate. An argument that resolves to no directory is an
-   error: say so and stop. It is not a request to create one - a typed path that does not
-   exist is a typo, and creating a change from it buries the mistake in a directory name.
+1. **An argument.** A path - `/mise-en-place docs/changes/2026-08-10-csp-header` - or a bare
+   slug resolved within `<changes dir>`. A path to a *file* resolves to the directory holding
+   it. An argument wins even over a better-matching candidate. One resolving to no directory
+   is an error: say so and stop - a typed path that does not exist is a typo, and creating a
+   change from it buries the mistake in a directory name.
 
-   A resolved directory with no `change.md` is **adopted**, not recreated: write `change.md`
-   into it and keep its existing name. Another skill got there first, and its date and slug
-   are the change's identity now.
-2. **A change already on disk.** Read `change.md` in every `<changes dir>/*/` and match
-   against the prompt, in this order:
-   - an exact slug match wins outright;
-   - otherwise, a change whose slug or `spec.outcome` shares the prompt's distinctive
-     terms - not "the", "add", "fix";
-   - two or more survivors, or a single weak one, is a question for the user, not a coin
-     flip.
-   Prefer a match without `approvals.tasks: true`. If the only match is terminal - approved
-   through `tasks` - say so and stop: there is nothing to advance, and the user either
-   re-enters it (see Re-entry) or names a new change.
+   A resolved directory with no `change.md` is **adopted**: write `change.md` into it and keep
+   its existing name. Something got there first, and its date and slug are the change's
+   identity now.
+2. **A change already on disk.** Read `change.md` in every `<changes dir>/*/` and match the
+   prompt: an exact slug match wins outright; otherwise a change whose slug or `spec.outcome`
+   shares the prompt's distinctive terms - not "the", "add", "fix". Two survivors, or a single
+   weak one, is a question for the user, not a coin flip. Prefer a match without
+   `approvals.tasks: true`; if the only match is terminal, say so and stop - the user either
+   re-enters it (see [Re-entry](#re-entry)) or names a new change.
 3. **Create.** Only when step 2 found nothing.
 
-Deriving a fresh `YYYY-MM-DD-<slug>` without step 2 is the failure this ordering exists to
-prevent: the same intent named a day later, or worded differently, silently opens a second
-change and re-answers a phase the user already approved. A terminal change is scanned for
-the same reason - excluding it is exactly how the duplicate gets created.
+Skipping step 2 is how the same intent, named a day later or worded differently, silently
+opens a second change and re-answers an approved phase. Terminal changes are scanned for that
+reason. There is no way to force a new change past a match: a wrong match is exactly the
+ambiguity step 2 already routes to the user.
 
-There is no way to force a new change past a match. If step 2 matched wrongly, that is
-exactly the ambiguity it already routes to the user.
-
-Then read `change.md`. Its `approvals` are the truth - never rewrite the fields of an
-approved phase. There is no `phase` field: the frontier is the first phase whose approval is
-false, which is derivable, and a stored copy of it is a second place to be wrong. A new
-change starts with all approvals `false`.
+Then read `change.md`. Its `approvals` are the truth - never rewrite the fields of an approved
+phase. There is no `phase` field: the frontier is the first phase whose approval is false. A
+new change starts with all approvals `false`.
 
 ### 2. Synthesize
 
 Fill every field of `spec`, then `plan`, then `tasks` that the conversation, the repository,
-an existing `CONTEXT.md` and `docs/adr/`, or another artifact in `<change dir>` already
-determine. Stop at the first phase whose fields the evidence cannot fill: everything
-downstream of a gap is written against a guess, and a plan built on an invented outcome is
-worse than no plan. That phase's gap is the report.
+an existing `CONTEXT.md` or `docs/adr/`, or another artifact in `<change dir>` already
+determine. Stop at the first phase the evidence cannot fill: everything downstream of a gap is
+written against a guess. That phase's gap is the report.
 
-Stopping early is a claim that the evidence ran out, and the script cannot check it - an
-unattempted phase and an unfillable one are both an empty mapping. It warns when the spec is
-complete and the plan is empty; say in the report which of the two it is, because a user who
-is not told assumes the phase was tried.
+**Invent nothing.** A plausible guess in a field is indistinguishable from a decision the user
+made. That is the failure this skill exists to prevent, and every rule below serves it.
 
-A field is written only where the evidence for it can be named: a `path:line` anchor, a
-`path::symbol`, an ADR number, a quote of what the user said, or a quote of a field in
-another artifact in `<change dir>`. No evidence, no write - the field stays empty and
-becomes part of the gap in step 4.
+A field is written only where the evidence for it can be named: a `path:line`, a
+`path::symbol`, an ADR number, a quote of what the user said, or a quote of a field in another
+artifact in `<change dir>`. No evidence, no write - the field stays empty and becomes part of
+the gap.
 
-Another artifact carries its own gate, and an ungated one is a draft. If it declares an
-approval state and that state is false, it is not evidence: report that it is unfinished
-and leave the fields it would have filled as gaps. Reading a value off an unapproved
-artifact is inventing a field with extra steps - a position someone wrote down is not a
-decision the user made. Its wording is also not a schema: a field there whose meaning
-differs from the field here is restated against this phase's rules, never copied across.
+Another artifact carries its own gate. One declaring an approval state that is false is not
+evidence: report it unfinished and leave the fields it would have filled as gaps. Its wording
+is not a schema either - a field whose meaning differs from the field here is restated against
+this phase's rules, never copied across.
 
-This is a discipline over what may be written, not a schema. There is no evidence field,
-because a script can check that such a field is *filled* and never that it is *true* - and
-a checkable-but-meaningless slot would convert "I must be able to defend this" into "fill
-the slot", which is the one failure this skill exists to prevent. Evidence lands in
-`plan.touchpoints` and task `scope`, whose *paths* the script resolves - the symbol or line
-after them it does not, so an anchor can point at nothing and still pass - and in the prose
-body for everything else. It is shown to the user at step 5. The user is the gate on
-whether it holds up.
+There is no evidence field. A script can check such a field is *filled*, never that it is
+*true*, and a checkable-but-meaningless slot converts "I must be able to defend this" into
+"fill the slot". Evidence lands in `plan.touchpoints` and task `scope`, whose paths the script
+resolves, and in the prose body for everything else. The user is the gate on whether it holds.
 
-Explore the area named in the prompt before writing anything, if the conversation has not
-already covered it.
+Stopping early claims the evidence ran out, and the script cannot check that - an unattempted
+phase and an unfillable one are both an empty mapping. Say which it is; a user who is not told
+assumes the phase was tried.
 
-Invent nothing. A gap is a gap; a plausible guess written into a field is indistinguishable
-from a decision the user made, which is the one failure this skill exists to prevent.
-
-If the conversation is cold - the change was named in a single sentence and nothing else -
-synthesis yields almost nothing and the report in step 4 does nearly all the work. Same
-machinery, same order.
+Explore the area named in the prompt first, unless the conversation already covered it. If the
+conversation is cold - one sentence and nothing else - synthesis yields almost nothing and the
+report does nearly all the work. Same machinery, same order.
 
 ### 3. Validate, by script
 
@@ -132,102 +105,86 @@ bun <skill dir>/scripts/validate.ts <change dir>
 ```
 
 `<skill dir>` is the directory holding this file. It takes no phase argument: a phase is
-checked once it has content of its own or the gate before it is given, so a change stopped
-at a gap is not also nagged about fields nobody has reached. It exits:
+checked once it has content of its own or the gate before it is given. It exits:
 
 | exit | meaning | what to do |
 | --- | --- | --- |
 | 0 | invariants hold | go to step 5 |
 | 1 | not ready | its output is the gap; go to step 4 |
-| 2 | malformed | a factual or structural defect, not a gap. Fix it, then re-run here |
+| 2 | malformed | a defect, not a gap. Fix it, then re-run here |
 
-Report every line the script prints, including warnings. Silence is not a pass. If `bun`
-is not installed, stop and say so - do not review the rules by eye instead.
+Report every line the script prints, warnings included. Silence is not a pass. If `bun` is not
+installed, stop and say so - do not review the rules by eye instead.
 
-An approval standing under a revoked one is exit 2: it claims tasks approved against a plan
-that was withdrawn. The fix is the cascade in [Re-entry](#re-entry) - never supplying the
-missing approval, which is the user's and no one else's.
+An approval standing under a revoked one is exit 2. The fix is the cascade in
+[Re-entry](#re-entry) - never supplying the missing approval, which is the user's alone.
 
-The script also warns on a capitalised term in a requirement that no `CONTEXT.md` defines,
-and on any word the glossary lists under `_Avoid_`. That check is deliberately partial: it
-misses lowercase terms and flags proper nouns that were never domain terms. So it warns, it
-never blocks, and whether every domain noun is glossed stays a question on the spec
-checklist. Nothing here says how the glossary gets written.
+The script also warns on a capitalised term in a requirement that no `CONTEXT.md` defines, and
+on any word the glossary lists under `_Avoid_`. That check is partial by design - it misses
+lowercase terms and flags proper nouns - so it warns, never blocks. Nothing here says how a
+glossary or an ADR gets written, only that the artifact survives the warnings.
 
 ### 4. Name the gap, then report it
 
 The gap has two halves.
 
-**What the script found** - missing fields, uncovered requirements, non-empty
-`open_questions`. Mechanical and complete.
+**What the script found** - missing fields, uncovered requirements, non-empty `open_questions`.
+Mechanical and complete.
 
-**What only a reader finds** - run the checklist below for every phase this invocation
-wrote, and no others: a checklist run against fields nobody has filled yet invents work. Its output
-goes into the report and nowhere else. It may not write a field value, may not set an
-approval, and may not be written into `open_questions`: that list is state, it blocks a
-gate, and state records the user's judgement, not the reader's. A doubt raised by whatever
-is reading this file should die with the invocation and be re-derived next time.
+**What only a reader finds** - run the checklist below for every phase this invocation wrote,
+and no others; a checklist run against unfilled fields invents work. Its output goes into the
+report and nowhere else: it may not write a field, set an approval, or land in
+`open_questions`. That list is state, and state records the user's judgement, not the reader's.
+A doubt raised here dies with the invocation and is re-derived next time.
 
-Then report, and stop. The report is the invocation's output:
+Then report, and stop:
 
 - Questions, grouped by what each one unblocks.
-- Each question carries the evidence synthesis found - `path::symbol`, an ADR, a quote -
-  because a question asked from zero context is generic, and a generic question spends the
-  user's attention for nothing.
-- **No proposed answers.** Evidence is a fact; a proposed field value is a preconception,
-  and the user's own understanding of the problem space is the thing being drawn out here.
-  Report what was found, never what it probably means.
-- If synthesis yielded almost nothing, say so in one line before the questions. A user who
-  sees fifteen questions and does not know whether that is normal will assume the skill
-  failed.
+- Each question carries the evidence synthesis found - `path::symbol`, an ADR, a quote. A
+  question asked from zero context is generic, and generic questions spend attention for
+  nothing.
+- **No proposed answers.** Evidence is a fact; a proposed field value is a preconception, and
+  the user's own understanding is the thing being drawn out.
+- If synthesis yielded almost nothing, say so in one line first. A user who sees fifteen
+  questions and does not know whether that is normal will assume the skill failed.
 
-The report is not persisted. It is re-derivable from the artifact plus the script, and a
-written copy is a second place holding the same thing that goes stale the moment a field
-is filled. The one thing that should survive - a question the user judged genuinely
-unresolved - already has a home in `open_questions`.
+The report is not persisted - it is re-derivable, and a written copy goes stale the moment a
+field is filled. The one thing that should survive, a question the user judged unresolved,
+already has a home in `open_questions`.
 
-Then the invocation ends. Closing the gap happens in the conversation, by whatever means
-the user prefers, and the next invocation picks the answers up in step 2. The only thing
-that does not end the invocation is exit 2: that is a defect, not a gap, so fix it and
-re-run the script in place.
+Then the invocation ends. Closing the gap happens in the conversation, and the next invocation
+picks the answers up at step 2. Only exit 2 does not end the invocation: that is a defect, so
+fix it and re-run the script in place.
 
 **What belongs in the script.** A check earns a place there only when a wrong answer is
-mechanically decidable. Everything else is a checklist line or a warning, and a claim that
-is neither belongs in no table in this file. The pull is always toward making the script
-check more; followed all the way it turns the gate into a checklist and moves judgement
-from the user to a regex.
+mechanically decidable. Everything else is a checklist line or a warning. The pull is always
+toward making the script check more; followed all the way it turns the gate into a checklist
+and moves judgement from the user to a regex.
 
 ### 5. The user approves
 
-One presentation, covering every phase this invocation wrote, and every warning the script
-printed. Synthesis-first means the user is auditing writing they did not do, and provenance
-is what makes that an audit rather than a skim. It is also the only enforcement the evidence
-discipline gets, since deliberately no script checks it.
+One presentation, covering every phase this invocation wrote and every warning the script
+printed. Synthesis-first means the user is auditing writing they did not do, and provenance is
+what makes that an audit rather than a skim. It is also the only enforcement the evidence
+discipline gets.
 
 - **spec and plan**: each field with where it came from - the quote, the anchor, the ADR
   number.
-- **tasks**: one row per task - `goal`, `satisfies`, `verify`, `verify_result` - and nothing
-  else. Those four are what only the user can judge: the script counts that every
-  requirement is claimed by some task, never that *this* task could deliver *that*
-  requirement, and it can run no `verify` for itself. Ids, anchor resolution and the
-  `depends_on` DAG it has already decided, and re-reading them is the part that turns a gate
-  into a skim - a row that looks wrong is a cue to open that file, not a reason to print
-  them all. `scope` and `depends_on` are one ask away when a row invites the question.
+- **tasks**: one row per task - `goal` and `satisfies` - and nothing else. Those two are what
+  only the user can judge: the script counts that every requirement is claimed by some task,
+  never that *this* task delivers *that* requirement. Ids, anchors and the `depends_on` DAG it
+  has already decided; re-reading them turns a gate into a skim. A row that looks wrong is a
+  cue to open that file.
 
-The user approves; this skill never does.
+The user approves; this skill never does. One approval covers everything presented: set those
+phases' `approvals` entries to `true` in a single edit. The flags stay separate because they
+are invalidated separately, but they are *given* together - one person deciding one thing in
+one sitting, and a second "do you approve?" is theatre that trains the reflex to say yes.
 
-One approval covers everything presented: set each of those phases' `approvals` entries to
-`true` in a single edit. The flags stay separate because they are invalidated separately - a
-task can prove the plan wrong while the outcome still stands - but they are *given*
-together, because it is one person deciding one thing in one sitting, and a second "do you
-approve?" for the same act of thinking is theatre that trains the reflex to say yes.
+`approvals.tasks: true` is terminal: a further invocation has nothing to advance.
 
-`approvals.tasks: true` is the terminal state: the change is ready for handoff and a further
-invocation has nothing to advance.
-
-If the user approves some of what was presented and not the rest, set only the flags they
-gave - the cascade in the script makes the rest unrepresentable anyway - and return to
-step 2 for what they rejected.
+If the user approves some of what was presented and not the rest, set only the flags they gave
+and return to step 2 for what they rejected.
 
 ## Phases
 
@@ -235,95 +192,83 @@ step 2 for what they rejected.
 
 Fields: `outcome`, `kill_criterion`, `non_goals`, `requirements`.
 
+`outcome` is the change's observable result, and no vague qualifier belongs in it or in a
+requirement.
+
 No requirement names a technology or a file. That is an approach decision wearing a
 requirement's clothes, and it belongs to the plan.
 
 `kill_criterion` warns when empty rather than blocking. Plenty of changes have no condition
-that would stop them, and a criterion written to clear a gate is worse than an absent one -
-it reads as a decision the user made. Leave it empty rather than manufacture one; the
-checklist asks whether the one that is there can ever fire.
+that would stop them, and one written to clear a gate reads as a decision the user made.
 
-More than about seven requirements usually means two changes. Check this before writing any
-`plan` field: the split is cheap to act on while only the spec exists and expensive once an
-approach has been paid for. If the prompt describes several independent subsystems, say so
-before any of this and help split it - do not spend a synthesis and a report on something
-that needs decomposing. The user decides.
+More than about seven requirements usually means two changes. Check before writing any `plan`
+field: the split is cheap while only the spec exists and expensive once an approach is paid
+for. If the prompt describes several independent subsystems, say so before synthesising
+anything and help split it. The user decides.
 
 **Reader's checklist**: Is `outcome` falsifiable, or does it merely sound good? Does
-`kill_criterion` name a condition that would actually stop the change, or one that can
-never occur? Does any requirement encode a mechanism rather than an observable result?
-Does any term contradict `CONTEXT.md`? Is any in-scope uncertainty still too vague to
-state as a question?
+`kill_criterion` name a condition that could actually fire? Does any requirement encode a
+mechanism rather than an observable result? Does any term contradict `CONTEXT.md`? Is any
+in-scope uncertainty still too vague to state as a question?
 
 ### plan
 
 Fields: `approach`, `touchpoints`, `constraints`, `acceptance`, `escalate_if`.
 
-`constraints` is the coordination slot - anything more than one task would otherwise
-decide independently and inconsistently: names, signatures, data shapes, error contracts.
-Anchor them where an anchor exists. It is not a record of decisions; a decision durable
-enough to outlive the change is an ADR.
+`constraints` is the coordination slot - anything more than one task would otherwise decide
+independently and inconsistently: names, signatures, data shapes, error contracts. Anchor them
+where an anchor exists. A decision durable enough to outlive the change is an ADR.
 
-`escalate_if` names the circumstances where the implementer stops rather than adapts.
-Without it, pinning turns "improvises badly" into "proceeds confidently off a cliff".
+`acceptance` is one command deciding whether the change as a whole works; all tasks done is
+not the change works. Leave it empty when no single command can decide it. It is literal and
+copy-pasteable - no placeholders, no `<...>`, no "your" - and decides by exit status. If exit
+status alone cannot, pipe it into something that can:
+`curl -sI $URL | grep -q '^content-security-policy:'`.
 
-`acceptance` is one command deciding whether the change as a whole works, distinct from any
-task's `verify`. All tasks done is not the change works. Leave it empty if no single
-command can decide it.
+`escalate_if` names what would prove the approach wrong - the plan's counterpart to
+`spec.kill_criterion`. Without it, a pinned plan has no stated failure mode.
 
-**Reader's checklist**: What could two tasks decide differently that `constraints` does
-not pin? If the approach is wrong, which way does it fail, and is that in `escalate_if`?
-Does `acceptance` test the outcome or merely re-run the tasks' own checks?
+**Reader's checklist**: What could two tasks decide differently that `constraints` does not
+pin? Does `acceptance` test the outcome, or merely re-run what the tasks already did? If the
+approach is wrong, which way does it fail, and is that in `escalate_if`?
 
 ### tasks
 
-One file per task in `tasks/`. `change.md` names no tasks - the directory is the list.
-Two places holding task state is two places that disagree.
+One file per task in `tasks/`. `change.md` names no tasks - the directory is the list. Two
+places holding task state is two places that disagree.
 
-`verify` is a literal command that decides truth by exit status. Copy-pasteable. No
-placeholders, no `<...>`, no "your". If exit status alone cannot decide it, pipe it into
-something that can: `curl -sI $URL | grep -q '^content-security-policy:'`.
+A task's `goal` must be falsifiable: something you could look at the result and call false.
+Nothing else in the file carries the task's truth condition, so a goal that only names work -
+"update the middleware" - leaves it without one. No command belongs here: the implementation is
+test-first, so the test is derived from the goal by whoever writes it, and a command fixed at
+design time pre-empts that while naming code that does not exist yet.
 
-Run each `verify` and record the outcome in `verify_result`. This catches a command that
-was never real - the cheapest and most common forgery - before an agent burns a run on it.
-A command that cannot run yet (needs a booted service, a migration, a deploy) is
-`verify_result: unrun`, with the reason in the body. A command that already passes is
-either a no-op task or a check that does not test the change; the script warns, and the
-warning is the user's to judge.
-
-`verify_result` is user-audited, not checked. The script cannot tell a recorded `fail` from
-one nobody ran, and cannot read whether the body explains an `unrun` - only that the field
-is non-empty, which would turn "say why" into "type something". It warns on `pass` and on
-`unrun`, and that is the whole of the mechanical check.
+Test names and assertions may be written. Test bodies and implementation code may not.
 
 `depends_on` forms a DAG. Every task leaves the tree green.
 
-There is no cap on a task's goal length, scope width, or requirement count. A task is as
-big as its seam, and the seam is judgement.
+No cap on a task's goal length, scope width, or requirement count. A task is as big as its
+seam, and the seam is judgement.
 
-**Reader's checklist**: Would each `verify` fail before the change and pass after, or does
-it merely run? Is there a requirement whose only coverage is a task that cannot really
-prove it? Is a seam missing - a place the change should be observable and is not?
+**Reader's checklist**: Could each `goal` be observed false? Is there a requirement whose only
+coverage is a task that cannot really show it? Is a seam missing - a place the change should be
+observable and is not?
 
 ## open_questions
 
-Every phase has one, `tasks` included. It holds only what the user judged unresolved -
-never a doubt the reader raised, which belongs in the report and dies with the invocation.
+Every phase has one, `tasks` included. It holds only what the user judged unresolved - never a
+doubt the reader raised, which belongs in the report and dies with the invocation.
 
-The three exits below presume the uncertainty is stateable as a question. One that is not
-is not an `open_question` - it is a gap in the report, and it recurs every invocation until
-the phase gets sharp enough to name it.
-
-A question that cannot be settled has exactly three exits:
+An uncertainty that cannot be stated as a question is not an `open_question` - it is a gap in
+the report, recurring every invocation until the phase gets sharp enough to name it. One that
+can be stated has exactly three exits:
 
 1. **Answered** - it becomes a field value and disappears.
-2. **Blocks the design** - it stays in that phase's `open_questions`. Non-empty is exit 1
-   from the script and blocks approval. The user resolves it or the change does not ship.
-3. **Cannot be answered until code is touched** - it converts to a `plan.escalate_if`
-   entry. The loop stops there and asks.
+2. **Blocks the design** - it stays in that phase's `open_questions`. Non-empty is exit 1 and
+   blocks approval. The user resolves it or the change does not ship.
+3. **Cannot be answered until code is touched** - it converts to a `plan.escalate_if` entry.
 
-There is no fourth exit. `open_questions` is empty at approval by definition, so it never
-reaches the handoff.
+There is no fourth exit. `open_questions` is empty at approval by definition.
 
 ## Anchors
 
@@ -336,22 +281,21 @@ src/middleware/security.ts:34-51         a range
 src/middleware/security.ts::applyHeaders a symbol
 ```
 
-Anchor to a symbol; use a line only where there is no symbol to name (config blocks,
-markup, data files). Lines rot when a task edits the file; symbols do not.
+Anchor to a symbol; use a line only where there is no symbol to name (config blocks, markup,
+data files). Lines rot when a task edits the file; symbols do not.
 
-`forbidden` takes whole paths and globs only, never anchors. Forbidding half a file is a
-rule an agent cannot reliably obey and a reviewer cannot cheaply check - if only part of a
-file is off-limits, the constraint is probably wrong.
+`forbidden` takes whole paths and globs only, never anchors. Forbidding half a file is a rule
+nobody can reliably obey and a reviewer cannot cheaply check - if only part of a file is
+off-limits, the constraint is probably wrong.
 
 ## Re-entry
 
 A task can prove the plan wrong. Set `approvals.plan: false`, which cascades to
-`approvals.tasks: false`, and invoke again. The specification survives - that is what stops
-a replan from quietly renegotiating the goal, and it is why the flags stay separate even
-though one approval gives them all.
-Revoking `approvals.spec` cascades to both others. The cascade is not optional - an
-approval standing downstream of a revoked one is malformed state, and the script exits 2
-on it.
+`approvals.tasks: false`, and invoke again. The specification survives - that is what stops a
+replan from quietly renegotiating the outcome, and why the flags stay separate even though one
+approval gives them all. Revoking `approvals.spec` cascades to both others. The cascade is not
+optional: an approval standing downstream of a revoked one is malformed state, and the script
+exits 2 on it.
 
 ## change.md shape
 
@@ -395,55 +339,23 @@ tasks:
 ---
 ```
 
-Prose body is optional. Use it for context a future reader needs and the fields cannot
-carry, including the evidence behind a field where an anchor alone does not explain it.
-Do not restate the fields in prose.
+Prose body is optional. Use it for context a future reader needs and the fields cannot carry,
+including the evidence behind a field where an anchor alone does not explain it. Do not restate
+the fields in prose.
 
 ## tasks/T1.md shape
 
 ```yaml
 ---
 id: T1                    # T followed by digits, unique across tasks/
-status: todo              # todo | done - the only field the implementation loop may write
-                          #   always todo when written; `done` is the loop's to set
 goal: "An HTML response carries a content-security-policy header."
 satisfies: [R1]           # requirement ids
 scope:                    # anchors; a path that does not exist yet is fine
   - src/middleware/security.ts::applyHeaders
   - test/security.test.ts
-verify: "npm test -- security.test.ts -t 'sets CSP header'"
-verify_result: fail       # pass | fail | unrun - recorded when the task was written
 forbidden:                # optional; whole paths and globs only, never anchors
   - path: "src/routes/**"
     reason: "Header is middleware-level; per-route changes mean the constraint was wrong."
 depends_on: []
 ---
 ```
-
-## Handoff
-
-`approvals.tasks: true` is the gate. What the implementation loop may read, what it may
-write, and where it stops is [HANDOFF.md](./HANDOFF.md) - that contract describes the loop,
-not this skill.
-
-## Prohibitions
-
-- Does not approve anything. The user approves.
-- Does not interview. It reports the gap and stops; closing it is the user's, by whatever
-  means they choose.
-- Does not propose a field value in the report. Evidence, never a preconception.
-- Does not invent a field value to fill a gap. A gap is reported, and an unresolved one is
-  an `open_question` that blocks.
-- Does not let the reader's checklist write a field, set an approval, or add an
-  `open_question`.
-- Does not write implementation code or test bodies. Test names and assertions, yes.
-- Does not branch, commit, or run a baseline. Not its half.
-- Does not prescribe how the glossary or an ADR gets written - only that the artifact
-  survives the script's warnings.
-- No vague qualifiers in `outcome` or `requirements`.
-
-## Known gap
-
-What happens to `<change dir>` after the change is done - deleted, archived, or harvested
-into an ADR first - is unspecified. That decision sits downstream of the implementation
-loop, which is out of scope here.

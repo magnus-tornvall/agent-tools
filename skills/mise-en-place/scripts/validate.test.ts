@@ -31,12 +31,9 @@ const PLAN = `
 
 const TASK = `---
 id: T1
-status: todo
 goal: "The header is set."
 satisfies: [R1]
 scope: ["src/app.ts"]
-verify: "npm test"
-verify_result: fail
 depends_on: []
 ---
 `;
@@ -207,13 +204,10 @@ const cases: Array<[name: string, dir: () => string, code: number, expect?: stri
     "depends_on cycle",
   ],
   [
-    "a verify placeholder is a defect",
-    () =>
-      fixture(change(), {
-        "T1.md": TASK.replace('verify: "npm test"', 'verify: "curl <your-host>"'),
-      }),
+    "a placeholder in acceptance is a defect",
+    () => fixture(change({ plan: PLAN.replace('acceptance: "npm test"', 'acceptance: "curl <your-host>"') })),
     2,
-    "placeholder",
+    "plan.acceptance contains a placeholder",
   ],
   [
     "a touchpoint that does not resolve is a defect",
@@ -239,13 +233,16 @@ const cases: Array<[name: string, dir: () => string, code: number, expect?: stri
 
   // ---- warnings do not change the exit --------------------------------------------------
   [
-    "a verify that already passes warns but holds",
-    () =>
-      fixture(change(), {
-        "T1.md": TASK.replace("verify_result: fail", "verify_result: pass"),
-      }),
+    "an empty acceptance warns but holds",
+    () => fixture(change({ plan: PLAN.replace(/  acceptance: .*\n/, "") }), { "T1.md": TASK }),
     0,
-    "verify already passes",
+    "plan.acceptance is empty",
+  ],
+  [
+    "a task with an empty goal is a gap",
+    () => fixture(change(), { "T1.md": TASK.replace('goal: "The header is set."', 'goal: ""') }),
+    1,
+    "goal is empty",
   ],
 ];
 
