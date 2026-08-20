@@ -8,6 +8,13 @@
 //   gaps    - a field the change needs and does not have yet. Normal mid-write state.
 //   defects - a factual or structural error. Not a gap; nothing downstream can proceed.
 //
+// What belongs in here: a check earns a place only when a wrong answer is mechanically
+// decidable. Everything else is a reader's-checklist line in SKILL.md, or a warning. The pull
+// is always toward checking more; followed all the way it turns the user's gate into a
+// checklist and moves judgement to a regex. This script can check that a field is *filled*,
+// never that it is *true* - and a checkable-but-meaningless slot converts "I must be able to
+// defend this" into "fill the slot".
+//
 // Usage: bun validate.ts <change dir>
 // Exit 0 = invariants hold, 1 = gaps remain, 2 = malformed or unusable.
 
