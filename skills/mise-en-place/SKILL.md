@@ -249,9 +249,12 @@ Nothing else in the file carries the task's truth condition, so a goal that only
 test-first, so the test is derived from the goal by whoever writes it, and a command fixed at
 design time pre-empts that while naming code that does not exist yet.
 
-Test names and assertions may be written. Test bodies and implementation code may not.
+Writes no code, tests included. A `goal` names what to observe; the test that observes it is
+the implementer's first act. `scope` may still anchor a test file that does not exist yet.
 
-`depends_on` forms a DAG. Every task leaves the tree green.
+`depends_on` forms a DAG. An edge exists when the later task's goal cannot be observed until
+the earlier one lands - not merely because two tasks touch the same file. Every task leaves the
+tree green.
 
 No cap on a task's goal length, scope width, or requirement count. A task is as big as its
 seam, and the seam is judgement.
