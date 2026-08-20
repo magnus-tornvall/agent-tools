@@ -15,8 +15,7 @@ hand-edit, another skill - is the user's choice. The conversation already holds 
 answers; what it does not becomes a report, not a question this skill asks.
 
 State lives in the artifact, never in the conversation. That is what makes an invocation
-resumable after context is lost - on this working copy: the default location survives a
-session, not a fresh clone or a reclaimed container.
+resumable after context is lost.
 
 ## Where things go
 
