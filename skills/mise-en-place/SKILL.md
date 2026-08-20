@@ -15,18 +15,24 @@ hand-edit, another skill - is the user's choice. The conversation already holds 
 answers; what it does not becomes a report, not a question this skill asks.
 
 State lives in the artifact, never in the conversation. That is what makes an invocation
-resumable after context is lost.
+resumable after context is lost - on this working copy: the default location survives a
+session, not a fresh clone or a reclaimed container.
 
 ## Where things go
 
-Resolve the changes directory first: default `docs/changes/`, overridden by a line matching
+Resolve the changes directory first: default `.scratch/changes/`, overridden by a line matching
 `changes dir: <path>` in the project's `CLAUDE.md`.
 
 A change lives at `<changes dir>/YYYY-MM-DD-<slug>/` - today's date, a 2-4 word kebab-case
 slug. That is `<change dir>`; it holds `change.md` and a `tasks/` directory. The directory
 name is the change's only identity - no `id` field duplicates it.
 
-This skill touches no git. No branch, no commit.
+A change directory is working state, not documentation. It defaults to a scratch path rather
+than `docs/` because a half-written spec swept into a commit reads as a decision the user made.
+Whether `.scratch/` is ignored is each project's business, and moving a change somewhere tracked
+is the user's to do by hand.
+
+This skill touches no git. No branch, no commit, no promotion.
 
 ## Every invocation
 
@@ -39,7 +45,7 @@ separate rounds of presenting and waiting.
 
 Which directory this operates on is a fact - look it up, never ask. First hit wins:
 
-1. **An argument.** A path - `/mise-en-place docs/changes/2026-08-10-csp-header` - or a bare
+1. **An argument.** A path - `/mise-en-place .scratch/changes/2026-08-10-csp-header` - or a bare
    slug resolved within `<changes dir>`. A path to a *file* resolves to the directory holding
    it. An argument wins even over a better-matching candidate. One resolving to no directory
    is an error: say so and stop - a typed path that does not exist is a typo, and creating a
