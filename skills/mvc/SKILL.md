@@ -239,5 +239,7 @@ settled on their behalf.
   transcript is not.
 - Does not write code, a plan, tasks, or a file.
 - Does not ask what the repository already answers.
+- Does not report a determination without provenance.
+- Does not search the web for approach comparison or best practice.
 - Does not report a kill criterion that cannot occur, or one that restates the outcome.
 - No vague qualifiers in the outcome or in what ships.
