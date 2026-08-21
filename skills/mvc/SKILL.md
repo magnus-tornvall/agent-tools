@@ -24,11 +24,41 @@ This skill touches no git and writes no file.
 ### Round 0 - synthesize
 
 Fill what the conversation and the repository already determine before asking anything. A
-question whose answer is in the repo wastes a round: look it up.
+question whose answer is in the repo wastes a round.
+
+List the candidate questions first, then dispatch one subagent to answer what it can. The
+candidates drive the search: a fixed file list reads what does not bear on this change and
+misses the one file that does.
+
+Candidates span both axes: what the repo settles, and what only the user can decide. A list
+drawn from the first alone comes back with nothing dark, which leaves round 1 nothing to ask.
+
+The explorer returns, per candidate, either the answer with `file:line` or **dark** - looked
+for, not found. Absence is a finding, because it is what becomes a question. A candidate can
+be both: the constraint the repo imposes is determined, the requirement it cannot know is
+dark, and splitting them is worth more than either half. It stops when every candidate is
+answered or dark, not when a file list is exhausted.
+
+Worth a lookup before anything else: precedent for the thing being added, which kills a
+branch rather than a leaf; the code the change touches and its callers; the repo's own
+convention and decision docs, whatever they are named; git history for the area; the
+dependency manifest; the existing test setup.
 
 Invent nothing. A plausible guess is indistinguishable from a decision the user made, and
-telling those two apart is the point. An unexplored path with no evidence becomes a
-question.
+telling those two apart is the point - which is why a determination without provenance is
+dark, not determined. General knowledge about a framework is not provenance, and a citation
+that proves something adjacent is worse than none: it makes the guess look checked.
+
+The web is in scope for one thing: a verifiable external fact a candidate turns on - a
+platform capability, an API shape, a version. Not approach comparison, not best practice:
+those are stances with no author, and the user owns the stances here. URL is provenance. Two
+searches per candidate, and the answer counts only from a primary source - the vendor's own
+documentation, the package's own stated requirements, the specification text. Two searches
+that do not reach one leave the candidate dark.
+
+Report the map before round 1: **determined**, with provenance; **ruled out**; **dark**. The
+user corrects it or says nothing, and either way round 1 asks from a shared map. Correcting
+a map is volunteered, so it costs no round.
 
 ### Rounds 1 to 3 - ask, re-derive
 
@@ -83,8 +113,8 @@ freeform counter is what surfaces the option neither party listed, which in a de
 is where the pruning happens. Enumerate only when the answer set is genuinely closed, and
 then the stance is a ranking rather than a position.
 
-**Keep bodies short.** Four is what a person absorbs at this density; three paragraphs each
-silently makes the real ceiling two.
+**Keep bodies to one short paragraph.** Four is what a person absorbs at this density; three
+paragraphs each silently makes the real ceiling two.
 
 **Clarification is off-budget and unlimited.** Nobody attacks a stance they have not
 understood. Asked why one holds, expand: the evidence, what it assumes, what would make it
@@ -165,7 +195,9 @@ out; "tests go in the existing suite, not a new harness" rules out a new harness
 Runs once, when the frontier closes. Everything above enforces *defined*; this is the only
 thing that enforces *minimal*.
 
-Probe every shipping item in one batch: drop this - does the outcome still hold?
+Probe every shipping item in one batch: drop this - does the outcome still hold? The
+four-question ceiling does not apply - the form is fixed and the material is already
+settled, so the batch reads as a checklist rather than as four things to absorb.
 
 - **It still holds.** The item was never load-bearing. It becomes a non-goal, deferred
   with the reason it survived this long.
