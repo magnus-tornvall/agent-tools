@@ -105,7 +105,10 @@ for (const fixture of readdirSync(runsRoot).sort()) {
       const b = stats[better][m];
       const x = stats[worse][m];
       const meanWins = dir === "high" ? b.mean > x.mean : b.mean < x.mean;
-      const disjoint = dir === "high" ? b.min > x.max : b.max < x.min;
+      // Disjointness is symmetric: two ranges that do not overlap are separated whichever
+      // way round they fall. Testing only the favourable direction hides the finding that
+      // matters most - a wording that moves a metric backwards, cleanly, every run.
+      const disjoint = b.min > x.max || b.max < x.min;
       const same = b.mean === x.mean;
       const tag = same ? "no difference" : disjoint ? (meanWins ? "SEPARATED" : "SEPARATED, WRONG WAY") :
         meanWins ? "overlapping, mean favours candidate" : "overlapping, mean favours control";

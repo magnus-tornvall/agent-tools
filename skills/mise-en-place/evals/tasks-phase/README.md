@@ -10,7 +10,8 @@ approved, so nothing about those phases is under test.
 
 ```
 bun run.ts                        calibration
-bun run.ts <fixture> <dir>...     a live comparison
+bun run.ts <fixture> <dir>...     grade one fixture's arms
+bun aggregate.ts <runs dir>       a full live run, several samples per arm
 ```
 
 **Calibration** grades the hand-written sample decompositions checked in under each fixture
@@ -42,8 +43,13 @@ difference is the wording being measured.
 Give each prompt to a fresh context. Collect the `tasks/` directory each produces, then:
 
 ```
-bun run.ts 01-notification-prefs runs/control/tasks runs/candidate/tasks
+bun aggregate.ts runs      # expects runs/<fixture>/<arm>/<n>/tasks/
 ```
+
+`aggregate.ts` reports every metric with its observed range and calls a difference
+*separated* only when the two arms' ranges do not overlap — in either direction, so a wording
+that moves a metric backwards every run shows up as a finding rather than as noise.
+`RESULTS.md` records what the first full run found.
 
 Two things this protocol needs and cannot enforce:
 
@@ -93,6 +99,12 @@ which one can actually land green. This fixture is the argument that the two add
 one addition: the verticality rule creates the failure mode the exception exists to catch, so
 shipping the first without the second makes the skill worse on this change than saying
 nothing.
+
+**`04-rename-neutral-plan`** - the same rename as 02, with a `plan.approach` that states the
+outcome and leaves the sequencing open. Fixture 02 turned out unable to separate the arms at
+all: its plan already names expand-contract, so both arms copy it rather than deciding it.
+Only a neutral plan can ask whether the tasks phase itself needs the rule, and it is the
+fixture that produced the run's decisive result.
 
 **`03-csp-header`** - the cost. The skill's own worked example, decomposed two ways, *both
 of them vertical*. `over-split` chops it finer than the change has seams for, and it beats
