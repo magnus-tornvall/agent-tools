@@ -95,10 +95,10 @@ nothing here, it does nothing.
 packages. `forced-vertical` slices it by feature, which scores *better* than the correct
 expand-contract sequence on `complete_path`, `single_layer` and `startable` - a declared
 inversion the calibration asserts still holds. Only `expand_contract`, read off the DAG, sees
-which one can actually land green. This fixture is the argument that the two additions are
-one addition: the verticality rule creates the failure mode the exception exists to catch, so
-shipping the first without the second makes the skill worse on this change than saying
-nothing.
+which one can actually land green. In calibration that makes the case that the two additions
+are one addition. In a live run it decides nothing, for the reason fixture 04 exists: its
+approved plan already names expand-contract, so both arms copy the plan instead of deciding
+the shape, and the metric reads 1.00 either way.
 
 **`04-rename-neutral-plan`** - the same rename as 02, with a `plan.approach` that states the
 outcome and leaves the sequencing open. Fixture 02 turned out unable to separate the arms at
@@ -111,16 +111,20 @@ of them vertical*. `over-split` chops it finer than the change has seams for, an
 the two-task decomposition on `complete_path`, `single_layer` and `critical_path`. The only
 ranked metric that notices is `req_fanout`, and the only hard stop is a task-count bound.
 This is the fixture that decides whether "usually one requirement" stays in the candidate
-wording: without that clause, a verticality rule is an incentive to over-decompose, and
-nothing in `validate.ts` would catch it.
+wording: in calibration, a verticality rule without it is an incentive to over-decompose that
+nothing in `validate.ts` would catch. The live run found the opposite hazard - the candidate
+ran coarser than the control here, and collapsed entirely on fixture 04 - so this fixture
+guards a direction the wording does not actually fail in. See `RESULTS.md`.
 
 ## What this harness cannot tell you
 
 - Whether a decomposition is **correct**. Shape is not truth; that is the user's gate, and
   the skill is built so no script takes it.
 - Whether a task is **the right size**. There is no metric for it here, deliberately: the
-  skill declines to give one, and a number would become the rule.
-- Whether the wording generalises past three fixtures. It is a smoke test.
+  skill declines to give one, and a number would become the rule. Note the blind spot this
+  leaves - a single task swallowing the whole change scores `complete_path` 1.00 and
+  `req_fanout` 1.00, the best possible on both.
+- Whether the wording generalises past four synthetic fixtures. It is a smoke test.
 
 ## Relationship to `validate.ts`
 
