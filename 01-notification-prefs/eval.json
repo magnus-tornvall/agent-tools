@@ -1,0 +1,22 @@
+{
+  "title": "a per-user notification setting, three product layers",
+  "why": "The change admits both an obvious layer decomposition and an obvious path decomposition. If a vertical-slice rule does anything, it does it here.",
+  "layers": {
+    "db": ["migrations/**", "src/db/**"],
+    "service": ["src/api/**", "src/notify/**"],
+    "ui": ["web/**"],
+    "test": ["test/**", "**/*.test.ts", "**/*.test.tsx"]
+  },
+  "verification": ["test"],
+  "discriminates": [
+    "complete_path",
+    "single_layer",
+    "critical_path",
+    "startable",
+    "req_fanout",
+    "unclaimed"
+  ],
+  "expect": [{ "better": "vertical", "worse": "horizontal" }],
+  "bounds": { "task_count": { "max": 6 } },
+  "expectBounds": { "pass": ["vertical", "horizontal"] }
+}

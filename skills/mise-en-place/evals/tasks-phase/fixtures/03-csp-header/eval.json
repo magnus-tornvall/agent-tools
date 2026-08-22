@@ -1,0 +1,16 @@
+{
+  "title": "the skill's own worked example - a small change with a real seam",
+  "why": "The cost side. Both samples here are vertical; one is chopped finer than the change has seams for. This fixture asks which metric notices, and the answer is not a verticality metric.",
+  "layers": {
+    "middleware": ["src/middleware/**"],
+    "config": ["src/config/**"],
+    "docs": ["docs/**"],
+    "test": ["test/**", "**/*.test.ts"]
+  },
+  "verification": ["test"],
+  "discriminates": ["req_fanout"],
+  "expect": [{ "better": "two-task", "worse": "over-split" }],
+  "inverts": ["complete_path", "single_layer", "critical_path"],
+  "bounds": { "task_count": { "max": 3 } },
+  "expectBounds": { "pass": ["two-task"], "fail": ["over-split"] }
+}

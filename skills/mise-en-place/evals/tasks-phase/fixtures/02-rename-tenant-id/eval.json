@@ -1,0 +1,17 @@
+{
+  "title": "one mechanical rename fanning across four packages",
+  "why": "The wide refactor. No path through it lands green, so this fixture exists to check whether a verticality rule makes the decomposition worse when applied here.",
+  "layers": {
+    "core": ["packages/core/**"],
+    "api": ["packages/api/**"],
+    "web": ["packages/web/**"],
+    "jobs": ["packages/jobs/**"],
+    "test": ["test/**", "**/*.test.ts", "**/*.test.tsx"]
+  },
+  "verification": ["test"],
+  "discriminates": ["expand_contract"],
+  "expect": [{ "better": "expand-contract", "worse": "forced-vertical" }],
+  "inverts": ["complete_path", "single_layer", "startable"],
+  "bounds": { "task_count": { "max": 8 } },
+  "expectBounds": { "pass": ["expand-contract", "forced-vertical"] }
+}

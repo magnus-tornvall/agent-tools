@@ -1,0 +1,8 @@
+migrations/001_users.sql
+src/db/user.ts            ::UserRow ::loadUser ::saveUser
+src/api/account.ts        ::routes ::getProfile ::putProfile
+src/notify/send.ts        ::deliver ::resolveAddress
+web/src/AccountPage.tsx
+test/security.test.ts
+test/db/user.test.ts
+test/e2e/account.test.ts
