@@ -7,7 +7,7 @@
 // skill it is supposed to be measuring. The candidate arm is the same text plus the files in
 // candidate/ - so the diff between arms is exactly the wording under test and nothing else.
 //
-// Usage: bun render.ts <fixture> [--candidate]
+// Usage: bun render.ts <fixture> [--candidate | --variant=<dir>]
 
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -26,10 +26,13 @@ function section(md: string, heading: string): string {
   return (next < 0 ? rest : rest.slice(0, heading.length + next)).trimEnd();
 }
 
+// An arm is a directory of wording to splice in, so a third arm costs a directory rather
+// than a code change - which is what it took to separate "both additions" from "one of them".
 const [fixture, ...flags] = process.argv.slice(2);
-const candidate = flags.includes("--candidate");
+const variantFlag = flags.find((f) => f.startsWith("--variant="))?.split("=")[1];
+const variant = variantFlag ?? (flags.includes("--candidate") ? "candidate" : null);
 if (!fixture) {
-  console.error("usage: render.ts <fixture> [--candidate]");
+  console.error("usage: render.ts <fixture> [--candidate | --variant=<dir under prompts/>]");
   process.exit(2);
 }
 
@@ -42,9 +45,9 @@ if (!existsSync(dir)) {
 const skill = readFileSync(SKILL, "utf8");
 let tasks = section(skill, "### tasks");
 
-if (candidate) {
-  const rule = readFileSync(join(HERE, "candidate", "rule.md"), "utf8").trim();
-  const extra = readFileSync(join(HERE, "candidate", "checklist.md"), "utf8").trim();
+if (variant) {
+  const rule = readFileSync(join(HERE, variant, "rule.md"), "utf8").trim();
+  const extra = readFileSync(join(HERE, variant, "checklist.md"), "utf8").trim();
   const marker = "**Reader's checklist**:";
   if (!tasks.includes(marker)) throw new Error("tasks section has no reader's checklist to anchor to");
   tasks = tasks.replace(marker, `${rule}\n\n${marker}`).trimEnd() + ` ${extra}`;

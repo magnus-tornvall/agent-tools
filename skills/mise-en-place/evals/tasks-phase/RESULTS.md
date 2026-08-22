@@ -96,3 +96,53 @@ perfect 1.00.
   synthesis reads code, and anchoring against real symbols may change decomposition pressure.
 - Every sample came from one model at one setting. Nothing here says how the wording behaves
   elsewhere.
+
+---
+
+# Third arm: the path clause alone, same day
+
+The first run confounded the two additions — the candidate carried both, so "the candidate
+collapsed fixture 04" could not distinguish which clause did it. `path-only` is the candidate
+with the refactor paragraph deleted and nothing else changed.
+
+| fixture | metric | path-only | candidate | control |
+| --- | --- | --- | --- | --- |
+| 01 | `complete_path` | 0.75 [0.67-1] | 0.73 [0.67-1] | 0.00 |
+| 01 | `single_layer` | 0.25 [0-0.33] | 0.27 [0-0.33] | 1.00 |
+| 01 | `req_fanout` | 1.33 | 1.13 [1-1.33] | 2.33 [2-2.67] |
+| 01 | `task_count` | 3.40 [3-4] | 2.80 [2-3] | 4.80 [4-5] |
+| 04 | `expand_contract` | **0.00** | **0.00** | 1.00 |
+| 04 | `task_count` | **1** | **1** | 5 |
+
+Two findings, and they point in opposite directions.
+
+**The refactor paragraph is inert.** On fixture 01 it changes nothing that clears the noise,
+and on 04 it does not prevent the collapse it was written to prevent. Delete it. Whatever the
+wide-refactor sequence needs, it is not those five sentences in the `tasks` phase.
+
+**The collapse belongs to the path clause, not the paragraph.** `path-only` produced one task
+for the four-hundred-call-site rename in all five samples, exactly as the full candidate did.
+So deleting the refactor paragraph does not fix fixture 04 — nothing in the `tasks` phase
+does. The clause tells the drafter to find a complete observable path, and for a rename with
+no isolating seam the only complete path is the whole rename. That is the clause working as
+written.
+
+## What that means for relying on `plan.approach`
+
+It works, with one consequence worth being explicit about.
+
+Fixture 04's plan is not neutral, it is defective: `plan.approach` reads "Rename the
+identifier wherever it appears so that only the new name remains", which restates
+`spec.outcome` and names no approach at all. It should not have passed its gate. So 04 does
+not show the path clause failing on a reasonable plan — it shows what happens downstream of a
+plan phase that abdicated.
+
+But the control degrades gracefully there and both candidate arms do not. Today's wording
+recovers a sensible batched sequence from a plan that says nothing; with the path clause, the
+tasks phase follows the plan off the cliff. Adding the clause therefore makes `plan.approach`
+load-bearing in a way it currently is not, and the place to spend the next effort is the plan
+gate - an approach that restates the outcome is a gap the reader's checklist should name -
+rather than a floor bolted onto `tasks`.
+
+A floor would also be a sizing rule, which is what `tasks` already refuses to give: "A task
+is as big as its seam, and the seam is judgement."
