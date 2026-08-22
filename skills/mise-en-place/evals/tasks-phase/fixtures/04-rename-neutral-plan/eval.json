@@ -1,0 +1,17 @@
+{
+  "title": "the same rename, with a plan that does not prescribe a sequence",
+  "why": "Fixture 02 cannot separate the arms: its approved plan.approach already names expand-contract, so both arms copy it. This one states the outcome and leaves the sequencing open, which is the only way to ask whether the tasks phase itself needs the rule.",
+  "layers": {
+    "core": ["packages/core/**"],
+    "api": ["packages/api/**"],
+    "web": ["packages/web/**"],
+    "jobs": ["packages/jobs/**"],
+    "test": ["test/**", "**/*.test.ts", "**/*.test.tsx"]
+  },
+  "verification": ["test"],
+  "discriminates": ["expand_contract"],
+  "expect": [{ "better": "expand-contract", "worse": "forced-vertical" }],
+  "inverts": ["complete_path", "single_layer", "startable"],
+  "bounds": { "task_count": { "max": 8 } },
+  "expectBounds": { "pass": ["expand-contract", "forced-vertical"] }
+}
