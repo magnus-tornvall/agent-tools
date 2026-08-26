@@ -311,7 +311,7 @@ plan:
     - "An existing test must be modified to pass."
   open_questions: []
 
-tasks:
+tasks:                    # tasks live in tasks/*.md, one per file - the directory is the list
   open_questions: []
 ---
 ```
