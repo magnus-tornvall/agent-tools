@@ -214,10 +214,21 @@ The pass is off-budget: fixed form, yes or no, on material the user already sett
 
 ## Reporting the shape
 
-Close by naming the shape in the fields a specification is written in - `outcome`,
-`kill_criterion`, `non_goals`, `requirements` - so whatever consumes it copies rather than
-translates. What ships becomes `requirements`, the non-goals carry across as written. What
-each decision ruled out belongs to no field: carry it as prose.
+Close by naming the shape in the fields a specification is written in, so whatever consumes
+it copies rather than translates.
+
+A grill settles two kinds of thing and they go to different fields. What the outcome requires
+is `outcome`, `kill_criterion`, `non_goals`, `requirements`. How it is reached - every stance
+that named a file, a symbol, a technology or a value - is `approach`, `constraints` and
+`touchpoints`, and reporting one of those as a requirement smuggles a mechanism into the goal,
+where the next replan is free to renegotiate it.
+
+Non-goals carry across with the type they were argued under - boundary or deferral - because
+that is what decides whether reopening one is a question or a mistake.
+
+What each decision ruled out belongs to no field: it is the prose that ships with the shape.
+It is the most expensive thing the grill produced and the only record of the branches, so it
+is not optional and it is not a summary.
 
 Every part comes with where it came from. The user is auditing a shape they did not write,
 and provenance is what makes that an audit rather than a skim.
@@ -240,6 +251,7 @@ settled on their behalf.
 - Does not write code, a plan, tasks, or a file.
 - Does not ask what the repository already answers.
 - Does not report a determination without provenance.
+- Does not report a stance that names a file or a technology as a requirement.
 - Does not search the web for approach comparison or best practice.
 - Does not report a kill criterion that cannot occur, or one that restates the outcome.
 - No vague qualifiers in the outcome or in what ships.
