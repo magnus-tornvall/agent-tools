@@ -89,6 +89,11 @@ them apart, and a user who is not told assumes it was tried.
 Explore the area named in the prompt first, unless the conversation already covered it. A cold
 conversation yields almost nothing, and the report does nearly all the work.
 
+A shape the conversation already settled is transferred, not re-derived. The provenance is the
+user's own answer, the fields it fills are the ones it was reported in, and synthesis is done
+when the transfer is. Re-deriving it invites a second opinion on a decision that was already
+made, and the two are indistinguishable in the file afterwards.
+
 ### 3. Validate, by script
 
 ```
@@ -147,7 +152,11 @@ fix it and re-run the script in place.
 ### 5. The user approves
 
 One presentation, covering every phase this invocation wrote and every warning the script
-printed. The user is auditing writing they did not do, so every field carries its provenance.
+printed. Every field carries its provenance, because the user is auditing writing they did not
+do - except where they did. A field transferred from a decision the user made in this
+conversation is presented for confirmation that it landed intact, not for a verdict on whether
+it is right; asking again for a verdict on their own answer is what trains the reflex to say
+yes.
 
 - **spec and plan**: each field with where it came from - the quote, the anchor, the ADR
   number.
@@ -155,6 +164,16 @@ printed. The user is auditing writing they did not do, so every field carries it
   that every requirement is claimed by some task, never that *this* task delivers *that*
   requirement; ids, anchors and the `depends_on` DAG it has already decided. A row that looks
   wrong is a cue to open that file.
+
+  Say which shape the change came out as before the rows: one seam, or several and why they
+  are separate. A task list arrives looking inevitable, and naming the call is what lets the
+  user reject it - "that is two tasks" and "those are one task" are both corrections, and
+  neither is available against a list presented as a fact.
+
+  One seam means one row, and that row is worth less than the others: a task claiming every
+  requirement, whose goal restates `spec.outcome`, cannot be confused with a sibling or miss a
+  requirement. Present it as the one line it is. The file still gets written - `scope` and
+  `forbidden` are what the implementer executes from, and they do that work at any size.
 
 The user approves; this skill never does. One approval covers everything presented: set those
 phases' `approvals` entries to `true` in a single edit. A second "do you approve?" is theatre
@@ -210,8 +229,10 @@ pin? If the approach is wrong, which way does it fail, and is that in `escalate_
 
 ### tasks
 
-One file per task in `tasks/`. `change.md` names no tasks - the directory is the list. Two
-places holding task state is two places that disagree.
+One file per task in `tasks/`. `change.md` names no tasks - the directory is the list, and a
+second copy of it is a second thing to disagree. Tasks live outside `change.md` because
+`change.md` holds the approvals: a replan rewrites every task, and it must not be able to
+touch the approved spec in the same edit.
 
 A task's `goal` must be falsifiable: something you could look at the result and call false.
 Nothing else in the file carries the task's truth condition, so a goal that only names work -
