@@ -1,6 +1,6 @@
 ---
 name: execute
-description: Drive one task from a settled shape to a verified green - author the check before any code exists, watch it fail for the stated reason, hand the work to a separate implementer, then judge what comes back against the check and the commit range it produced. Takes one settled shape - a change directory written down, or the same fields reported into the prompt - one unit per invocation, and returns one verdict a calling agent can act on. Use once the shape is settled, never to settle it.
+description: Drive one or more tasks from a settled shape to a verified green - author the check before any code exists, watch it fail for the stated reason, hand the work to a separate implementer, then judge what comes back against the check and the commit range it produced. Takes one settled shape - a change directory written down, or the same fields reported into the prompt - and the units of it to run, one at a time and stopping at the first that is not green, and returns a verdict per unit a calling agent can act on. Use once the shape is settled, never to settle it.
 disable-model-invocation: true
 ---
 
@@ -15,12 +15,15 @@ judges what comes back. The **implementer** satisfies it and cannot touch it. Co
 a green verdict means only that one agent was satisfied with its own work, which is the one
 thing this skill exists to make impossible.
 
-One invocation, one task, one verdict. The caller is the loop - it names the next task, because
-a skill that picks its own next task is a driver loop wearing a smaller name, and one wrong
-early check would then become a run of commits before anyone looked.
+Units run one at a time and the run **stops at the first that is not green**. That is what makes
+naming several of them safe: a unit's check is authored only after the previous unit's verdict
+exists, so a wrong early check still cannot become a run of commits before anyone looked. What the
+caller chooses is which units and in what order the shape already puts them; this skill never
+picks a unit the caller did not name, and never decides the change is done.
 
 State lives in git. This skill writes no state of its own: not a status file, not a run log, and
-nothing into `change.md`, which holds approvals it must not be able to touch.
+nothing into `change.md`, which holds approvals it must not be able to touch. A check that has no
+home in the repository is a working file, not state - see [Where it is written](#where-it-is-written).
 
 ## The input contract
 
@@ -32,12 +35,12 @@ not report, because a skill that half-fills its own input behaves differently de
 invoked it. Copying a shape that was reported into this conversation is a different act, and
 [Arguments](#arguments) draws that line.
 
-**Written down - a change directory**: its path, and the id of one task. A decomposition exists,
-so the unit is one task and the check comes from its `goal`; boundaries come from `scope` and
+**Written down - a change directory**: its path, and the ids of the tasks to run. A decomposition
+exists, so the unit is a task and the check comes from its `goal`; boundaries come from `scope` and
 `forbidden`, obligations from `plan.constraints`, and the change-level check from
 `plan.acceptance`.
 
-**Settled but not written - a reported shape**: the fields verbatim, and which requirement to
+**Settled but not written - a reported shape**: the fields verbatim, and which requirements to
 work. There is no decomposition, so the unit is a requirement and there is one check per
 requirement; `touchpoints` is scope, and `constraints` and `approach` are the obligations. Nothing
 at this level carries `forbidden` - `non_goals` is the nearest thing and it is prose - so the
@@ -58,24 +61,38 @@ a guess in a field is indistinguishable from a decision someone made.
 
 ## Arguments
 
-Two forms reach a verdict, and each of them names one unit. Nothing else is passed: the form
-decides which level the fields come from, and the level decides everything else.
+Two forms reach a verdict. The form decides which level the fields come from, and the level
+decides everything else. Each form takes the units to run: one id, several ids, or none.
 
-**`/execute <change dir | slug> <task id>`** - the written-down level. A path, or a bare slug
+**`/execute <change dir | slug> [task ids]`** - the written-down level. A path, or a bare slug
 resolved within the changes directory the way `mise-en-place` resolves one. The fields come off
 disk and the conversation is not consulted at all, which is what makes this the form a subagent
 framer can be handed.
 
-**`/execute <requirement id>`** - the settled-but-not-written level. The fields are transcribed
+**`/execute [requirement ids]`** - the settled-but-not-written level. The fields are transcribed
 from the shape most recently reported in this conversation, field by field, verbatim.
 
-**`/execute`** with no unit is a **gap**. Choosing the unit belongs to the caller, in the same
-class as choosing the next task, and a skill that picks one when the argument is empty has taken
-the decision the empty argument failed to make. So is more than one unit - `/execute R1, R2` - and
-that reason names the count. Naming both satisfies the half of the one-unit rule that is about
-choosing, because the caller did choose; it does not satisfy the half that is about looking, since
-R1's verdict is the evidence you would want before R2's check is written against a base it may
-already be evidence against.
+### How many units
+
+**One id** is the unit. **Several** run in the order named. **None** - `/execute <change dir>`, or
+`/execute` on its own after a shape was reported - is the whole change: every unit in the order the
+shape already puts them, `depends_on` for a decomposition and the reported order for a requirement
+list. Naming none is a choice rather than the absence of one, and it is the caller's: whether a
+change is small enough to run end to end is a judgement about the change, which this skill has no
+standing to make and does not second-guess in either direction.
+
+The order is always the shape's. A cycle in `depends_on`, or a named unit whose `depends_on` names
+a unit that runs **later** in this run, is a **gap** - reordering them would mean choosing an
+order, which is the caller's. A dependency named in no unit of this run is not checked: whether it
+is already done is state this skill does not keep, and the caller who named the list is the one
+that knows.
+
+Running several is safe for the reason the run stops at the first non-green unit: a unit's check is
+authored against a base the previous unit's verdict has already been rendered on. What multiple ids
+cost is commits before the caller looks, and the stop bounds that at one unit's worth.
+
+**`/execute`** with neither a change directory nor a shape reported in the conversation is a
+**gap**: there is no input, not an empty unit list.
 
 ### Transcription is not synthesis
 
@@ -92,16 +109,17 @@ and not the nearest requirement that resembles it.
 
 ## Preconditions
 
-Each of these is a gap verdict, and nothing is written:
+Checked before the first unit, and again before each later one. Each is a gap verdict, and
+nothing is written:
 
-- **A dirty working tree.** The framer commits the check alone, and from a dirty tree that
-  commit either sweeps up work it did not write or requires selective staging. Both make the
-  base commit a lie that every later boundary check is measured against. Stashing is worse -
-  the skill would be moving work it cannot restore if it fails mid-loop.
+- **A dirty working tree**, ignoring an ephemeral check this run wrote. Every commit in the range
+  is measured against `<base>`, and from a dirty tree the framer's own commit either sweeps up
+  work it did not write or requires selective staging - both make that base a lie. Stashing is
+  worse: the skill would be moving work it cannot restore if it fails mid-run. Between units it
+  means the previous implementer left work uncommitted, which its brief forbids.
 - **HEAD on the default branch.** The implementer commits, rejected attempts stay in history,
   and neither belongs on the trunk. Requiring a branch is not the same as creating one: naming
-  a branch is the caller's decision, in the same class as choosing the next task.
-- **No path for the check.** See below.
+  a branch is the caller's decision, in the same class as choosing which units to run.
 - **Delegation unavailable.** If this agent cannot spawn an implementer, the roles collapse and
   the verdict would be shaped like a verified change without being one.
 
@@ -131,16 +149,18 @@ because requiring a command everywhere would refuse every change whose executabl
 more than the change itself, which is most interface work and most infrastructure. The verdict
 format is identical either way, and "the human judges the diff" appears nowhere.
 
-A human-run check stops the invocation **before any implementer is spawned**: the check is
-written and committed, and the verdict is a **gap** carrying the check and how to run it. A
-subagent cannot obtain a human verdict, and one that guesses it, or quietly substitutes a command
-it can run itself, has changed the acceptance criterion to suit its own reachability.
+A human-run check stops the run **before any implementer is spawned** for that unit, and stops the
+run: the check is written, and the verdict is a **gap** carrying the check, its path and how to run
+it. A subagent cannot obtain a human verdict, and one that guesses it, or quietly substitutes a
+command it can run itself, has changed the acceptance criterion to suit its own reachability.
 
-That gap is resumable, and it is the one place where something is written before a gap returns. A
-later invocation naming the same unit finds the check already committed at HEAD: it adopts that
-commit as `<base>` instead of authoring a second check, takes the human's reported result as the
-red-first observation, and goes on to the implementer. A check the human reports green needs no
-implementer, and the invocation says that rather than manufacturing one.
+That gap is resumable, and it is the one place where something is left behind before a gap returns.
+A later invocation naming the same unit finds the check at the path the verdict named - committed at
+HEAD if it was durable, in the change directory if it was not: it adopts that instead of authoring a
+second check, takes the human's reported result as the red-first observation, and goes on to the
+implementer. A check the human reports green needs no implementer, and the invocation says that
+rather than manufacturing one. In a run of several units the remaining ones are not started, and
+the verdict lists them, so resuming is the same command with that list.
 
 Where neither a command nor a runbook can be written cheaply, this skill does not apply. Say so
 and stop. A skill that accepts every input by weakening the check until it passes is the failure
@@ -148,33 +168,55 @@ mode red-first exists to prevent.
 
 ### Where it is written
 
-From the shape where the shape says - a `scope` anchor may already name a test file that does
-not exist yet. Otherwise from whatever the repository already does. Neither available is a gap:
-inventing a location means inventing a harness, and a skill that refuses to invent a task
-decomposition should not invent a test layout either.
+Two rungs, and the question that decides between them is whether the repository already has a home
+for this check.
+
+**Durable** - the shape names the path, a `scope` anchor already pointing at a test file that need
+not exist yet, or the repository's own test convention covers it. It is written there and committed
+alone, and `<base>` is that commit. This is a test, and a test landing in the suite is the
+deliverable, not pollution: every later unit's regression run re-runs it for free.
+
+**Ephemeral** - neither names a home. A one-off script, and every runbook, is a working file: it is
+written under the change directory at `checks/<unit id>`, or at `.scratch/checks/<unit id>` for a
+reported shape which has no change directory, and it is **never committed**. `<base>` is HEAD as it
+stood when the check was observed red. Whether `.scratch/` is ignored is each project's business,
+the same way `mise-en-place` leaves it.
+
+The rung is not a preference. Inventing a location means inventing a harness, and a skill that
+refuses to invent a task decomposition should not invent a test layout either - so where the repo
+has no convention to follow, the check does not go into the repo at all. What it costs is stated
+under [Red first](#red-first), and it is one thing.
 
 ## Red first
 
-The framer commits the check **alone**, before the implementer exists, and observes it failing at
-that commit **for the stated reason**. That commit is `<base>`.
+Before the implementer exists, the framer puts the check in place and observes it failing **for the
+stated reason**. A durable check is committed **alone** and that commit is `<base>`; an ephemeral
+check is not committed and `<base>` is HEAD at the moment it was seen red.
 
 Failing for the stated reason is not the same as failing. A check that cannot run - a missing
 import, an absent fixture, a harness that does not load - also fails, and hands the implementer
 two attempts to spend on plumbing. Whatever the check needs in order to reach its observation is
 the framer's to write, and belongs in that same commit.
 
-Two things fall out of committing it separately. The check's own creation sits outside the range
-being policed, so it needs no exemption from the no-test-path rule below. And "it was red"
-becomes a fact re-verifiable at a commit rather than a claim in a report.
+Either way the check's own creation sits outside the range being policed - the durable one because
+its commit precedes `<base>`, the ephemeral one because it is in no commit at all - so neither needs
+an exemption from the no-test-path rule below.
+
+What the ephemeral rung costs is exactly one thing: "it was red" stops being re-verifiable at a
+commit and becomes the framer's observation at a named HEAD. That is the price of not writing a
+file the repository has no place for, and it is paid nowhere else - the boundary check, the
+hand-back loop and the verdict are identical on both rungs.
 
 A check that passes at `<base>` is not a check. Either the outcome already holds or the check
 does not discriminate; both are the caller's to resolve, so it is a gap.
 
 ## The implementer
 
-Spawned once, with this brief. It is fixed rather than composed per invocation, because it is the
-other half of the boundary check below - improvise the wording and the two drift, in the
-direction of a brief that permits what the judge rejects.
+One per unit, spawned after that unit's check is red, with this brief. It is fixed rather than
+composed per invocation, because it is the other half of the boundary check below - improvise the
+wording and the two drift, in the direction of a brief that permits what the judge rejects. A unit
+gets a fresh one: carrying the previous unit's context in would carry the previous unit's scope with
+it, and hand-backs are the only thing a context is kept across.
 
 ```
 A check has already been written and committed, and it currently fails. Make it pass.
@@ -193,7 +235,8 @@ You may not touch: <forbidden paths and globs>
 - Write no tests. The one that judges this task already exists and is not yours. If you
   want a test that does not exist, name it in your report instead of writing it.
 - Commit each attempt before you report. An attempt that failed is wanted in history;
-  work that exists only in your report does not exist.
+  work that exists only in your report does not exist. Stage by path - if the check is
+  an untracked file, it stays untracked.
 - Run the check yourself, as often as you like. Reporting that it passes without having
   run it is a failed attempt.
 - If the check cannot be satisfied inside "you may edit" without touching "you may not
@@ -273,7 +316,9 @@ about where the work landed.
   symbol or line anchor permits its whole file - a diff decides paths and nothing finer.
   Enforcement is file-level, and the verdict says so rather than implying it policed a symbol.
 - **No touched path matches `forbidden`.**
-- **No touched path is a test path.**
+- **No touched path is a test path.** An ephemeral check appearing in the range at all is a
+  rejection under this condition: it is untracked by construction, so a commit containing it is
+  an implementer that swept up a file it was told to leave alone.
 
 No test path, rather than the check's own path, because every test in the range is the framer's.
 The stronger rule is the mechanical one: which paths are tests is decidable from the convention
@@ -294,24 +339,30 @@ from the inside; what is lost is the check on a `scope` too wide to bound the wo
 
 ### Regression
 
-The repository's own suite, run whole, then `plan.acceptance` when it is non-empty. Judging order
-is this unit's check, the suite, then acceptance - narrowest first, so a failure names the
-smallest thing that broke.
+The repository's own suite, run whole, after every unit; then `plan.acceptance` when it is
+non-empty, after the **last** unit of this run and not before. Judging order is this unit's check,
+the suite, then acceptance - narrowest first, so a failure names the smallest thing that broke.
+
+Acceptance last because it is the change-level check and a change with units still to run has no
+business satisfying it. In a single-unit invocation the last unit is the only one, so this is what
+the caller-as-loop already got.
 
 The suite rather than a list of prior checks, because git records neither which commits were
 checks nor how each was run. Re-running them individually would need state this skill does not
-keep, and every check committed so far in this change is a test in the suite already. What the
-whole suite buys is the thing a per-check verdict cannot: task four quietly breaking task two
+keep, and every durable check committed so far in this change is a test in the suite already. What
+the whole suite buys is the thing a per-check verdict cannot: task four quietly breaking task two
 while returning green three times.
 
-A human-run check from an earlier task is in no suite, so it is **skipped and named** - the
-verdict carries a `regression not verified` list. Re-running it would force a human into every
+A human-run check from an earlier unit is in no suite, and neither is an ephemeral one from a
+previous invocation, so both are **skipped and named** - the verdict carries a
+`regression_not_verified` list. An ephemeral check written earlier in *this* run is still on disk
+and is re-run, which is the one thing the multi-unit form buys over the caller looping. Re-running it would force a human into every
 later invocation of the change, which ends the unattended path after the first one. A partial
 green reported as green is the only unacceptable option.
 
 ## The verdict
 
-One of three, and the difference between them is how far the invocation got.
+One of three per unit, and the difference between them is how far that unit got.
 
 - **green** - the check passes, the boundary holds, the regression set holds.
 - **red** - the check was written and committed red, an implementer worked, and it is still
@@ -327,22 +378,31 @@ This is the whole verdict, and it is a literal shape rather than a description o
 same reason the brief above is: a caller that has to infer structure from prose is not an agent
 caller.
 
+One block per unit reached, in the order they ran, inside a run wrapper that is present whether one
+unit ran or ten - a caller that has to detect which of two shapes it got is parsing prose again.
+The run stops at the first non-green, so the last block's `verdict` is the run's, and a non-empty
+`remaining` is what says it halted early.
+
 ```
-verdict: green | red | gap
-unit: <task id, or requirement id>
-check:
-  path: <check path>
-  runner: agent | human
-  command: <command>              # absent when the runner is human
-range: <base>..<head>             # absent on a gap that wrote nothing
-boundary: full | no-forbidden-list
-failure: |                        # red only - the check's own output, verbatim
-  <output>
-attempts: <n>                     # red only
-reason: <the field, precondition, or construction that failed>   # gap only
-resumable: true | false           # gap only
-dependents: [<task ids>]          # empty for a reported shape
-regression_not_verified: [<check paths>]
+units: [<ids, in the order named>]
+remaining: [<ids never started>]        # empty when every unit reached a verdict
+completed:
+  - verdict: green | red | gap
+    unit: <task id, or requirement id>
+    check:
+      path: <check path>
+      durable: true | false           # false - written, never committed
+      runner: agent | human
+      command: <command>              # absent when the runner is human
+    range: <base>..<head>             # absent on a gap that left nothing behind
+    boundary: full | no-forbidden-list
+    failure: |                        # red only - the check's own output, verbatim
+      <output>
+    attempts: <n>                     # red only
+    reason: <the field, precondition, or construction that failed>   # gap only
+    resumable: true | false           # gap only
+    dependents: [<task ids>]          # empty for a reported shape
+    regression_not_verified: [<check paths>]
 ```
 
 No prose account of what the implementer did: the commits are that account, and a summary is free
@@ -367,8 +427,9 @@ covered it.
 
 - Does not settle the shape. It executes one that is already settled.
 - Does not read the surrounding conversation. What it was given is what it has.
-- Does not invent a check, a check's location, a task decomposition, or a test setup. Each is a
-  gap.
+- Does not invent a check, a task decomposition, or a test setup. Each is a gap.
+- Does not put a check into the repository where the repository has no home for it, and does not
+  commit an ephemeral check.
 - Does not let the implementer author or edit the check, write any test of its own, or have its
   report accepted in place of the check being run.
 - Does not spawn an implementer before the check exists, is committed, and has been seen failing
@@ -380,9 +441,11 @@ covered it.
 - Does not report green without the boundary check and the regression set, or without naming what
   it could not verify.
 - Does not return a fourth verdict, or report a gap as a red.
-- Does not choose the unit when the argument names none, or the nearest one when the argument
-  names an id no shape carries.
-- Does not choose the next task, run more than one unit, or decide that the change is done.
+- Does not choose the nearest unit when the argument names an id no shape carries, and does not
+  choose an order the shape does not already give.
+- Does not start a unit after one that was not green, and does not run acceptance before the last
+  unit.
+- Does not decide which units are worth running in one invocation, or that the change is done.
 - Does not create or name a branch, and does not commit on the default branch.
 - Does not push, and does not open a pull request. Green means the next step is available.
 - Does not rewrite, squash or amend history. The attempts that failed are the record.
