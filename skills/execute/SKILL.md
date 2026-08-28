@@ -26,10 +26,11 @@ nothing into `change.md`, which holds approvals it must not be able to touch.
 
 One vocabulary, at two levels of completeness. `outcome`, `requirements`, `approach`,
 `constraints`, `non_goals` and `touchpoints` mean the same thing wherever they arrive from; what
-differs is whether they have been written down. The caller supplies them, and this skill never
-reads the surrounding conversation - a skill that half-scrapes its context behaves differently
-depending on who invoked it, and the less complete of the two levels lives only in a conversation
-a subagent was never in.
+differs is whether they have been written down. The caller supplies them, and what arrives is
+what this skill has: it does not scrape the surrounding conversation for anything the shape did
+not report, because a skill that half-fills its own input behaves differently depending on who
+invoked it. Copying a shape that was reported into this conversation is a different act, and
+[Arguments](#arguments) draws that line.
 
 **Written down - a change directory**: its path, and the id of one task. A decomposition exists,
 so the unit is one task and the check comes from its `goal`; boundaries come from `scope` and
@@ -54,6 +55,40 @@ writing it down is an act with an approval of its own.
 Either level arriving incomplete is a **gap** verdict naming the missing field. Filling it from
 context is a thing the caller can be asked to do as its own act; it is not this skill's, because
 a guess in a field is indistinguishable from a decision someone made.
+
+## Arguments
+
+Two forms reach a verdict, and each of them names one unit. Nothing else is passed: the form
+decides which level the fields come from, and the level decides everything else.
+
+**`/execute <change dir | slug> <task id>`** - the written-down level. A path, or a bare slug
+resolved within the changes directory the way `mise-en-place` resolves one. The fields come off
+disk and the conversation is not consulted at all, which is what makes this the form a subagent
+framer can be handed.
+
+**`/execute <requirement id>`** - the settled-but-not-written level. The fields are transcribed
+from the shape most recently reported in this conversation, field by field, verbatim.
+
+**`/execute`** with no unit is a **gap**. Choosing the unit belongs to the caller, in the same
+class as choosing the next task, and a skill that picks one when the argument is empty has taken
+the decision the empty argument failed to make. So is more than one unit - `/execute R1, R2` - and
+that reason names the count. Naming both satisfies the half of the one-unit rule that is about
+choosing, because the caller did choose; it does not satisfy the half that is about looking, since
+R1's verdict is the evidence you would want before R2's check is written against a base it may
+already be evidence against.
+
+### Transcription is not synthesis
+
+The framer of a reported shape is normally the agent that was in the conversation the shape was
+reported into, so the report is already in front of it. Copying it is the transfer a settled shape
+is owed - re-deriving it invites a second opinion on a decision already made, and the two are
+indistinguishable afterwards. Filling a field the report does not contain is the other thing
+entirely, and it is a gap: one commit later, a value the framer supplied cannot be told from one
+the user chose.
+
+Every field verbatim, and no field without a source. No `touchpoints` reported means no scope,
+which is a gap and not an unbounded implementer. A requirement id appearing in no report is a gap
+and not the nearest requirement that resembles it.
 
 ## Preconditions
 
@@ -345,7 +380,9 @@ covered it.
 - Does not report green without the boundary check and the regression set, or without naming what
   it could not verify.
 - Does not return a fourth verdict, or report a gap as a red.
-- Does not choose the next task, run more than one task, or decide that the change is done.
+- Does not choose the unit when the argument names none, or the nearest one when the argument
+  names an id no shape carries.
+- Does not choose the next task, run more than one unit, or decide that the change is done.
 - Does not create or name a branch, and does not commit on the default branch.
 - Does not push, and does not open a pull request. Green means the next step is available.
 - Does not rewrite, squash or amend history. The attempts that failed are the record.
