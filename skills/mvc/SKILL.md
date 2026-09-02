@@ -1,6 +1,6 @@
 ---
 name: mvc
-description: Initiate a minimal viable change by grilling the user down a design tree until its shape is settled - what ships, what does not and why, what would kill it, and what each decision ruled out. Use before a change is planned, when what it is has not yet been pinned down.
+description: Initiate a minimal viable change by grilling the user down a design tree until its shape is settled - what ships, what does not and why, and what each decision ruled out. Use before a change is planned, when what it is has not yet been pinned down.
 disable-model-invocation: true
 ---
 
@@ -12,10 +12,6 @@ the ledger of what was cut, and the reason for each.
 
 Minimal is the constraint, not the aspiration. Every item that ships must be load-bearing
 on the outcome. Three rounds is the budget, so that "we'll decide later" costs something.
-
-State lives in the conversation. A grill that loses its context restarts rather than
-resumes - that is the trade for owning no file. Settling the shape is this skill's; making
-it durable is not.
 
 This skill touches no git and writes no file.
 
@@ -62,7 +58,7 @@ a map is volunteered, so it costs no round.
 
 ### Rounds 1 to 3 - ask, re-derive
 
-Each round is one batch of **at most four questions**, asked together, answered together.
+Each round is one batch of **four questions**, asked together, answered together.
 Fewer than two is not a round, it is a conversation - except a final single question, which
 is a whole round when it is all the frontier holds.
 
@@ -76,6 +72,14 @@ delete the other three - so when in doubt, hold it back.
 More than four candidates, rank by what an answer would prune. The question that rules the
 most out takes the slot; one that closes a single leaf takes one only when nothing bigger
 is open.
+
+**What the batch could not hold is listed, not discarded.** A candidate that would prune a
+branch - kill other questions hanging off it - gets one line under the round in an **open,
+not asked** list: the title, nothing else. No stance and no rules out, because the cost of a
+fifth question is the stance and the body, not the title. The user promotes one to a real
+question or closes it, and a listed candidate the user says nothing about stays listed. A
+candidate that closes a single leaf is dropped silently - the branch-or-leaf test is what
+keeps the list from becoming a fifth question under another name.
 
 **An unanswered question is not silent acceptance of its stance.** Ask why it was skipped,
 once, in the same reply that reports the round: unclear means clarify and re-ask within the
@@ -155,12 +159,14 @@ it is, where it came from, why the outcome is unreachable without it, and what i
 out. The reason clears a bar - not "it would be better with this", but "the outcome does
 not happen without this".
 
-Widening buys no extra round. The budget bounds what the grill asks; a widening is
-discovered by an answer. If a widening bought a round, widening becomes how rounds are
-bought, and the grill acquires a motive to widen.
+**The grill proposes, the user decides.** It never admits an item on its own reasoning, and
+never withholds one it spotted because the idea was not the user's. It states the widening
+and argues it once; the call is the user's, and a rejected proposal is closed.
 
-Widening stays possible because round 2 sometimes genuinely discovers the outcome is
-unreachable as drawn. Forbidding it would not prevent the growth, only the record of it.
+The same statement carries the pushback. An item that competes with a pattern already in the
+repo, adds a dependency, or challenges the existing architecture says so where it enters.
+That is cheaper than finding it at the minimality pass, and it is the same sentence either
+way.
 
 ## What ships, what does not
 
@@ -181,36 +187,43 @@ the most frontier a single answer can clear. A deferral only parks - the item le
 ships, its subtree stays alive. The list exists to stop re-litigation, not to inventory
 everything imaginable; if nobody would have asked for it, leave it out.
 
-**The kill criterion.** One condition that would stop the change rather than reshape it -
-the grill owes an answer to "what would make you abandon this?", and the answer is usually
-the sharpest thing said all session. A criterion that can never occur is not one. Neither
-is a restatement of the outcome with "fails" appended.
-
 **Ruled out.** Every decision names what it eliminated. A decision that eliminates no
 alternative was not a decision, it was a description. "We will write tests" rules nothing
 out; "tests go in the existing suite, not a new harness" rules out a new harness.
 
 ## The minimality pass
 
-Runs once, when the frontier closes. Everything above enforces *defined*; this is the only
-thing that enforces *minimal*.
+Runs once, when the frontier closes. Everything above enforces *defined*; this is the last
+thing that enforces *minimal*, and the only one that sees the closed set rather than one
+item arriving. Minimal here means not unnecessarily complex, not the smallest design
+imaginable: the pass exists against drift, complexity creep, scope expansion and
+inefficiency, not against every line that could technically go.
 
-Probe every shipping item in one batch: drop this - does the outcome still hold? The
-four-question ceiling does not apply - the form is fixed and the material is already
-settled, so the batch reads as a checklist rather than as four things to absorb.
+Probe the shipping items that add **mechanism**, in one batch: drop this - does the outcome
+still hold? An item adds mechanism when deleting it changes what the system does - a code
+path, a dependency, a schema, a config surface, a new pattern. An item whose deletion leaves
+behaviour identical - a name, a doc, a test, a type - does not enter the batch at all, because
+probing it produces a squabble over a detail nobody wanted cut.
+
+Inefficiency is the one trigger that belongs here rather than at entry. Two items that each
+looked proportionate as they arrived can be redundant against each other once the set is
+closed, and only the closed set shows it.
+
+Report only what moves - an item whose deletion breaks the outcome stays, and stays silently,
+because the shipping list already asserts it is load-bearing:
 
 - **It still holds.** The item was never load-bearing. It becomes a non-goal, deferred
   with the reason it survived this long.
-- **The outcome fails.** It stays, and how the outcome breaks is the record.
 - **Cannot tell.** The frontier reopens. The shape was out of questions, not settled - and
   if the budget is also spent, the split signal fires here instead of at exhaustion.
 
 Apply accepted deletions one at a time, and if two or more land, read the reduced set back
 against the outcome. Two items can each be individually droppable because the other covers
-the outcome, and dropping both breaks it. One extra question buys that whole class of
-mistake.
+the outcome, and dropping both breaks it. That read-back buys the whole class of mistake.
 
-The pass is off-budget: fixed form, yes or no, on material the user already settled.
+The pass is off-budget and the four-question ceiling does not apply to it: the form is fixed,
+the answer is yes or no, and the material is already settled, so the batch reads as a
+checklist rather than as four things to absorb.
 
 ## Reporting the shape
 
@@ -218,10 +231,15 @@ Close by naming the shape in the fields a specification is written in, so whatev
 it copies rather than translates.
 
 A grill settles two kinds of thing and they go to different fields. What the outcome requires
-is `outcome`, `kill_criterion`, `non_goals`, `requirements`. How it is reached - every stance
-that named a file, a symbol, a technology or a value - is `approach`, `constraints` and
-`touchpoints`, and reporting one of those as a requirement smuggles a mechanism into the goal,
-where the next replan is free to renegotiate it.
+is `outcome`, `requirements`, `non_goals`. How it is reached - every stance that named a file,
+a symbol, a technology or a value - is `approach`, `constraints` and `touchpoints`:
+
+- `approach` - the mechanism chosen.
+- `constraints` - the limits the mechanism must respect.
+- `touchpoints` - the files and symbols it lands on.
+
+Reporting one of those as a requirement smuggles a mechanism into the goal, where the next
+replan is free to renegotiate it.
 
 Non-goals carry across with the type they were argued under - boundary or deferral - because
 that is what decides whether reopening one is a question or a mistake.
@@ -233,18 +251,18 @@ is not optional and it is not a summary.
 Every part comes with where it came from. The user is auditing a shape they did not write,
 and provenance is what makes that an audit rather than a skim.
 
-The user accepts the shape, or names what is wrong with it. This skill does not declare it
-settled on their behalf.
-
 ## Prohibitions
 
 - Does not settle the shape on the user's behalf.
-- Does not start a fourth round, and does not raise its own ceiling.
 - Does not ask more than four questions in a round, or two whose answers interact.
-- Does not reserve a slot for an unanswered question, or reword it when re-asking.
+- Does not reserve a batch slot for an unanswered question, or reword it when re-asking.
+- Does not discard a branch-pruning candidate the batch could not hold. It is listed.
 - Does not present a stance as a recommendation, state one without its reasoning, or pair
   one with a list of options.
-- Does not let anything into the shipping set after round 1 without a widening reason.
+- Does not let anything into the shipping set after round 1 without a widening reason, and
+  does not admit one on its own reasoning. It proposes; the user decides.
+- Does not probe an item whose deletion leaves behaviour identical, or report one the probe
+  left standing.
 - Does not invent an answer to fill a gap. A gap is reported.
 - Does not keep the pruned branches. What each decision ruled out is the record; the
   transcript is not.
@@ -253,5 +271,4 @@ settled on their behalf.
 - Does not report a determination without provenance.
 - Does not report a stance that names a file or a technology as a requirement.
 - Does not search the web for approach comparison or best practice.
-- Does not report a kill criterion that cannot occur, or one that restates the outcome.
 - No vague qualifiers in the outcome or in what ships.
