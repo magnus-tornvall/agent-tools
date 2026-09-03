@@ -90,6 +90,17 @@ withhold the round's other answers waiting for it.
 A re-asked question is asked verbatim. A reworded question is a different question, and the
 silence was about this one.
 
+**A question is withdrawn or it stands - it is never replaced.** Withdrawing names which of
+three things happened: an answer in the same batch killed it, which is an independence
+failure and is reported as one; a fact arrived and reframed it, which is the frontier
+working; or it was worded badly. A `replaces Qn` label carries all three at once and reports
+none of them, and the cause is the information.
+
+Withdrawing is free - the slot went when the batch was asked, so there is nothing to refund.
+What takes its place is a new question, numbered fresh, competing for a slot like any other
+candidate; it is not the old one in a new body. The retired number is never reused, because
+the ledger this skill produces needs questions to keep their identity.
+
 ### The question format
 
 Plain text, one block per question, never a picker. A picker makes the most valuable reply
@@ -111,6 +122,11 @@ having. The reasoning is always inline - a stance without it is an appeal to aut
 nothing to disagree with.
 
 **Rules out** is what agreeing costs. It is the line that makes someone stop.
+
+**One question, one decision.** If the stance needs an "and" to answer it, or if **Rules
+out** covers only half of it, it is two questions and one of them waits. The ceiling counts
+decisions, not blocks - a question carrying two is how four blocks come to hold eight, and
+the reply it earns is "which of these are you asking", which costs a round to recover.
 
 **No option lists.** Options plus a stance is a ballot with a box already marked. A
 freeform counter is what surfaces the option neither party listed, which in a design tree
@@ -256,7 +272,9 @@ and provenance is what makes that an audit rather than a skim.
 
 - Does not settle the shape on the user's behalf.
 - Does not ask more than four questions in a round, or two whose answers interact.
+- Does not settle two decisions in one question. The ceiling counts decisions, not blocks.
 - Does not reserve a batch slot for an unanswered question, or reword it when re-asking.
+- Does not replace a question. It is withdrawn with its cause, and its number is retired.
 - Does not discard a branch-pruning candidate the batch could not hold. It is listed.
 - Does not present a stance as a recommendation, state one without its reasoning, or pair
   one with a list of options.
