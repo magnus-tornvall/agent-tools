@@ -1,6 +1,6 @@
 ---
 name: mvc
-description: Initiate a minimal viable change by grilling the user down a design tree until its shape is settled - what ships, what does not and why, and what each decision ruled out. Use before a change is planned, when what it is has not yet been pinned down.
+description: Initiate a minimal viable change by grilling the user down a design tree until its shape is settled - what ships, what does not and why, and what each decision ruled out. Writes the settled shape to one file on request, so it survives the conversation. Use before a change is planned, when what it is has not yet been pinned down.
 disable-model-invocation: true
 ---
 
@@ -13,7 +13,8 @@ the ledger of what was cut, and the reason for each.
 Minimal is the constraint, not the aspiration. Every item that ships must be load-bearing
 on the outcome. Three rounds is the budget, so that "we'll decide later" costs something.
 
-This skill touches no git and writes no file.
+This skill touches no git. It writes one file, and only when asked - see [Persisting the
+shape](#persisting-the-shape).
 
 ## The grill
 
@@ -21,6 +22,13 @@ This skill touches no git and writes no file.
 
 Fill what the conversation and the repository already determine before asking anything. A
 question whose answer is in the repo wastes a round.
+
+A shape this conversation already settled is determined, not a candidate: it is transferred,
+and its provenance is the user's own answer. Re-deriving it invites a second opinion on a
+decision already made, and afterwards the two are indistinguishable. The frontier it leaves is
+empty, and an empty frontier asks nothing - which is what a re-invocation that wants only the
+file costs. The transfer carries the minimality pass with it: a shape that closed once has
+already been probed, so a re-invocation goes straight to the report or the file.
 
 List the candidate questions first, then dispatch one subagent to answer what it can. The
 candidates drive the search: a fixed file list reads what does not bear on this change and
@@ -216,7 +224,7 @@ out; "tests go in the existing suite, not a new harness" rules out a new harness
 
 ## The minimality pass
 
-Runs once, when the frontier closes. Everything above enforces *defined*; this is the last
+Runs once per grill, when the frontier closes. Everything above enforces *defined*; this is the last
 thing that enforces *minimal*, and the only one that sees the closed set rather than one
 item arriving. Minimal here means not unnecessarily complex, not the smallest design
 imaginable: the pass exists against drift, complexity creep, scope expansion and
@@ -251,8 +259,7 @@ checklist rather than as four things to absorb.
 ## Reporting the shape
 
 Close by naming the shape in the fields a specification is written in, so whatever consumes
-it copies rather than translates. The shape is reported, not stored - persisting it belongs
-to whatever consumes it.
+it copies rather than translates.
 
 A grill settles two kinds of thing and they go to different fields. What the outcome requires
 is `outcome`, `requirements`, `non_goals`. How it is reached - every stance that named a file,
@@ -275,6 +282,57 @@ is not optional and it is not a summary.
 Every part comes with where it came from. The user is auditing a shape they did not write,
 and provenance is what makes that an audit rather than a skim.
 
+## Persisting the shape
+
+Reported is enough for a conversation that continues. One that ends takes the shape with it -
+so on request, and only on request, the shape is written to one file.
+
+The gate is the closed frontier, not the argument. Asked for the file while questions are still
+open, name which and write nothing: a file that presents an unsettled shape as a settled one is
+worse than no file, because its reader cannot tell the difference.
+
+Path, first case that matches what the user gave. `.md` is what makes an argument a file, and
+a path separator is what makes it a path - both read off the argument, so the same argument
+always resolves the same way. The checks below are what consult the filesystem:
+
+- ends in `.md`, with a separator - that filepath
+- ends in `.md`, no separator - that filename in `<dir>`
+- anything else - a directory: `mvc-<slug>.md` in it
+- nothing - `mvc-<slug>.md` in `<dir>`
+
+`<dir>` is `.scratch` in the repository root when it exists, else the system temp directory.
+`<slug>` is two to four kebab-case words from the outcome. Report the absolute path of what was
+written - a file whose location the reader has to go looking for is not a handoff.
+
+Then two checks, in this order, before anything is written. Each one says so and stops - it
+never falls through to another case, and stopping costs nothing, because the shape is still in
+the conversation and a re-invocation asks nothing.
+
+- The resolved directory must exist. A typed path that is not there is a typo, and creating it
+  buries the mistake in a directory name - which is also why an argument that is neither a
+  `.md` file nor an existing directory stops here rather than being guessed at.
+- A file already at the resolved path is replaced only when it is itself a shape file -
+  frontmatter carrying the fields below. Anything else is named, not written: destroying an
+  unrelated document is the same failure as writing an unsettled shape, with someone else's
+  content as the casualty.
+
+
+The file is the report, in the same fields and the same prose: frontmatter carrying `outcome`,
+`requirements`, `non_goals` with each entry's type on the entry, `approach`, `constraints` and
+`touchpoints`, and a body carrying the ruled-out ledger, the argument behind each type, and
+where each part came from. Nothing else. A field the report does not have is one the grill did
+not settle, and an unsettled item reaches the file as a boundary, as a deferral, or not at
+all.
+
+The file carries no approval, no round count and no frontier. Acting on it is the acceptance,
+and a file that half-resumes a grill is how three rounds become six.
+
+A later grill on the same outcome resolves to the same name and replaces its own file; a
+different outcome resolves to a different one, so `<dir>` holds as many shapes as there were
+grills. Nothing reads any of them back - a round 0 that took a shape file as determined context
+would make the file state the grill maintains rather than a report it emitted, and the grill
+lives in the context window.
+
 ## Prohibitions
 
 - Does not settle the shape on the user's behalf.
@@ -294,7 +352,12 @@ and provenance is what makes that an audit rather than a skim.
 - Does not invent an answer to fill a gap. A gap is reported.
 - Does not keep the pruned branches. What each decision ruled out is the record; the
   transcript is not.
-- Does not write code, a plan, tasks, or a file.
+- Does not write code, a plan, or tasks.
+- Does not write a file unasked, or before the frontier closes.
+- Does not put anything in the file the reported shape does not carry.
+- Does not overwrite a file that is not a shape file. It names it instead.
+- Does not create a directory it was not given. A path that is not there is a typo.
+- Does not read a shape file back. The grill lives in the context window.
 - Does not ask what the repository already answers.
 - Does not report a determination without provenance.
 - Does not report a stance that names a file or a technology as a requirement.
