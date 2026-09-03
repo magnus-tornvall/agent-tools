@@ -81,6 +81,13 @@ question or closes it, and a listed candidate the user says nothing about stays 
 candidate that closes a single leaf is dropped silently - the branch-or-leaf test is what
 keeps the list from becoming a fifth question under another name.
 
+**Nothing leaves the grill still listed.** A candidate still on the list when the frontier
+closes takes an exhaustion exit like any other survivor, and usually exit 2 - "not now, and
+why" is what an unasked branch is. The list is never reported as its own section: an entry
+carrying neither a boundary nor a deferral reason is an omission, and an unsettled item with
+a reason attached reads to whatever implements the change as a blank it may fill rather than
+one it must stop at.
+
 **An unanswered question is not silent acceptance of its stance.** Ask why it was skipped,
 once, in the same reply that reports the round: unclear means clarify and re-ask within the
 round, since clarification never spends budget; premature means it stays open; don't-care
@@ -276,6 +283,8 @@ and provenance is what makes that an audit rather than a skim.
 - Does not reserve a batch slot for an unanswered question, or reword it when re-asking.
 - Does not replace a question. It is withdrawn with its cause, and its number is retired.
 - Does not discard a branch-pruning candidate the batch could not hold. It is listed.
+- Does not report an open question as its own section, or carry one out of the grill
+  untyped. It leaves as a boundary, a deferral, or the split signal.
 - Does not present a stance as a recommendation, state one without its reasoning, or pair
   one with a list of options.
 - Does not let anything into the shipping set after round 1 without a widening reason, and
