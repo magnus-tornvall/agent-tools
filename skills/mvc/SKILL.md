@@ -228,7 +228,8 @@ checklist rather than as four things to absorb.
 ## Reporting the shape
 
 Close by naming the shape in the fields a specification is written in, so whatever consumes
-it copies rather than translates.
+it copies rather than translates. The shape is reported, not stored - persisting it belongs
+to whatever consumes it.
 
 A grill settles two kinds of thing and they go to different fields. What the outcome requires
 is `outcome`, `requirements`, `non_goals`. How it is reached - every stance that named a file,
