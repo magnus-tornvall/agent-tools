@@ -1,6 +1,6 @@
 ---
 name: mvc
-description: Initiate a minimal viable change by grilling the user down a design tree until its shape is settled - what ships, what does not and why, and what each decision ruled out. Writes the settled shape to one file on request, so it survives the conversation. Use before a change is planned, when what it is has not yet been pinned down.
+description: Initiate a minimal viable change by grilling the user down a design tree until its shape is settled - what ships, what does not and why, and what each decision ruled out. Writes the settled shape to one file on request, so it survives the conversation.
 disable-model-invocation: true
 ---
 
@@ -36,6 +36,9 @@ misses the one file that does.
 
 Candidates span both axes: what the repo settles, and what only the user can decide. A list
 drawn from the first alone comes back with nothing dark, which leaves round 1 nothing to ask.
+The second axis has prompts of its own - intent, the priority between outcomes, a constraint
+from outside the repository, the direction the code cannot show - read the way the risk axes
+below are read: they prompt the listing and appear nowhere else.
 
 They span what could go wrong too - a risk is a candidate like any other. The axes worth a
 thought while listing them: architecture and the technical mechanism under it, security,
@@ -98,6 +101,11 @@ is a whole round when it is all the frontier holds.
 
 A round is spent when the batch is asked. Not by the answers: a batch that comes back with
 three of four answered still spent it, or nothing bounds a grill that keeps re-asking.
+
+The budget is a ceiling, not a schedule. A frontier that closes after round 1 ends the grill
+there, and the rounds left unspent are not questions owed. A question that rules nothing out is
+not ranked and not asked - a round that can only muster those is the frontier reporting itself
+closed.
 
 **Questions in one round must be independent**: no answer may change whether another in the
 same batch is worth asking. The failure mode is batching four and having the first answer
@@ -193,13 +201,17 @@ back on.
 ### Pushing back
 
 - **A settled decision reopened.** Ask what changed. Nothing changed, it stays settled.
+- **An answer that contradicts an earlier one.** Name both and ask which wins. Someone
+  reopening a decision knows they are doing it; this is the one they do not, and taking the
+  later answer quietly leaves the ledger carrying two. A correction, so it costs no round.
 - **An answer that widens the change.** Route it through widening below, or make it a
   non-goal. Never let it into what ships quietly.
 - **A better option exists.** Say which and why, once - then it is the user's call, and a
   reaffirmed decision is closed. Re-arguing it is not grilling, it is stalling. "Once" caps
   what is volunteered, not what is asked for: pressed, explain as fully as it takes.
 - **A vague answer.** "Probably", "some kind of", "we'll see" is not an answer. Ask the
-  narrower question.
+  narrower question, or name what deferring it blocks and let the user rule. A defer accepted
+  there is a non-goal with its reason, recorded then - not a survivor waiting for exhaustion.
 
 ### Exhaustion
 
@@ -266,31 +278,63 @@ once the set is closed, and only the closed set shows it. That is the one thing 
 check - everything else about what ships was settled as it entered, under the deletion test or
 the widening bar, and asking again is a second opinion on a decision already made.
 
-A grill settles two kinds of thing and they go to different fields. What the outcome requires
-is `outcome`, `requirements`, `non_goals`. How it is reached - every stance that named a file,
-a symbol, a technology or a value - is `approach`, `constraints` and `touchpoints`:
+Then the shape itself, as frontmatter and the body under it:
 
-- `approach` - the mechanism chosen.
-- `constraints` - the limits the mechanism must respect.
-- `touchpoints` - the files and symbols it lands on.
+```yaml
+---
+outcome: <one sentence - what is true once this ships>
+requirements:
+  - <something the outcome needs>
+non_goals:
+  - item: <what is not being built>
+    type: boundary | deferral
+    reason: <the line that separates it, or why not now>
+approach:
+  - <a mechanism chosen>
+constraints:
+  - <a limit the mechanism must respect>
+touchpoints:
+  - <path/to/file.ext:symbol>
+---
+```
 
-Reporting one of those as a requirement smuggles a mechanism into the goal, where the next
-replan is free to renegotiate it.
+Placeholders, never annotations. What is reported here is what the file carries, copied
+verbatim, so a comment left in the block reaches that file's reader as template instructions
+stapled to a settled decision. The definitions live below it, where nothing can carry them
+into the copy.
 
-Non-goals carry across with the type they were argued under - boundary or deferral - because
-that is what decides whether reopening one is a question or a mistake.
+`outcome` is the one scalar. Every other field is a collection, and an empty one is a statement
+the grill made rather than a field it forgot.
+
+A grill settles two kinds of thing and they go to different fields. What the outcome requires is
+`outcome`, `requirements` and `non_goals`. How it is reached - every stance that named a file, a
+symbol, a technology or a value - is `approach`, the mechanism chosen; `constraints`, the limits
+that mechanism must respect; and `touchpoints`, the files and symbols it lands on. Reporting one
+of those as a requirement smuggles a mechanism into the goal, where the next replan is free to
+renegotiate it.
+
+`type` carries a non-goal across under the argument it was settled with, boundary or deferral,
+and `reason` carries whatever that type argues: the line that separates a boundary, or why a
+deferral is not now. The type sits on the entry rather than being inferred from the reason,
+because it is what decides whether reopening one is a question or a mistake.
 
 A risk carries no field of its own. It lands as a `constraint`, as a typed non-goal, or as a
 cost the shape accepts - and an accepted one names what accepting it costs, the way every
 decision names what it ruled out. A risk that lands nowhere is dropped rather than listed: an
 entry with no consequence reads as an observation, and what ships here is decisions.
 
-What each decision ruled out belongs to no field: it is the prose that ships with the shape.
-It is the most expensive thing the grill produced and the only record of the branches, so it
-is not optional and it is not a summary.
+What each decision ruled out belongs to no field: it is the body that ships under the
+frontmatter. It is the most expensive thing the grill produced and the only record of the
+branches, so it is not optional and it is not a summary.
 
-Every part comes with where it came from. The user is auditing a shape they did not write,
-and provenance is what makes that an audit rather than a skim.
+Every part comes with where it came from. The user is auditing a shape they did not write, and
+provenance is what makes that an audit rather than a skim. It is body prose rather than a key on
+the entry it belongs to, because it argues for a decision, and the argument is already there,
+beside what that decision ruled out.
+
+A provisional entry that reached the close uncorrected carries its type with it. Silence
+accepted it, which is not the user having decided it, and telling those two apart is what the
+audit is.
 
 ## Persisting the shape
 
@@ -322,17 +366,13 @@ the conversation and a re-invocation asks nothing.
   buries the mistake in a directory name - which is also why an argument that is neither a
   `.md` file nor an existing directory stops here rather than being guessed at.
 - A file already at the resolved path is replaced only when it is itself a shape file -
-  frontmatter carrying the fields below. Anything else is named, not written: destroying an
-  unrelated document is the same failure as writing an unsettled shape, with someone else's
-  content as the casualty.
+  frontmatter carrying the fields the report names. Anything else is named, not written:
+  destroying an unrelated document is the same failure as writing an unsettled shape, with
+  someone else's content as the casualty.
 
-
-The file is the report, in the same fields and the same prose: frontmatter carrying `outcome`,
-`requirements`, `non_goals` with each entry's type on the entry, `approach`, `constraints` and
-`touchpoints`, and a body carrying the ruled-out ledger, the cost of each accepted risk, the
-argument behind each type, and where each part came from. Nothing else. A field the report does not have is one the grill did
-not settle, and an unsettled item reaches the file as a boundary, as a deferral, or not at
-all.
+The file is the report copied - the frontmatter it named and the body under it, and nothing
+else. A field the report does not have is one the grill did not settle, and an unsettled item
+reaches the file as a boundary, as a deferral, or not at all.
 
 The file carries no approval, no round count and no frontier. Acting on it is the acceptance,
 and a file that half-resumes a grill is how three rounds become six.
@@ -346,8 +386,10 @@ lives in the context window.
 ## Prohibitions
 
 - Does not settle the shape on the user's behalf.
+- Does not adopt the later of two contradicting answers without naming both.
 - Does not ask more than four questions in a round, or two whose answers interact.
 - Does not settle two decisions in one question. The ceiling counts decisions, not blocks.
+- Does not fill a batch to its ceiling. A question that rules nothing out is not asked.
 - Does not reserve a batch slot for an unanswered question, or reword it when re-asking.
 - Does not replace a question. It is withdrawn with its cause, and its number is retired.
 - Does not discard a branch-pruning candidate the batch could not hold. It is listed.
@@ -366,6 +408,8 @@ lives in the context window.
 - Does not write code, a plan, or tasks.
 - Does not write a file unasked, or before the frontier closes.
 - Does not put anything in the file the reported shape does not carry.
+- Does not leave a comment or an unfilled placeholder in the frontmatter it reports. Both are
+  copied verbatim into the file.
 - Does not overwrite a file that is not a shape file. It names it instead.
 - Does not create a directory it was not given. A path that is not there is a typo.
 - Does not read a shape file back. The grill lives in the context window.
