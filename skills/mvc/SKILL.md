@@ -19,8 +19,8 @@ Touches no git. Writes no code, plan, or tasks. Writes one file, only on request
    answer, or a primary-source URL. General framework knowledge is not provenance, and a citation
    proving something adjacent is worse than none - it makes a guess look checked. A provisional
    entry satisfies this by citing the settled material it follows from.
-2. **The grill proposes, the user decides.** It never settles the shape, admits an item, or rules
-   on a risk on the user's behalf.
+2. **The grill proposes, the user decides.** It never settles the shape, admits an item, or declines
+   a risk on the user's behalf.
 3. **Settled is closed.** Reopening requires new information. Idempotent: re-invoked on a settled
    shape, it asks nothing and goes straight to the report or the file.
 4. **Hard timebox: three rounds** - so that "we'll decide later" costs something. The user may
@@ -75,22 +75,21 @@ shape, a version. Primary sources only: vendor docs, the package's own stated re
 text. Two searches per candidate; no primary source means dark. Never for approach comparison or
 best practice - the user owns the stances.
 
-Report the map before round 1: **determined**, **provisional**, **ruled out**, **dark**,
-**risks**. Corrections are volunteered and off-budget.
+Report the map before round 1: **determined**, **provisional**, **ruled out**, **dark**.
+Corrections are volunteered and off-budget.
 
-**Risk register.** One line per risk: the risk, its provenance, what it would open. No stance, no
-body, no likelihood/impact scoring. The user rules one of two dispositions on each:
+**Risks ride on decisions.** A risk is never ruled on its own - one decision, one touch. No
+likelihood/impact scoring.
 
-- **pursue** - raises the ranking of every question hanging off it;
-- **decline** - prunes them, and records the risk as a non-goal typed the way it was declined: a
-  boundary when outside the change's shape, a deferral when real and parked.
+- Bears on a dark question: it goes on that question as its **Risk** line, and the answer settles
+  it.
+- Bears on no question: a provisional entry landing as a constraint or an accepted cost. Silence
+  accepts it; silence never declines it.
+- Would need declining: its own question. Declining drops it from the shape, and that takes the
+  user's word - a boundary when outside the change's shape, a deferral when real and parked.
 
-A risk a stance creates mid-grill is appended to the same register and ruled the same way. One
-register, never two.
-
-Silence is not a ruling. An unruled risk is handled like an unanswered question (below): ask once
-why, then it stays open. Still unruled at close, it takes exit 1 or 3 of
-[Exhaustion](#exhaustion) - never a deferral, which would decline it on the user's behalf.
+A risk a stance creates mid-grill goes in that stance's **Rules out** - it is a cost of agreeing,
+and agreement accepts it as an accepted cost.
 
 ### Rounds 1 to 3 - ask, re-derive
 
@@ -102,7 +101,7 @@ asked, however many answers come back.
 When in doubt, hold it back.
 
 **Ranking.** Greedy by information gain: branch-pruning beats leaf-closing, and a question
-hanging off a pursued risk can win a slot it would not win on pruning alone. Zero-gain questions -
+carrying a **Risk** line can win a slot it would not win on pruning alone. Zero-gain questions -
 rule nothing out, or have a predictable answer - are never asked. A round that can only muster
 those means the frontier is closed.
 
@@ -149,6 +148,8 @@ serve the same routes from the same bundle.
 - **Wrong if** - the condition that would refute the stance, so the argument has a target. It
   refutes this decision; it never opens a second one.
 - **Rules out** - what agreeing costs.
+- **Risk** - only when the question bears on one: the risk and its provenance, one line under
+  Rules out.
 - **Atomic** - one decision per question. A stance needing "and", or a Rules out covering half of
   it, is two questions. The ceiling counts decisions, not blocks.
 - **Open-ended** - no option lists; options plus a stance is a ballot with a box pre-marked, and
@@ -173,11 +174,13 @@ plainly and drop the stance until it lands. A question back is not a vague answe
 
 ### Exhaustion
 
-No extra round. At close - frontier closed or budget spent - each surviving question, listed
-candidate, or unruled risk takes one exit:
+No extra round. At close - frontier closed or budget spent - each surviving question or listed
+candidate takes one exit:
 
-1. The user answers it off-budget - volunteered, not asked. For a risk, the answer is its ruling.
-2. It becomes a deferral with its reason. Never for a risk: that is declining it for the user.
+1. The user answers it off-budget - volunteered, not asked. On a question carrying a **Risk** line,
+   the answer settles the risk.
+2. It becomes a deferral with its reason. Never for a question carrying a **Risk** line: that is
+   declining the risk for the user.
 3. Neither: the change is too big to define within the budget. Report that and propose how to
    decompose it. The split signal is the most valuable output - never raise the ceiling to avoid
    it.
@@ -242,10 +245,10 @@ The reported block has no comments and no unfilled placeholders - it is copied v
   lands on) are the how. A stance naming a file, symbol, technology, or value is how - never a
   requirement.
 - `type` is explicit on each non-goal: it decides whether reopening one is a question or a mistake.
-- Risks have no field. A ruled risk lands as a constraint, a typed non-goal, or an accepted cost
-  (tolerated, not mitigated) recorded in the decision log with what tolerating it costs. A pursued
-  risk that changed nothing is dropped; a declined one is always recorded as its non-goal. An
-  unruled risk is never carried.
+- Risks have no field. A settled risk lands as a constraint, a typed non-goal, or an accepted cost
+  (tolerated, not mitigated) recorded in the decision log with what tolerating it costs. A risk
+  whose answer changed nothing is dropped; a declined one is always recorded as its non-goal. An
+  unsettled risk is never carried.
 
 The body under the frontmatter is the decision log, ADR-style but only three parts per decision:
 the decision, its rejected alternatives, its provenance. Not optional, not a summary - it is the
@@ -292,9 +295,10 @@ Beyond the invariants:
 - Lists branch-pruning overflow instead of discarding it.
 - Questions are neutral, concrete, and presuppose nothing unsettled; stances are argued, never
   recommendations, never paired with option lists, and always carry a Wrong if.
-- Carries no risk the user has not ruled on. A ruled risk lands as a constraint, a typed
-  non-goal, or an accepted cost - or is dropped if pursued and it changed nothing. Never drops a
-  declined risk. Names no empty risk axis.
+- Rules no risk on its own: it rides on a question, a provisional entry, or a stance's Rules out.
+  Silence never declines one, and a question carrying a Risk line is never deferred. A settled
+  risk lands as a constraint, a typed non-goal, or an accepted cost - or is dropped if its answer
+  changed nothing. Never drops a declined risk. Names no empty risk axis.
 - Nothing enters what ships after round 1 without a widening statement.
 - No how-stance reported as a requirement; no web search for approach or best practice.
 - No weasel words in the outcome or in what ships.
