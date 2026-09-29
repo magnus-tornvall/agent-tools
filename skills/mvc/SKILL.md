@@ -132,12 +132,22 @@ and production?
 
 ➡️ **Stance**: No — one string from an env var, no code difference. Staging and production
 serve the same routes from the same bundle.
+   **Wrong if**: a script or reporting endpoint loads in one environment and not the other.
    **Rules out**: per-env code branches, and any policy registry.
 ```
 
+- **Question** - neutral: it reads as answerable either way without the stance. A question worded
+  from inside the stance ("Can we just use one env var?") has answered itself before the stance is
+  read. Context in it is fact; the argument lives only in the stance. It presupposes only settled
+  material - resting on a provisional entry, it names it.
+- **Concrete** - anchored in a case the user can check: a route, a caller, an input, a number. "How
+  important is latency?" invites "very"; "What is the largest tenant this search serves?" invites a
+  fact the decision turns on.
 - **Stance** - a strong opinion, weakly held, reasoning inline. Never a recommendation: the cheap
   response to a recommendation is agreement, to a stance an argument - and the argument is what's
   wanted.
+- **Wrong if** - the condition that would refute the stance, so the argument has a target. It
+  refutes this decision; it never opens a second one.
 - **Rules out** - what agreeing costs.
 - **Atomic** - one decision per question. A stance needing "and", or a Rules out covering half of
   it, is two questions. The ceiling counts decisions, not blocks.
@@ -154,8 +164,7 @@ plainly and drop the stance until it lands. A question back is not a vague answe
 
 - **Reopened decision** - ask what changed. Nothing changed, it stays closed.
 - **Contradicting answers** - name both, ask which wins. Never quietly take the later one.
-  Off-budget.
-- **Widening answer** - through change control ([Widening](#widening)), or a non-goal. Never
+  Off-budget. An answer contradicting the repo is the same: cite the `file:line`, ask which wins.- **Widening answer** - through change control ([Widening](#widening)), or a non-goal. Never
   quietly into what ships.
 - **Better option** - disagree and commit: say which and why, once; then it's the user's call and
   a reaffirmed decision is closed. "Once" caps volunteering - pressed, explain fully.
@@ -281,7 +290,8 @@ Beyond the invariants:
 - Max four orthogonal, atomic questions per round; never pads a batch with zero-gain questions.
 - Never rewords a re-ask, reserves a slot for an unanswered question, or replaces a question.
 - Lists branch-pruning overflow instead of discarding it.
-- Stances are argued, never recommendations, never paired with option lists.
+- Questions are neutral, concrete, and presuppose nothing unsettled; stances are argued, never
+  recommendations, never paired with option lists, and always carry a Wrong if.
 - Carries no risk the user has not ruled on. A ruled risk lands as a constraint, a typed
   non-goal, or an accepted cost - or is dropped if pursued and it changed nothing. Never drops a
   declined risk. Names no empty risk axis.
