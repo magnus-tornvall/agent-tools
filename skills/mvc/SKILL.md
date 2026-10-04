@@ -64,9 +64,19 @@ Classify each candidate:
   determined, its provenance the user's answer: transfer it, never re-derive it.
 - **Provisional (assumption)** - a stated assumption inferred from settled material (the outcome, a
   user answer, a cited determination), reported with what it follows from. Silence accepts it, a
-  word corrects it. Use this instead of a question whenever the answer is predictable. One
-  provisional entry is never provenance for another - that is a guess with a paper trail.
+  word corrects it. Use this instead of a question whenever the answer is predictable and the
+  item is a two-way door. A one-way door is never provisional: predictable or not, it becomes a
+  question, because silence must not settle what is costly to undo. One provisional entry is never
+  provenance for another - that is a guess with a paper trail.
 - **Dark (unknown)** - looked for, not found; it becomes a question.
+
+**Doors.** Mark each candidate that decides something costly to reverse once shipped as a
+**one-way door**, with provenance for why: a public route or API shape, a persisted column or
+type, a contract another service consumes, a dependency others will build on, a data migration.
+Everything else is a two-way door and carries no mark. A door mark is a determination like any
+other: without provenance it is provisional, and the map reports it so. A door the repo already
+determines (the route is live, the column exists) stays determined; the rule applies only to what
+the grill would otherwise infer.
 
 Invent nothing. A guess must never be indistinguishable from a decision the user made.
 
@@ -75,8 +85,9 @@ shape, a version. Primary sources only: vendor docs, the package's own stated re
 text. Two searches per candidate; no primary source means dark. Never for approach comparison or
 best practice - the user owns the stances.
 
-Report the map before round 1: **determined**, **provisional**, **ruled out**, **dark**.
-Corrections are volunteered and off-budget.
+Report the map before round 1: **determined**, **provisional**, **ruled out**, **dark**. One-way
+doors are marked on their entries; they get no section of their own. Corrections are volunteered
+and off-budget.
 
 **Risks ride on decisions.** A risk is never ruled on its own - one decision, one touch. No
 likelihood/impact scoring.
@@ -84,7 +95,8 @@ likelihood/impact scoring.
 - Bears on a dark question: it goes on that question as its **Risk** line, and the answer settles
   it.
 - Bears on no question: a provisional entry landing as a constraint or an accepted cost. Silence
-  accepts it; silence never declines it.
+  accepts it; silence never declines it. An accepted cost that is a one-way door is never
+  provisional: it becomes its own question.
 - Would need declining: its own question. Declining drops it from the shape, and that takes the
   user's word - a boundary when outside the change's shape, a deferral when real and parked.
 
@@ -100,13 +112,23 @@ asked, however many answers come back.
 **Orthogonal.** No answer may change whether another question in the same batch is worth asking.
 When in doubt, hold it back.
 
-**Ranking.** Greedy by information gain: branch-pruning beats leaf-closing, and a question
-carrying a **Risk** line can win a slot it would not win on pruning alone. Zero-gain questions -
-rule nothing out, or have a predictable answer - are never asked. A round that can only muster
+**Report the record once.** The map before round 1 is the record: determined facts with their
+provenance, provisional entries with what they follow from, what is ruled out. Rounds do not
+repeat it. Provenance is shown again only when the user asks for it ("why P2?"), and always
+lands in the decision log.
+
+**Questions first.** A round reply opens with its questions. After them come only the changes
+since the last reply: entries newly determined, corrected, or withdrawn, one line each. Nothing
+unchanged is restated.
+
+**Ranking.** Greedy by information gain: branch-pruning beats leaf-closing. A question carrying
+a **Risk** or **One-way door** line can win a slot it would not win on pruning alone. Zero-gain
+questions - rule nothing out, or have a predictable answer - are never asked, except a one-way
+door: its predictable answer still needs the user's word. A round that can only muster
 those means the frontier is closed.
 
-**Open, not asked.** A branch-pruning candidate the batch could not hold gets one title-only line
-under the round. The user promotes or closes it; unaddressed, it stays listed. Leaf-closing
+**Open, not asked.** A branch-pruning candidate the batch could not hold gets one line under the
+round: the question itself, shortened. The user promotes or closes it; unaddressed, it stays listed. Leaf-closing
 overflow is dropped silently. The list is never its own section in the report - at close, each
 entry takes an exhaustion exit, usually a deferral.
 
@@ -123,22 +145,33 @@ with a fresh number, competing for a slot like any other.
 ### The question format
 
 Plain text, one block per question, never a picker - "you are asking the wrong thing" must be as
-easy to type as an answer.
+easy to type as an answer. Two forms:
+
+- **Stance** - for a decision whose readings differ in mechanism, structure, or cost, but not in
+  anything an input can show.
+- **Case** - for a decision whose live readings produce different observable outcomes for the same
+  input. Use it whenever such an input exists: judging an outcome is cheaper than arguing a
+  proposition, and the answer is already an oracle.
+
+A question that fits both is asked as a case.
 
 ```
-❓ **Q1** — **Per-environment policy**: Does the CSP value need to differ between staging
-and production?
+**Q1.** Does the CSP value need to differ between staging and production?
 
-➡️ **Stance**: No — one string from an env var, no code difference. Staging and production
-serve the same routes from the same bundle.
-   **Wrong if**: a script or reporting endpoint loads in one environment and not the other.
-   **Rules out**: per-env code branches, and any policy registry.
+Stance: No — one string from an env var, no code difference. Staging and production serve
+the same routes from the same bundle.
+Wrong if: a script or reporting endpoint loads in one environment and not the other.
+Rules out: per-env code branches, and any policy registry.
 ```
+
+The question is the first line, after its number - no title label, no markers before it.
+**Risk** and **One-way door** lines follow Rules out, in that order, only when present.
 
 - **Question** - neutral: it reads as answerable either way without the stance. A question worded
   from inside the stance ("Can we just use one env var?") has answered itself before the stance is
   read. Context in it is fact; the argument lives only in the stance. It presupposes only settled
-  material - resting on a provisional entry, it names it.
+  material - resting on a provisional entry, it restates the few words of it the question needs,
+  with its ID. Never a bare pointer the user has to scroll back for.
 - **Concrete** - anchored in a case the user can check: a route, a caller, an input, a number. "How
   important is latency?" invites "very"; "What is the largest tenant this search serves?" invites a
   fact the decision turns on.
@@ -150,22 +183,58 @@ serve the same routes from the same bundle.
 - **Rules out** - what agreeing costs.
 - **Risk** - only when the question bears on one: the risk and its provenance, one line under
   Rules out.
+- **One-way door** - only when the decision is costly to reverse: what makes it so, with its
+  provenance, one line under Rules out (below **Risk** when both).
 - **Atomic** - one decision per question. A stance needing "and", or a Rules out covering half of
   it, is two questions. The ceiling counts decisions, not blocks.
-- **Open-ended** - no option lists; options plus a stance is a ballot with a box pre-marked, and
-  a freeform counter is what surfaces the option neither side listed. Enumerate only a genuinely
-  closed answer set, and then the stance is a ranking.
+- **Open-ended** - no option lists in the stance form; options plus a stance is a ballot with a
+  box pre-marked, and a freeform counter is what surfaces the option neither side listed.
+  Enumerate only a genuinely closed answer set, and then the stance is a ranking. A case's
+  outcomes are not an option list: they are what the live readings already predict, and
+  **Neither** keeps the freeform counter open.
 - One short paragraph per body.
 
 Clarification is off-budget and unlimited. Asked why a stance holds: the evidence, what it
 assumes, what would make it wrong - never restate it louder. Asked what a question means: answer
 plainly and drop the stance until it lands. A question back is not a vague answer.
 
+#### The case form
+
+```
+**Q1.** Staging loads `cdn.staging.example.net/pay.js` on `/checkout`; production doesn't.
+With one shared CSP string, what does staging do?
+
+🅰 Blocked — breaks until the host is in the shared allowlist. (one-string reading)
+🅱 Loads — staging needs its own policy value. (`config/staging.php:14`)
+
+Stance: 🅰 — the staging origin is a config leftover.
+Wrong if: QA serves unreleased assets from that host.
+Rules out: 🅰 rules out per-env policy values; 🅱 rules out a single string.
+One-way door: the CSP header is public.
+```
+
+- **One input, two outcomes.** A concrete input the user can check (a route, a payload, a caller,
+  a value) and the outcome under each live reading. A third reading is a third outcome, never a
+  second input. More than three outcomes means the input does not discriminate. Find a sharper one.
+- **Outcomes, not mechanisms.** Each outcome is what an observer would see: a status, a value, a
+  rendered state, a log line. "Uses a registry" is a mechanism; it belongs in a stance question.
+- **Each outcome cites its reading.** A short parenthetical after the outcome gives the provenance
+  that makes that reading live. An outcome no settled material supports is invented; drop it.
+- **Discriminating.** The live readings must disagree on this input. An input where they agree is
+  zero-gain, even if it looks concrete.
+- **Stance is a ranking.** It names the expected pick with its reasoning, and keeps **Wrong if**.
+  **Rules out** lists what each outcome costs.
+- **Four answers.** A pick of one outcome settles it. **Neither** states the right outcome, which
+  settles the case and usually opens a reading nobody listed. **Either** means the divergence does
+  not matter: it is recorded as a deliberate non-constraint and rules out pinning a test on it.
+- **Risk** and **One-way door** lines work as in the stance form.
+
 ### Pushing back
 
 - **Reopened decision** - ask what changed. Nothing changed, it stays closed.
 - **Contradicting answers** - name both, ask which wins. Never quietly take the later one.
-  Off-budget. An answer contradicting the repo is the same: cite the `file:line`, ask which wins.- **Widening answer** - through change control ([Widening](#widening)), or a non-goal. Never
+  Off-budget. An answer contradicting the repo is the same: cite the `file:line`, ask which wins.
+- **Widening answer** - through change control ([Widening](#widening)), or a non-goal. Never
   quietly into what ships.
 - **Better option** - disagree and commit: say which and why, once; then it's the user's call and
   a reaffirmed decision is closed. "Once" caps volunteering - pressed, explain fully.
@@ -180,7 +249,9 @@ candidate takes one exit:
 1. The user answers it off-budget - volunteered, not asked. On a question carrying a **Risk** line,
    the answer settles the risk.
 2. It becomes a deferral with its reason. Never for a question carrying a **Risk** line: that is
-   declining the risk for the user.
+   declining the risk for the user. A question carrying a **One-way door** line is deferred only on
+   the user's word, and the deferral names what it blocks: nothing that lands on the door ships
+   until it is decided. That block lands in `constraints`.
 3. Neither: the change is too big to define within the budget. Report that and propose how to
    decompose it. The split signal is the most valuable output - never raise the ceiling to avoid
    it.
@@ -249,11 +320,16 @@ The reported block has no comments and no unfilled placeholders - it is copied v
   (tolerated, not mitigated) recorded in the decision log with what tolerating it costs. A risk
   whose answer changed nothing is dropped; a declined one is always recorded as its non-goal. An
   unsettled risk is never carried.
+- A settled case lands in `requirements` as `given <input>, <outcome>`: observable, so problem
+  space, and copyable into an acceptance test as written. An **Either** answer lands in the
+  decision log as a non-constraint with the input it covers. The rejected outcome is that
+  decision's rejected alternative.
 
 The body under the frontmatter is the decision log, ADR-style but only three parts per decision:
 the decision, its rejected alternatives, its provenance. Not optional, not a summary - it is the
 only record of the pruned branches. A provisional entry that reached the close uncorrected keeps
-its label: silence accepted it, the user did not decide it.
+its label: silence accepted it, the user did not decide it. A decision on a one-way door keeps
+its mark in the decision log, so a reviewer can see which entries cost most to reopen.
 
 ## Persisting the shape
 
@@ -295,6 +371,14 @@ Beyond the invariants:
 - Lists branch-pruning overflow instead of discarding it.
 - Questions are neutral, concrete, and presuppose nothing unsettled; stances are argued, never
   recommendations, never paired with option lists, and always carry a Wrong if.
+- Asks as a case whenever an input discriminates the live readings; every outcome is observable
+  and cites the reading it follows from.
+- Marks one-way doors with provenance in round 0; never makes one provisional (a dark item or an
+  accepted cost), never lets pruning alone crowd one out, and never defers one without the user's
+  word.
+- Opens each round with its questions; reports the record once and only deltas after; restates
+  what a question rests on instead of pointing to it; puts nothing before the question but its
+  number.
 - Rules no risk on its own: it rides on a question, a provisional entry, or a stance's Rules out.
   Silence never declines one, and a question carrying a Risk line is never deferred. A settled
   risk lands as a constraint, a typed non-goal, or an accepted cost - or is dropped if its answer
