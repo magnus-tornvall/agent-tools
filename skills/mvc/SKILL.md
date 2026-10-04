@@ -128,9 +128,9 @@ door: its predictable answer still needs the user's word. A round that can only 
 those means the frontier is closed.
 
 **Open, not asked.** A branch-pruning candidate the batch could not hold gets one line under the
-round: the question itself, shortened. The user promotes or closes it; unaddressed, it stays listed. Leaf-closing
-overflow is dropped silently. The list is never its own section in the report - at close, each
-entry takes an exhaustion exit, usually a deferral.
+round: the question itself, shortened. The user promotes or closes it; unaddressed, it stays
+listed. Leaf-closing overflow is dropped silently. The list is never its own section in the
+report - at close, each entry takes an exhaustion exit, usually a deferral.
 
 **Unanswered is not accepted.** In the reply reporting the round, ask once why a question was
 skipped: unclear means clarify and re-ask within the round (off-budget); premature means it stays
@@ -172,9 +172,9 @@ The question is the first line, after its number - no title label, no markers be
   read. Context in it is fact; the argument lives only in the stance. It presupposes only settled
   material - resting on a provisional entry, it restates the few words of it the question needs,
   with its ID. Never a bare pointer the user has to scroll back for.
-- **Concrete** - anchored in something the user can check: a route, a caller, an input, a number. "How
-  important is latency?" invites "very"; "What is the largest tenant this search serves?" invites a
-  fact the decision turns on.
+- **Concrete** - anchored in something the user can check: a route, a caller, an input, a
+  number. "How important is latency?" invites "very"; "What is the largest tenant this search
+  serves?" invites a fact the decision turns on.
 - **Stance** - a strong opinion, weakly held, reasoning inline. Never a recommendation: the cheap
   response to a recommendation is agreement, to a stance an argument - and the argument is what's
   wanted.
@@ -218,7 +218,8 @@ One-way door: the CSP header is public.
 
 - **One Given/When, two Thens.** A concrete context and event the user can check (a route, a
   payload, a caller, a value) and the outcome under each live reading. A third reading is a third
-  Then, never a second When. More than three outcomes means the input does not discriminate. Find a sharper one.
+  Then, never a second When. More than three outcomes means the input does not discriminate.
+  Find a sharper one.
 - **Outcomes, not mechanisms.** Each Then is what an observer would see: a status, a value, a
   rendered state, a log line. "Uses a registry" is a mechanism; it belongs in a stance question.
 - **Each outcome cites its reading.** A short parenthetical after the outcome gives the provenance
@@ -228,8 +229,8 @@ One-way door: the CSP header is public.
 - **Stance is a ranking.** It names the expected pick with its reasoning, and keeps **Wrong if**.
   **Rules out** lists what each outcome costs.
 - **Four answers.** A pick of one outcome settles it. **Neither** states the right outcome, which
-  settles the example and usually opens a reading nobody listed. **Either** means the divergence does
-  not matter: it is recorded as a deliberate non-constraint and rules out pinning a test on it.
+  settles the example and usually opens a reading nobody listed. **Either** means the divergence
+  does not matter: it is recorded as a deliberate non-constraint and rules out pinning a test on it.
 - **Risk** and **One-way door** lines work as in the stance form.
 
 ### Pushing back
@@ -324,9 +325,9 @@ The reported block has no comments and no unfilled placeholders - it is copied v
   whose answer changed nothing is dropped; a declined one is always recorded as its non-goal. An
   unsettled risk is never carried.
 - A settled example lands in `requirements` as `given <context>, when <event>, then <outcome>`:
-  observable, so problem space, and copyable into an acceptance test as written. An **Either** answer lands in the
-  decision log as a non-constraint with the input it covers. The rejected outcome is that
-  decision's rejected alternative.
+  observable, so problem space, and copyable into an acceptance test as written. An **Either**
+  answer lands in the decision log as a non-constraint with the input it covers. The rejected
+  outcome is that decision's rejected alternative.
 
 The body under the frontmatter is the decision log, ADR-style but only three parts per decision:
 the decision, its rejected alternatives, its provenance. Not optional, not a summary - it is the
