@@ -149,11 +149,11 @@ easy to type as an answer. Two forms:
 
 - **Stance** - for a decision whose readings differ in mechanism, structure, or cost, but not in
   anything an input can show.
-- **Case** - for a decision whose live readings produce different observable outcomes for the same
-  input. Use it whenever such an input exists: judging an outcome is cheaper than arguing a
-  proposition, and the answer is already an oracle.
+- **Example** - specification by example: for a decision whose live readings produce different
+  observable outcomes for the same input. Use it whenever such an input exists: judging a key
+  example is cheaper than arguing a proposition, and the answer is already an acceptance test.
 
-A question that fits both is asked as a case.
+A question that fits both is asked as an example.
 
 ```
 **Q1.** Does the CSP value need to differ between staging and production?
@@ -172,7 +172,7 @@ The question is the first line, after its number - no title label, no markers be
   read. Context in it is fact; the argument lives only in the stance. It presupposes only settled
   material - resting on a provisional entry, it restates the few words of it the question needs,
   with its ID. Never a bare pointer the user has to scroll back for.
-- **Concrete** - anchored in a case the user can check: a route, a caller, an input, a number. "How
+- **Concrete** - anchored in something the user can check: a route, a caller, an input, a number. "How
   important is latency?" invites "very"; "What is the largest tenant this search serves?" invites a
   fact the decision turns on.
 - **Stance** - a strong opinion, weakly held, reasoning inline. Never a recommendation: the cheap
@@ -189,7 +189,7 @@ The question is the first line, after its number - no title label, no markers be
   it, is two questions. The ceiling counts decisions, not blocks.
 - **Open-ended** - no option lists in the stance form; options plus a stance is a ballot with a
   box pre-marked, and a freeform counter is what surfaces the option neither side listed.
-  Enumerate only a genuinely closed answer set, and then the stance is a ranking. A case's
+  Enumerate only a genuinely closed answer set, and then the stance is a ranking. An example's
   outcomes are not an option list: they are what the live readings already predict, and
   **Neither** keeps the freeform counter open.
 - One short paragraph per body.
@@ -198,14 +198,17 @@ Clarification is off-budget and unlimited. Asked why a stance holds: the evidenc
 assumes, what would make it wrong - never restate it louder. Asked what a question means: answer
 plainly and drop the stance until it lands. A question back is not a vague answer.
 
-#### The case form
+#### The example form
+
+A key example in Given/When/Then: the question states the Given and the When, each outcome is a
+Then.
 
 ```
-**Q1.** Staging loads `cdn.staging.example.net/pay.js` on `/checkout`; production doesn't.
-With one shared CSP string, what does staging do?
+**Q1.** Given one shared CSP string, when staging serves `/checkout` with
+`cdn.staging.example.net/pay.js` (production doesn't load it), what happens?
 
-🅰 Blocked — breaks until the host is in the shared allowlist. (one-string reading)
-🅱 Loads — staging needs its own policy value. (`config/staging.php:14`)
+🅰 Then the script is blocked until the host is in the shared allowlist. (one-string reading)
+🅱 Then the script loads — staging has its own policy value. (`config/staging.php:14`)
 
 Stance: 🅰 — the staging origin is a config leftover.
 Wrong if: QA serves unreleased assets from that host.
@@ -213,10 +216,10 @@ Rules out: 🅰 rules out per-env policy values; 🅱 rules out a single string.
 One-way door: the CSP header is public.
 ```
 
-- **One input, two outcomes.** A concrete input the user can check (a route, a payload, a caller,
-  a value) and the outcome under each live reading. A third reading is a third outcome, never a
-  second input. More than three outcomes means the input does not discriminate. Find a sharper one.
-- **Outcomes, not mechanisms.** Each outcome is what an observer would see: a status, a value, a
+- **One Given/When, two Thens.** A concrete context and event the user can check (a route, a
+  payload, a caller, a value) and the outcome under each live reading. A third reading is a third
+  Then, never a second When. More than three outcomes means the input does not discriminate. Find a sharper one.
+- **Outcomes, not mechanisms.** Each Then is what an observer would see: a status, a value, a
   rendered state, a log line. "Uses a registry" is a mechanism; it belongs in a stance question.
 - **Each outcome cites its reading.** A short parenthetical after the outcome gives the provenance
   that makes that reading live. An outcome no settled material supports is invented; drop it.
@@ -225,7 +228,7 @@ One-way door: the CSP header is public.
 - **Stance is a ranking.** It names the expected pick with its reasoning, and keeps **Wrong if**.
   **Rules out** lists what each outcome costs.
 - **Four answers.** A pick of one outcome settles it. **Neither** states the right outcome, which
-  settles the case and usually opens a reading nobody listed. **Either** means the divergence does
+  settles the example and usually opens a reading nobody listed. **Either** means the divergence does
   not matter: it is recorded as a deliberate non-constraint and rules out pinning a test on it.
 - **Risk** and **One-way door** lines work as in the stance form.
 
@@ -320,8 +323,8 @@ The reported block has no comments and no unfilled placeholders - it is copied v
   (tolerated, not mitigated) recorded in the decision log with what tolerating it costs. A risk
   whose answer changed nothing is dropped; a declined one is always recorded as its non-goal. An
   unsettled risk is never carried.
-- A settled case lands in `requirements` as `given <input>, <outcome>`: observable, so problem
-  space, and copyable into an acceptance test as written. An **Either** answer lands in the
+- A settled example lands in `requirements` as `given <context>, when <event>, then <outcome>`:
+  observable, so problem space, and copyable into an acceptance test as written. An **Either** answer lands in the
   decision log as a non-constraint with the input it covers. The rejected outcome is that
   decision's rejected alternative.
 
@@ -371,7 +374,7 @@ Beyond the invariants:
 - Lists branch-pruning overflow instead of discarding it.
 - Questions are neutral, concrete, and presuppose nothing unsettled; stances are argued, never
   recommendations, never paired with option lists, and always carry a Wrong if.
-- Asks as a case whenever an input discriminates the live readings; every outcome is observable
+- Asks as an example whenever an input discriminates the live readings; every outcome is observable
   and cites the reading it follows from.
 - Marks one-way doors with provenance in round 0; never makes one provisional (a dark item or an
   accepted cost), never lets pruning alone crowd one out, and never defers one without the user's
