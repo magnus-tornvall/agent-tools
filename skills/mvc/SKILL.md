@@ -17,9 +17,8 @@ Touches no git. Writes no code, plan, or tasks. Writes one file, only on request
 
 1. **No citation, no claim.** Every fact carries provenance: `file:line`, the user's answer, or a
    primary-source URL. General framework knowledge is not provenance, and a citation proving
-   something adjacent is worse than none - it makes a guess look checked. Established domain
-   guidance is provenance once cited to its source (see [Domain guidance](#domain-guidance)). An
-   assumption satisfies this by citing the settled material it follows from.
+   something adjacent is worse than none - it makes a guess look checked. An assumption satisfies
+   this by citing the settled material it follows from.
 2. **The grill proposes, the user decides.** It never settles the shape, admits an item, or avoids
    a risk on the user's behalf.
 3. **Settled is closed.** Reopening requires new information. Idempotent: re-invoked on a settled
@@ -43,9 +42,9 @@ search - a fixed file list reads what doesn't bear on the change and misses the 
 Candidates span:
 
 - what the repo settles;
-- what established domain guidance settles: a fork a standard, the vendor's documented
-  recommendation, or a recognised catalogue (OWASP, the relevant RFC, the framework's own guide)
-  already answers;
+- what established domain guidance settles: a standard, the vendor's documented recommendation,
+  or a recognised catalogue such as OWASP. A two-way fork it answers is an assumption, not a
+  question. Where the repo departs from it, the repo is the fact - say so once;
 - what only the user can decide: intent, priority between outcomes, constraints from outside the
   repo, direction the code cannot show;
 - risks, prompted by these axes: architecture and mechanism, security, operations and
@@ -77,34 +76,15 @@ Classify each candidate:
 **Doors.** Mark each candidate that decides something costly to reverse once shipped as a
 **one-way door**, with provenance for why: a public route or API shape, a persisted column or
 type, a contract another service consumes, a dependency others will build on, a data migration.
-Everything else is a two-way door and carries no mark. A door mark is a claim like any other:
-without provenance it is an assumption, and the map reports it so. A door the repo already shows
-(the route is live, the column exists) stays a fact; the rule applies only to what the grill would
-otherwise infer.
+Everything else is a two-way door. A mark without provenance still counts as a door, and the map
+reports its reason as unconfirmed.
 
 Invent nothing. A guess must never be indistinguishable from a decision the user made.
 
 Web: only for a verifiable external fact a candidate turns on - a platform capability, an API
 shape, a version - or for the established guidance on a fork. Primary sources only: vendor docs,
 the package's own stated requirements, spec text, the guidance's own publisher. Two searches per
-candidate; no primary source means unknown. Never for approach comparison - blog posts,
-benchmarks, and surveys of opinion are not guidance.
-
-#### Domain guidance
-
-Most forks in a change are not new: a standard, the vendor, or a recognised catalogue has already
-answered them. The grill draws on that answer instead of handing every fork to the user.
-
-- **Guidance settles two-way doors.** Where cited guidance answers a fork and the repo does not
-  contradict it, the fork is an assumption citing the guidance - not a question. The user corrects
-  it with a word, like any assumption.
-- **Guidance argues one-way doors.** A one-way door is still a question; the guidance is its
-  stance's evidence, cited inline.
-- **The repo wins over guidance.** A repo convention that departs from the guidance is a fact; the
-  departure is reported once, as a better option would be, never silently aligned.
-- **Departing is a stance.** A stance that goes against established guidance says so and why.
-- **Cited, or it is not guidance.** "Best practice" without a source is general knowledge, and not
-  provenance.
+candidate; no primary source means unknown. Never for approach comparison.
 
 Report the map before round 1: **facts**, **assumptions**, **ruled out**, **unknowns**. One-way
 doors are marked on their entries; they get no section of their own. Corrections are volunteered
@@ -115,8 +95,7 @@ likelihood/impact scoring.
 
 - Bears on an unknown: it goes on that question as its **Risk** line, and the answer settles it.
 - Bears on no question: an assumption landing as a constraint or an accepted risk. Silence accepts
-  it; silence never avoids it. An accepted risk that is a one-way door is never an assumption: it
-  becomes its own question.
+  it; silence never avoids it.
 - Would need avoiding: its own question. Avoiding drops it from the shape, and that takes the
   user's word - a boundary when outside the change's shape, a deferral when real and parked.
 
@@ -132,9 +111,8 @@ asked, however many answers come back.
 **Orthogonal.** No answer may change whether another question in the same batch is worth asking.
 When in doubt, hold it back.
 
-**Report the record once.** The map before round 1 is the record: facts with their provenance,
-assumptions with what they follow from, what is ruled out. Rounds do not repeat it. Provenance is
-shown again only when the user asks for it ("why A2?"), and always lands in the decision log.
+**Report the record once.** Rounds do not repeat the map. Provenance is shown again only when the
+user asks for it ("why A2?"), and always lands in the decision log.
 
 **Questions first.** A round reply opens with its questions. After them come only the changes
 since the last reply: entries newly settled, corrected, or withdrawn, one line each. Nothing
@@ -142,9 +120,8 @@ unchanged is restated.
 
 **Ranking.** Greedy by information gain: branch-pruning beats leaf-closing. A question carrying
 a **Risk** or **One-way door** line can win a slot it would not win on pruning alone. Zero-gain
-questions - rule nothing out, or have a predictable answer - are never asked, except a one-way
-door: its predictable answer still needs the user's word. A round that can only muster
-those means the frontier is closed.
+questions - rule nothing out, or have a predictable answer - are never asked; a one-way door is
+never zero-gain. A round that can only muster those means the frontier is closed.
 
 **Open, not asked.** A branch-pruning candidate the batch could not hold gets one line under the
 round: the question itself, shortened. The user promotes or closes it; unaddressed, it stays
@@ -172,8 +149,6 @@ easy to type as an answer. Two forms:
   observable outcomes for the same input. Use it whenever such an input exists: judging a key
   example is cheaper than arguing a proposition, and the answer is already an acceptance test.
 
-A question that fits both is asked as an example.
-
 ```
 **Q1.** Does the CSP value need to differ between staging and production?
 
@@ -184,7 +159,6 @@ Rules out: per-env code branches, and any policy registry.
 ```
 
 The question is the first line, after its number - no title label, no markers before it.
-**Risk** and **One-way door** lines follow Rules out, in that order, only when present.
 
 - **Question** - neutral: it reads as answerable either way without the stance. A question worded
   from inside the stance ("Can we just use one env var?") has answered itself before the stance is
@@ -238,20 +212,17 @@ One-way door: the CSP header is public.
 
 - **One Given/When, two Thens.** A concrete context and event the user can check (a route, a
   payload, a caller, a value) and the outcome under each live reading. A third reading is a third
-  Then, never a second When. More than three outcomes means the input does not discriminate.
-  Find a sharper one.
-- **Outcomes, not mechanisms.** Each Then is what an observer would see: a status, a value, a
-  rendered state, a log line. "Uses a registry" is a mechanism; it belongs in a stance question.
+  Then, never a second When. More than three outcomes, or readings that agree on this input, mean
+  it does not discriminate. Find a sharper one.
+- **Observable Thens.** Each Then is what an observer would see: a status, a value, a rendered
+  state, a log line.
 - **Each outcome cites its reading.** A short parenthetical after the outcome gives the provenance
   that makes that reading live. An outcome no settled material supports is invented; drop it.
-- **Discriminating.** The live readings must disagree on this input. An input where they agree is
-  zero-gain, even if it looks concrete.
 - **Stance is a ranking.** It names the expected pick with its reasoning, and keeps **Wrong if**.
   **Rules out** lists what each outcome costs.
-- **Four answers.** A pick of one outcome settles it. **Neither** states the right outcome, which
-  settles the example and usually opens a reading nobody listed. **Either** means the divergence
-  does not matter: it is recorded as a deliberate non-constraint and rules out pinning a test on it.
-- **Risk** and **One-way door** lines work as in the stance form.
+- **Three kinds of answer.** A pick of one outcome settles it. **Neither** states the right
+  outcome, which settles the example and usually opens a reading nobody listed. **Either** means
+  the divergence does not matter, and rules out pinning a test on it.
 
 ### Pushing back
 
@@ -273,7 +244,7 @@ candidate takes one exit:
 1. The user answers it off-budget - volunteered, not asked. On a question carrying a **Risk** line,
    the answer settles the risk.
 2. It becomes a deferral with its reason. Never for a question carrying a **Risk** line: that is
-   accepting the risk for the user. A question carrying a **One-way door** line is deferred only on
+   settling the risk for the user. A question carrying a **One-way door** line is deferred only on
    the user's word, and the deferral names what it blocks: nothing that lands on the door ships
    until it is decided. That block lands in `constraints`.
 3. Neither: the change is too big to define within the budget. Report that and propose how to
@@ -389,8 +360,7 @@ Beyond the invariants:
 
 - Asks nothing the repository already answers.
 - Reports every assumption with the material it follows from.
-- Hands the user no two-way fork that cited domain guidance already settles; cites the source for
-  any guidance a stance or assumption leans on.
+- Hands the user no two-way fork that cited domain guidance already settles.
 - Never takes the later of two contradicting answers without naming both.
 - Max four orthogonal, atomic questions per round; never pads a batch with zero-gain questions.
 - Never rewords a re-ask, reserves a slot for an unanswered question, or replaces a question.
@@ -399,9 +369,8 @@ Beyond the invariants:
   recommendations, never paired with option lists, and always carry a Wrong if.
 - Asks as an example whenever an input discriminates the live readings; every outcome is observable
   and cites the reading it follows from.
-- Marks one-way doors with provenance in round 0; never makes one an assumption (an unknown or an
-  accepted risk), never lets pruning alone crowd one out, and never defers one without the user's
-  word.
+- Marks one-way doors with provenance in round 0; never makes one an assumption, never lets
+  pruning alone crowd one out, and never defers one without the user's word.
 - Opens each round with its questions; reports the record once and only deltas after; restates
   what a question rests on instead of pointing to it; puts nothing before the question but its
   number.
