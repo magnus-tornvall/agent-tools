@@ -15,11 +15,12 @@ Touches no git. Writes no code, plan, or tasks. Writes one file, only on request
 
 ## Invariants
 
-1. **No citation, no claim.** Every determination carries provenance: `file:line`, the user's
-   answer, or a primary-source URL. General framework knowledge is not provenance, and a citation
-   proving something adjacent is worse than none - it makes a guess look checked. A provisional
-   entry satisfies this by citing the settled material it follows from.
-2. **The grill proposes, the user decides.** It never settles the shape, admits an item, or declines
+1. **No citation, no claim.** Every fact carries provenance: `file:line`, the user's answer, or a
+   primary-source URL. General framework knowledge is not provenance, and a citation proving
+   something adjacent is worse than none - it makes a guess look checked. Established domain
+   guidance is provenance once cited to its source (see [Domain guidance](#domain-guidance)). An
+   assumption satisfies this by citing the settled material it follows from.
+2. **The grill proposes, the user decides.** It never settles the shape, admits an item, or avoids
    a risk on the user's behalf.
 3. **Settled is closed.** Reopening requires new information. Idempotent: re-invoked on a settled
    shape, it asks nothing and goes straight to the report or the file.
@@ -42,11 +43,14 @@ search - a fixed file list reads what doesn't bear on the change and misses the 
 Candidates span:
 
 - what the repo settles;
+- what established domain guidance settles: a fork a standard, the vendor's documented
+  recommendation, or a recognised catalogue (OWASP, the relevant RFC, the framework's own guide)
+  already answers;
 - what only the user can decide: intent, priority between outcomes, constraints from outside the
   repo, direction the code cannot show;
 - risks, prompted by these axes: architecture and mechanism, security, operations and
   maintenance, dependencies and integration. Requirements risk needs no prompt - it already shows
-  up as dark.
+  up as an unknown.
 
 Axes are prompts only. One that turns up nothing produces no candidate and no line.
 
@@ -54,54 +58,70 @@ Look first for: precedent for the thing being added (kills a branch, not a leaf)
 and its callers, the repo's convention and decision docs, git history for the area, the dependency
 manifest, the test setup.
 
-The explorer returns, per candidate, the answer with `file:line` or **dark** - looked for, not
-found. Absence is a finding. Split a candidate that is both: the constraint the repo imposes is
-determined, the requirement it cannot know is dark. Stop when every candidate is answered or dark.
+The explorer returns, per candidate, the answer with `file:line` or **unknown** - looked for, not
+found. Absence is a finding. Split a candidate that is both: the constraint the repo imposes is a
+fact, the requirement it cannot know is unknown. Stop when every candidate is answered or unknown.
 
 Classify each candidate:
 
-- **Determined (fact)** - with provenance. A shape already settled in this conversation is
-  determined, its provenance the user's answer: transfer it, never re-derive it.
-- **Provisional (assumption)** - a stated assumption inferred from settled material (the outcome, a
-  user answer, a cited determination), reported with what it follows from. Silence accepts it, a
-  word corrects it. Use this instead of a question whenever the answer is predictable and the
-  item is a two-way door. A one-way door is never provisional: predictable or not, it becomes a
-  question, because silence must not settle what is costly to undo. One provisional entry is never
-  provenance for another - that is a guess with a paper trail.
-- **Dark (unknown)** - looked for, not found; it becomes a question.
+- **Fact** - with provenance. A shape already settled in this conversation is a fact, its
+  provenance the user's answer: transfer it, never re-derive it.
+- **Assumption** - inferred from settled material (the outcome, a user answer, a cited fact, cited
+  domain guidance), reported with what it follows from. Silence accepts it, a word corrects it. Use
+  this instead of a question whenever the answer is predictable and the item is a two-way door. A
+  one-way door is never an assumption: predictable or not, it becomes a question, because silence
+  must not settle what is costly to undo. One assumption is never provenance for another - that is
+  a guess with a paper trail.
+- **Unknown** - looked for, not found; it becomes a question.
 
 **Doors.** Mark each candidate that decides something costly to reverse once shipped as a
 **one-way door**, with provenance for why: a public route or API shape, a persisted column or
 type, a contract another service consumes, a dependency others will build on, a data migration.
-Everything else is a two-way door and carries no mark. A door mark is a determination like any
-other: without provenance it is provisional, and the map reports it so. A door the repo already
-determines (the route is live, the column exists) stays determined; the rule applies only to what
-the grill would otherwise infer.
+Everything else is a two-way door and carries no mark. A door mark is a claim like any other:
+without provenance it is an assumption, and the map reports it so. A door the repo already shows
+(the route is live, the column exists) stays a fact; the rule applies only to what the grill would
+otherwise infer.
 
 Invent nothing. A guess must never be indistinguishable from a decision the user made.
 
 Web: only for a verifiable external fact a candidate turns on - a platform capability, an API
-shape, a version. Primary sources only: vendor docs, the package's own stated requirements, spec
-text. Two searches per candidate; no primary source means dark. Never for approach comparison or
-best practice - the user owns the stances.
+shape, a version - or for the established guidance on a fork. Primary sources only: vendor docs,
+the package's own stated requirements, spec text, the guidance's own publisher. Two searches per
+candidate; no primary source means unknown. Never for approach comparison - blog posts,
+benchmarks, and surveys of opinion are not guidance.
 
-Report the map before round 1: **determined**, **provisional**, **ruled out**, **dark**. One-way
+#### Domain guidance
+
+Most forks in a change are not new: a standard, the vendor, or a recognised catalogue has already
+answered them. The grill draws on that answer instead of handing every fork to the user.
+
+- **Guidance settles two-way doors.** Where cited guidance answers a fork and the repo does not
+  contradict it, the fork is an assumption citing the guidance - not a question. The user corrects
+  it with a word, like any assumption.
+- **Guidance argues one-way doors.** A one-way door is still a question; the guidance is its
+  stance's evidence, cited inline.
+- **The repo wins over guidance.** A repo convention that departs from the guidance is a fact; the
+  departure is reported once, as a better option would be, never silently aligned.
+- **Departing is a stance.** A stance that goes against established guidance says so and why.
+- **Cited, or it is not guidance.** "Best practice" without a source is general knowledge, and not
+  provenance.
+
+Report the map before round 1: **facts**, **assumptions**, **ruled out**, **unknowns**. One-way
 doors are marked on their entries; they get no section of their own. Corrections are volunteered
 and off-budget.
 
 **Risks ride on decisions.** A risk is never ruled on its own - one decision, one touch. No
 likelihood/impact scoring.
 
-- Bears on a dark question: it goes on that question as its **Risk** line, and the answer settles
-  it.
-- Bears on no question: a provisional entry landing as a constraint or an accepted cost. Silence
-  accepts it; silence never declines it. An accepted cost that is a one-way door is never
-  provisional: it becomes its own question.
-- Would need declining: its own question. Declining drops it from the shape, and that takes the
+- Bears on an unknown: it goes on that question as its **Risk** line, and the answer settles it.
+- Bears on no question: an assumption landing as a constraint or an accepted risk. Silence accepts
+  it; silence never avoids it. An accepted risk that is a one-way door is never an assumption: it
+  becomes its own question.
+- Would need avoiding: its own question. Avoiding drops it from the shape, and that takes the
   user's word - a boundary when outside the change's shape, a deferral when real and parked.
 
 A risk a stance creates mid-grill goes in that stance's **Rules out** - it is a cost of agreeing,
-and agreement accepts it as an accepted cost.
+and agreement makes it an accepted risk.
 
 ### Rounds 1 to 3 - ask, re-derive
 
@@ -112,13 +132,12 @@ asked, however many answers come back.
 **Orthogonal.** No answer may change whether another question in the same batch is worth asking.
 When in doubt, hold it back.
 
-**Report the record once.** The map before round 1 is the record: determined facts with their
-provenance, provisional entries with what they follow from, what is ruled out. Rounds do not
-repeat it. Provenance is shown again only when the user asks for it ("why P2?"), and always
-lands in the decision log.
+**Report the record once.** The map before round 1 is the record: facts with their provenance,
+assumptions with what they follow from, what is ruled out. Rounds do not repeat it. Provenance is
+shown again only when the user asks for it ("why A2?"), and always lands in the decision log.
 
 **Questions first.** A round reply opens with its questions. After them come only the changes
-since the last reply: entries newly determined, corrected, or withdrawn, one line each. Nothing
+since the last reply: entries newly settled, corrected, or withdrawn, one line each. Nothing
 unchanged is restated.
 
 **Ranking.** Greedy by information gain: branch-pruning beats leaf-closing. A question carrying
@@ -170,12 +189,13 @@ The question is the first line, after its number - no title label, no markers be
 - **Question** - neutral: it reads as answerable either way without the stance. A question worded
   from inside the stance ("Can we just use one env var?") has answered itself before the stance is
   read. Context in it is fact; the argument lives only in the stance. It presupposes only settled
-  material - resting on a provisional entry, it restates the few words of it the question needs,
+  material - resting on an assumption, it restates the few words of it the question needs,
   with its ID. Never a bare pointer the user has to scroll back for.
 - **Concrete** - anchored in something the user can check: a route, a caller, an input, a
   number. "How important is latency?" invites "very"; "What is the largest tenant this search
   serves?" invites a fact the decision turns on.
-- **Stance** - a strong opinion, weakly held, reasoning inline. Never a recommendation: the cheap
+- **Stance** - a strong opinion, weakly held, reasoning inline. Grounded in cited domain guidance
+  when there is some, and saying so when it departs from it. Never a recommendation: the cheap
   response to a recommendation is agreement, to a stance an argument - and the argument is what's
   wanted.
 - **Wrong if** - the condition that would refute the stance, so the argument has a target. It
@@ -238,8 +258,8 @@ One-way door: the CSP header is public.
 - **Reopened decision** - ask what changed. Nothing changed, it stays closed.
 - **Contradicting answers** - name both, ask which wins. Never quietly take the later one.
   Off-budget. An answer contradicting the repo is the same: cite the `file:line`, ask which wins.
-- **Widening answer** - through change control ([Widening](#widening)), or a non-goal. Never
-  quietly into what ships.
+- **Scope creep** - through change control ([Change requests](#change-requests)), or a non-goal.
+  Never quietly into what ships.
 - **Better option** - disagree and commit: say which and why, once; then it's the user's call and
   a reaffirmed decision is closed. "Once" caps volunteering - pressed, explain fully.
 - **Weasel words** ("probably", "some kind of", "we'll see") - ask the narrower question, or name
@@ -253,19 +273,19 @@ candidate takes one exit:
 1. The user answers it off-budget - volunteered, not asked. On a question carrying a **Risk** line,
    the answer settles the risk.
 2. It becomes a deferral with its reason. Never for a question carrying a **Risk** line: that is
-   declining the risk for the user. A question carrying a **One-way door** line is deferred only on
+   accepting the risk for the user. A question carrying a **One-way door** line is deferred only on
    the user's word, and the deferral names what it blocks: nothing that lands on the door ships
    until it is decided. That block lands in `constraints`.
 3. Neither: the change is too big to define within the budget. Report that and propose how to
    decompose it. The split signal is the most valuable output - never raise the ceiling to avoid
    it.
 
-## Widening
+## Change requests
 
 Scope creep under change control. Anything entering the shipping set after round 1 is stated as a
-widening: what it is, where it came from, why the outcome is unreachable without it (not "better
-with it"), and what it rules out. The same statement flags if it competes with a pattern already
-in the repo, adds a dependency, or challenges the architecture.
+change request: what it is, where it came from, why the outcome is unreachable without it (not
+"better with it"), and what it rules out. The same request flags if it competes with a pattern
+already in the repo, adds a dependency, or challenges the architecture.
 
 Argue it once; the user decides; a rejected proposal is closed. Never admit one on the grill's own
 reasoning, and never withhold one because the idea wasn't the user's.
@@ -320,9 +340,9 @@ The reported block has no comments and no unfilled placeholders - it is copied v
   lands on) are the how. A stance naming a file, symbol, technology, or value is how - never a
   requirement.
 - `type` is explicit on each non-goal: it decides whether reopening one is a question or a mistake.
-- Risks have no field. A settled risk lands as a constraint, a typed non-goal, or an accepted cost
-  (tolerated, not mitigated) recorded in the decision log with what tolerating it costs. A risk
-  whose answer changed nothing is dropped; a declined one is always recorded as its non-goal. An
+- Risks have no field. A settled risk lands as a constraint (mitigated), a typed non-goal
+  (avoided), or an accepted risk recorded in the decision log with what accepting it costs. A risk
+  whose answer changed nothing is dropped; an avoided one is always recorded as its non-goal. An
   unsettled risk is never carried.
 - A settled example lands in `requirements` as `given <context>, when <event>, then <outcome>`:
   observable, so problem space, and copyable into an acceptance test as written. An **Either**
@@ -331,8 +351,8 @@ The reported block has no comments and no unfilled placeholders - it is copied v
 
 The body under the frontmatter is the decision log, ADR-style but only three parts per decision:
 the decision, its rejected alternatives, its provenance. Not optional, not a summary - it is the
-only record of the pruned branches. A provisional entry that reached the close uncorrected keeps
-its label: silence accepted it, the user did not decide it. A decision on a one-way door keeps
+only record of the pruned branches. An assumption that reached the close uncorrected keeps its
+label: silence accepted it, the user did not decide it. A decision on a one-way door keeps
 its mark in the decision log, so a reviewer can see which entries cost most to reopen.
 
 ## Persisting the shape
@@ -368,7 +388,9 @@ file. Export, not state: nothing reads a shape file back, round 0 included.
 Beyond the invariants:
 
 - Asks nothing the repository already answers.
-- Reports every provisional entry with the material it follows from.
+- Reports every assumption with the material it follows from.
+- Hands the user no two-way fork that cited domain guidance already settles; cites the source for
+  any guidance a stance or assumption leans on.
 - Never takes the later of two contradicting answers without naming both.
 - Max four orthogonal, atomic questions per round; never pads a batch with zero-gain questions.
 - Never rewords a re-ask, reserves a slot for an unanswered question, or replaces a question.
@@ -377,18 +399,18 @@ Beyond the invariants:
   recommendations, never paired with option lists, and always carry a Wrong if.
 - Asks as an example whenever an input discriminates the live readings; every outcome is observable
   and cites the reading it follows from.
-- Marks one-way doors with provenance in round 0; never makes one provisional (a dark item or an
-  accepted cost), never lets pruning alone crowd one out, and never defers one without the user's
+- Marks one-way doors with provenance in round 0; never makes one an assumption (an unknown or an
+  accepted risk), never lets pruning alone crowd one out, and never defers one without the user's
   word.
 - Opens each round with its questions; reports the record once and only deltas after; restates
   what a question rests on instead of pointing to it; puts nothing before the question but its
   number.
-- Rules no risk on its own: it rides on a question, a provisional entry, or a stance's Rules out.
-  Silence never declines one, and a question carrying a Risk line is never deferred. A settled
-  risk lands as a constraint, a typed non-goal, or an accepted cost - or is dropped if its answer
-  changed nothing. Never drops a declined risk. Names no empty risk axis.
-- Nothing enters what ships after round 1 without a widening statement.
-- No how-stance reported as a requirement; no web search for approach or best practice.
+- Rules no risk on its own: it rides on a question, an assumption, or a stance's Rules out.
+  Silence never avoids one, and a question carrying a Risk line is never deferred. A settled risk
+  lands as a constraint, a typed non-goal, or an accepted risk - or is dropped if its answer
+  changed nothing. Never drops an avoided risk. Names no empty risk axis.
+- Nothing enters what ships after round 1 without a change request.
+- No how-stance reported as a requirement; no web search for approach comparison.
 - No weasel words in the outcome or in what ships.
 - No file unasked or before the frontier closes; nothing in it beyond the report; no comments or
   unfilled placeholders.
