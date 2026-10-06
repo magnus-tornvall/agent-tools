@@ -238,15 +238,27 @@ Orca is an execution layer; this design is a decision layer.
   `coordinator-start/stop`) are retired; a Run is a durable mailbox, not a session. So a tick can
   `run-use --id <run>`, drain with a non-blocking `check` and `--ack`, start new work with
   `worker-start --worktree new-top-level --repo <repo> --base-branch main`, and exit.
-- **Unverified:** whether `run-use` and `worker-start` work from an automation run rather than an
-  Orca terminal; whether workers keep running after the starting process exits; what `--precheck`
-  failure does; whether Orca's UI surfaces gates and asks to the human.
+- **Smoke-tested (Orca 1.4.220, BUILD-2):** the tick works as designed, no fallback needed.
+  - An existing-workspace automation (`--provider claude`) ran a tick script: `run-use` rebound the
+    Run to the automation's terminal, `worker-start --worktree new-top-level` returned `ready`, and
+    the automation session closed itself once the prompt finished.
+  - The worker kept running after that session closed (`liveness: live`) and sent `worker_done`.
+  - The next automation run's `run-use` plus a plain `check` (non-blocking) returned the
+    `worker_done` delivery; the payload carries `taskId`, `dispatchId` and `outcome`. The tick then
+    ran `worker-release` and `check --ack`.
+  - `run-use` fences the previous consumer: any other terminal's `check`, even `--peek`, fails with
+    `consumer_fenced`. Only the current tick may read the inbox.
+  - `worker-release` closes the agent terminal and archives the transcript but keeps the worktree
+    and branch; the orchestrator removes them (`worktree rm`) once the item is merged or abandoned.
+  - A failing `--precheck` on a scheduled run records `status: skipped_precheck` with exit code,
+    stdout and stderr, dispatches no agent, and the schedule continues. A manual
+    `automations run` skips the precheck entirely, so test the precheck on a schedule.
+- **Unverified:** whether Orca's UI surfaces gates and asks to the human.
 
 ## Next steps
 
 1. Write the four reference docs: rubric, card, brief, debrief.
-2. Smoke-test the tick: an automation that binds a Run, starts a trivial worker, exits; the next
-   run reads its `worker_done`.
+2. ~~Smoke-test the tick~~ — done; see Orca notes.
 3. Agent definitions, gate scripts, the orchestrator invariants, the inbox skill.
 4. Owner writes the first trial spec; run it end to end.
 
