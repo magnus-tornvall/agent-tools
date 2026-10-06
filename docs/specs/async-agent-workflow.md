@@ -1,4 +1,4 @@
-# Async agent workflow — handoff
+# Sliceworks — async agent workflow handoff
 
 Diagram: https://claude.ai/artifact/JBsCzv5XgKrFtHrGCX1PTJ (private artifact; the flow, the six
 human touchpoints, the escalation tiers and the invariants).
@@ -184,26 +184,37 @@ Watch for drift between mvc's door definition and this rubric.
 
 ## v1 decisions
 
-- **Tracker:** backlog-md (installed, v1.53) in a new local git repo at `~/dev/me/ai/backlog` —
-  does not exist yet. Proposed mapping: spec = task; slices = subtasks (`--parent`) with
-  `--depends-on` for the critical path; acceptance cases = `--ac`; plan = plan field; debrief =
-  final summary; DECIDE rulings = `backlog decision`; owner queue = a custom status such as
-  `Awaiting you`; pipeline states = configured statuses.
-- **Trial repo:** `~/dev/lambertsson/repos/lao-web-frontend` (Angular, pnpm, no CI). Work only on
-  a local branch from `staging`. **Never push. Never touch Azure DevOps.** Gate: `pnpm lint`,
-  `pnpm test` (Vitest), `pnpm build`. E2E (Playwright) is out. The repo's AGENTS.md conventions
-  apply (no code comments, a `Deviations` heading for the eventual PR).
+- **Tracker:** backlog-md (v1.53) in a local-only git repo at `~/dev/me/ai/backlog` holding two
+  independent boards, each with its own config and statuses (select one by working directory or
+  `BACKLOG_CWD`):
+  - `build-sliceworks/` (prefix `BUILD`, default statuses) — the work of building this workflow.
+  - `sliceworks/` (prefix `ITEM`) — the workflow's own state. Statuses: `Spec`, `Planning`,
+    `Awaiting you`, `Ready`, `Implementing`, `Gating`, `Reviewing`, `Judging`, `Done`.
+
+  Mapping: spec = task; slices = subtasks (`--parent`) with `--depends-on` for the critical path;
+  acceptance cases = `--ac`; plan = plan field; debrief = final summary; DECIDE rulings =
+  `backlog decision`; owner queue = `Awaiting you`.
+- **Trial repo:** `~/dev/me/ai/vscode` (github.com/magnus-tornvall/vscode), owner's own repos
+  only. Empty today, so the first spec establishes the gate commands. Work only on local branches
+  from `main`; agents never push.
 - **Inbox:** a terminal skill. No notifications; the owner opens it in scheduled windows.
 - **Merge:** the owner pushes and opens the PR themselves after H4.
-- **Runtime:** local worktrees, at most three items in flight. Orca automations plus
-  `worker-start` are a good fit (see below) but the design stays execution-agnostic.
+- **Runtime:** every agent that changes code works in its own git worktree; at most three items in
+  flight. Orca automations plus `worker-start` are a good fit (see below) but the design stays
+  execution-agnostic.
 - **Scope:** the full chain for one item at a time; the four reference docs; both gates
   (integration = rebase + rerun only); the inbox. Out: parallel items until one runs cleanly,
   per-slice review, overlap detection across in-flight items, automated escape capture.
 - **Success measure:** log time and number of owner touches per item, count escapes; run 3–5
   items and compare with the current mvc flow.
-- **First trial item:** not chosen. Should be medium-sized with at least one likely DECIDE, so
-  the rubric is exercised.
+- **First trial items:** a read-only VS Code extension that shows the `sliceworks/` board, written
+  by the owner as three specs, run one at a time in order:
+  1. Scaffold — extension skeleton and the lint/test/build commands the gates call. Likely
+     DECIDEs: precedent (package manager, bundler, test runner), dependencies.
+  2. Board view — a tree of items grouped by status. Hinge: read the task markdown directly, or
+     shell out to `backlog task list --json` (data/consumers).
+  3. Owner queue — an `Awaiting you` view with a count in the status bar, opening the brief or
+     card. Hinge: may anything in the extension write to the tracker (external effects)?
 
 ## Orca notes
 
@@ -222,14 +233,21 @@ Orca is an execution layer; this design is a decision layer.
   - Orca's coordinator loop assumes a live session; use a tick instead.
   - Answer in one place — the inbox — with Orca gates as plumbing only.
   - `gate-create` options suit case cards, not stance or hinge cards.
-- **Unverified:** whether Orca's UI surfaces gates/asks to the human; whether `gate-resolve` takes
-  free text; what `--precheck` failure does.
+- **Checked against the CLI:** `gate-resolve --resolution <text>` takes free text, and
+  `gate-create --options` is optional. The coordinator commands (`run`, `run-stop`,
+  `coordinator-start/stop`) are retired; a Run is a durable mailbox, not a session. So a tick can
+  `run-use --id <run>`, drain with a non-blocking `check` and `--ack`, start new work with
+  `worker-start --worktree new-top-level --repo <repo> --base-branch main`, and exit.
+- **Unverified:** whether `run-use` and `worker-start` work from an automation run rather than an
+  Orca terminal; whether workers keep running after the starting process exits; what `--precheck`
+  failure does; whether Orca's UI surfaces gates and asks to the human.
 
 ## Next steps
 
 1. Write the four reference docs: rubric, card, brief, debrief.
-2. Create `~/dev/me/ai/backlog` (`git init`, `backlog init`, custom statuses).
+2. Smoke-test the tick: an automation that binds a Run, starts a trivial worker, exits; the next
+   run reads its `worker_done`.
 3. Agent definitions, gate scripts, the orchestrator invariants, the inbox skill.
-4. Pick the first trial item and run it end to end.
+4. Owner writes the first trial spec; run it end to end.
 
 Ask before writing outside this repo.
