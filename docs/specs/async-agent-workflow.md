@@ -189,11 +189,12 @@ Watch for drift between mvc's door definition and this rubric.
   `BACKLOG_CWD`):
   - `build-sliceworks/` (prefix `BUILD`, default statuses) — the work of building this workflow.
   - `sliceworks/` (prefix `ITEM`) — the workflow's own state. Statuses: `Spec`, `Planning`,
-    `Awaiting you`, `Ready`, `Implementing`, `Gating`, `Reviewing`, `Judging`, `Done`.
+    `Awaiting you`, `Ready`, `Implementing`, `Reviewing`, `Gating`, `Judging`, `Done`.
 
   Mapping: spec = task; slices = subtasks (`--parent`) with `--depends-on` for the critical path;
-  acceptance cases = `--ac`; plan = plan field; debrief = final summary; DECIDE rulings =
-  `backlog decision`; owner queue = `Awaiting you`.
+  acceptance cases = `--ac`; plan = plan field; debrief = final summary; decisions of every tier =
+  one line per durable ID in the item's implementation notes; owner queue = `Awaiting you`. Full
+  conventions: `sliceworks/docs/board.md`.
 - **Trial repo:** `~/dev/me/ai/vscode` (github.com/magnus-tornvall/vscode), owner's own repos
   only. Empty today, so the first spec establishes the gate commands. Work only on local branches
   from `main`; agents never push.
