@@ -205,7 +205,6 @@ src/            the binary — main.ts is the sequence, config.ts the TOML surfa
                 requests either of them is answered by, mcp.ts the stdio MCP
                 client the Azure DevOps provider talks through
 workflows/      the four prompts this repository points its own config at
-docs/plans/     the plans that record how it got here
 skills/         unrelated: the mvc and commit skills
 ```
 
