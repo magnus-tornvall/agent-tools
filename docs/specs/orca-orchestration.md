@@ -132,8 +132,11 @@ Keep it short: every line is an instruction an agent will follow at a cost.
 1. The worker hits a decision the shape and rulings don't settle. Two-way door: decide, record it
    as an assumption, continue. One-way door: write the question to its report in `mvc`'s format
    (neutral question, stance, Wrong if, Rules out, One-way door) plus a **Meanwhile** line naming
-   what stays parked, send `worker_done --outcome failed`, and stop. One decision per question,
-   readable without opening anything else. How the outcome is encoded depends on OO-3.
+   what stays parked, and stop with `worker_done --outcome failed --subject "Question: <one line>"
+   --report-path <report>`. One decision per question, readable without opening anything else.
+   The `Question:` subject is what tells a question from a real failure: Orca stores it in the
+   Task's `result`, so the tick reads it from `task-list` without the inbox. Orca does not count
+   either toward its failure limit.
 2. Tasks that depend on the stopped Task stay pending; the rest of the DAG moves.
 3. The owner opens the inbox in a scheduled window, reads each question, and answers in free
    text. Free text keeps "you are asking the wrong thing" and "that's a two-way door, decide it"
@@ -143,7 +146,10 @@ Keep it short: every line is an instruction an agent will follow at a cost.
    waits hours with a question open.
 
 More than three one-way doors on one item means the shape wasn't settled: the tick stops
-dispatching that item and the report sends it back to `mvc`.
+dispatching that item and the report sends it back to `mvc`. Orca enforces no attempt limit on
+`worker-start` (see [Known Orca behaviour](#known-orca-behaviour)), so the tick counts: questions
+by walking each Task's `retry_of_dispatch_id` chain, and real failures the same way, so a Task
+that keeps failing goes to the inbox instead of retrying forever.
 
 **What counts as a one-way door** — costly to undo once shipped because someone outside this
 change pays:
@@ -334,6 +340,32 @@ Smoke-tested on Orca 1.4.221:
 - A worker that settled `succeeded` in `--worktree current` reads `resource.state: user_owned` with
   `nextAction` `none`, and its terminal stays live. `worker-list` names no release, so the tick
   leaves it. Whether a `new-top-level` worker behaves the same is untested.
+- `worker_done --outcome failed` moves the Task straight to `failed` and leaves the Dispatch's
+  `failure_count` at 0. Four such attempts in a row, chained with `--retry-of`, and a
+  `worker-stop` among them, all left it at 0; each retry was accepted. A question costs nothing
+  against Orca's limit, so there is nothing for a retry after a ruling to reset.
+- `failure_count` rises only when Orca itself sees the attempt end: the worker's terminal process
+  exits without a report (`last_failure` "Agent process ended"), the terminal is closed, preamble
+  injection fails, or (read from the bundle, not tested) an escalation arrives once the worker has
+  settled. Killing only the agent process left the Dispatch `dispatched` and its liveness
+  `unverifiable`; killing the pane's shell settled it `failed` with `failure_count` 1 and put the
+  Task back to `ready`, not `failed`. Each such exit also put an `escalation` from Orca, "Agent
+  exited unexpectedly", in the Run's inbox; reading and acking it later changed no count.
+- The limit never trips through `worker-start`: each new Dispatch starts at 0, with or without
+  `--retry-of`, so three crashes in a row gave three Dispatches at 1 and a `ready` Task. Only plain
+  `dispatch` seeds a new Dispatch from the Task's highest count; two dispatches ended by closing
+  the terminal went to 2, then 3, `circuit_broken`, Task `failed`. A circuit-broken Task cannot be
+  retried: `worker-start --retry-of` refuses it with `task_not_startable`.
+- `--retry-of` must name the latest settled Dispatch of a `failed` or `blocked` Task; a `ready`
+  Task refuses it and starts with plain `worker-start --task`. A `failed` Task refuses plain
+  `dispatch`, though `dispatch --dry-run` accepts it.
+- `task-list`'s `result` for a reported Task carries the report's `outcome`, `subject`, `body` and
+  `reportPath`; `worker-show` on an older Dispatch still returns its `lastFailure`, so a Task's
+  attempts can be walked back through `retry_of_dispatch_id`.
+- `worker-start --terminal` refuses a terminal Orca doesn't recognise as an agent
+  (`agent_unconfigured`), even one running a process named `claude`.
+- A Haiku worker given a vague spec improvised its own `worker_done` and stalled at a permission
+  prompt for a command with a shell variable in it. Input for OO-4.
 
 Read from the guide and `--help` on Orca 1.4.221, not smoke-tested:
 
@@ -341,8 +373,6 @@ Read from the guide and `--help` on Orca 1.4.221, not smoke-tested:
   takes a JSON array; `task-list --ready` lists what can start; `worker-start` refuses a Task with
   unmet dependencies (`task_not_startable`).
 - `worker_done` takes `--report-path` alongside `--outcome`.
-- `worker-start --task … --retry-of <dispatch_id>` retries; a Task fails after three consecutive
-  failed attempts.
 - After an unknown result, a mutation is retried with the `--retry-request <uuid>` Orca reported,
   and `request-show` tells whether it took effect.
 - Automations always launch an agent (`--prompt` and `--provider` are required), so the tick is a
