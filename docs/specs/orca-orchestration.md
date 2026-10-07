@@ -26,7 +26,7 @@ interruptions — while the owner still understands what shipped.
   state machine doesn't work well"; Cemri et al. 2025: most multi-agent failures are system
   design and agents misaligning with each other) → a deterministic script dispatches and enforces
   what no agent may move; no agent coordinates. The owner runs it through a skill that holds the
-  only judgement in the loop: rulings, and what follows a failure. How a Task gets done belongs to
+  only judgement in the loop: answers to questions, and what follows a failure. How a Task gets done belongs to
   the agent that owns it, working from an objective and a toolbox, so a better model does more
   without more glue.
 - **Asking pays, when cheap and early** (Ambig-SWE 2025: up to +74% on underspecified tasks;
@@ -66,18 +66,18 @@ sit a tick script, three skills and a few rules; no agent runs the loop on its o
   decides nothing; a split the shape doesn't name doesn't happen. How much it adds beyond pointing
   each Task at the shape is open until a real shape has been run (OO-19).
 - **Code does the mechanics; the owner runs it.** The tick script reads Orca state, replies to
-  questions with the owner's rulings, starts ready Tasks under a cap, runs the required gates and
+  questions with the owner's answers, starts ready Tasks under a cap, runs the required gates and
   releases settled workers. It holds nothing between runs and is tested against recorded Orca
   JSON. The `orca-tick` skill wraps it for judgement: the owner runs it in a scheduled window, it
   shows each question, failure and report, and it calls the script for everything else. Neither
   decides how a Task is done.
 - **Workers own a Task with a toolbox.** One agent owns a Task end to end from an objective: the
-  shape and rulings, the repo's own commands, the `orca-worker` skill, Orca's orchestration verbs,
+  shape and answers, the repo's own commands, the `orca-worker` skill, Orca's orchestration verbs,
   and any subagents it chooses to use on its own work. Better models use the same toolbox better;
   nothing in the harness has to change.
-- **The escalation rule is the door distinction.** Settled in the shape or a ruling → follow it.
+- **The escalation rule is the door distinction.** Settled in the shape or an answer → follow it.
   Two-way door → the worker decides, records an assumption, carries on. One-way door → the worker
-  asks with Orca's `ask`, parks what the question decides, and the owner rules. No other tiers.
+  asks with Orca's `ask`, parks what the question decides, and the owner answers. No other tiers.
 - **The producer never certifies.** Every code change passes required gates the worker can neither
   skip nor steer: the repo's checks first, then a review agent with a clean context. A gate
   detects and sorts; it never edits code. What it finds goes in the report.
@@ -88,14 +88,14 @@ sit a tick script, three skills and a few rules; no agent runs the loop on its o
 owner: mvc grill ─► shape file ─► to-orca: Run, Tasks S1…Sn with deps
   ─► owner runs orca-tick: worker-start per ready Task (cap), each in its own worktree
   ─► worker implements with its toolbox; one-way door ─► ask, carries on with what isn't parked
-  ─► owner runs orca-tick: reads each question, rules ─► reply ─► worker resumes
+  ─► owner runs orca-tick: reads each question, answers ─► reply ─► worker resumes
   ─► all parts done ─► tick script runs the repo's checks on the item branch ─► surprise check Task
-  ─► orca-tick shows the item report ─► owner pushes and opens the PR, or rules a rework
+  ─► orca-tick shows the item report ─► owner pushes and opens the PR, or decides a rework
 ```
 
 The owner touches each item at the `mvc` grill (with `to-orca` in the same sitting), in tick
 windows where a question or a report is waiting, and at the final push. A tick with nothing to
-rule costs a glance.
+answer or decide costs a glance.
 
 ## Shape → Task spec
 
@@ -112,20 +112,20 @@ shape and the part's name (OO-19).
 | Observable acceptance | the `requirements` it satisfies, as given/when/then tests |
 
 Every spec carries the absolute path of the shape file, says to read and follow it, and names
-the `orca-worker` skill. A later attempt also gets the Task's earlier questions and rulings, which
-the tick script sends it as a message. The shape and rulings are authoritative; the spec is a
-view of them. Edits to the skill take effect on the next attempt.
+the `orca-worker` skill. Every attempt also gets a starting message from the tick script with the
+Task's earlier questions and answers, or saying there are none, and waits for it before anything
+else. The shape and answers are authoritative; the spec is a view of them. Edits to the skill take effect on the next attempt.
 
 **Unit of work.** One Task per item by default. The shape may name independent parts (parallel
 Tasks) or a strict sequence (a chain); `to-orca` copies that and nothing else (OO-6). Several
 agents never write one change in parallel.
 
 **One file, one writer.** The shape file is `mvc`'s export: written once, never edited by
-agents. It must be written to a durable path, not the system temp directory. A ruling is Orca's
-reply to the worker's `ask`; Orca holds both, and no file records them.
+agents. It must be written to a durable path, not the system temp directory. An answer is the
+owner's reply to the worker's `ask`, which Orca's JSON also calls `answer`; Orca holds both, and no file records them.
 
 **IDs.** `to-orca` assigns requirements `R1…` in shape order and parts `S1…` as Task title
-prefixes. Workers number assumptions (`S1/A1`) and questions (`S1/Q1`) per Task; a ruling goes by its
+prefixes. Workers number assumptions (`S1/A1`) and questions (`S1/Q1`) per Task; an answer goes by its
 question's ID. IDs are never reused within an item.
 
 ## Where policy lives
@@ -141,7 +141,7 @@ Each piece of policy goes where its reader already looks:
 | How to work an Orca Task | The `orca-worker` skill | Workers |
 | What a worker may run, the `git push` deny | The repo's committed `.claude/settings.json` | Claude Code, enforced |
 
-The `orca-worker` skill says: the shape and rulings are authoritative; the door rule and the
+The `orca-worker` skill says: the shape and answers are authoritative; the door rule and the
 list below; the question format; assumptions logged with IDs; tests from the acceptance cases
 first, and a requirement with no observable form gets a test the worker picks, logged as an
 assumption; run the repo's checks before reporting success; the report format; propose follow-ups
@@ -158,7 +158,7 @@ Questions use Orca's own `ask` and `reply`, as Orca's orchestration guide intend
 the coordinator replies. Gates stay what the guide says they are, coordinator-owned decisions on
 the Task DAG, and never carry a worker's question.
 
-1. The worker hits a decision the shape and rulings don't settle. Two-way door: decide, record it
+1. The worker hits a decision the shape and answers don't settle. Two-way door: decide, record it
    as an assumption, continue. One-way door: write the question in `mvc`'s format (neutral
    question, stance, Wrong if, Rules out, One-way door) plus a **Meanwhile** line naming what
    stays parked, and `ask` with that whole block as `--question` and a timeout. One decision per
@@ -175,13 +175,20 @@ the Task DAG, and never carry a worker's question.
    (`check --peek`), and the skill shows each one with no reply. The owner answers in free text. Free text keeps "you are asking the wrong thing" and "that's a
    two-way door, decide it" as easy to type as an answer. The skill hands the answer to the
    script, which sends it with `reply --id <message_id>`. Orca keeps the question and its reply.
-5. The worker's resume returns the ruling and it carries on in the same attempt. If the attempt
+5. The worker's resume returns the answer and it carries on in the same attempt. If the attempt
    has ended, Orca refuses the reply (`dispatch_inactive`). The tick shows that closed question
-   with the failed attempt, the owner rules it when deciding to retry, and the script sends the
-   new attempt the Task's questions and rulings with `send --to dispatch:<id>`.
+   with the failed attempt, the owner answers it when deciding to retry, and the script puts it
+   in the new attempt's starting message.
+
+Every attempt, the first included, gets a starting message: right after `worker-start`, the
+script sends the Task's questions and answers so far, or says there are none, with `send --to
+dispatch:<id>`. Orca doesn't inject it, and the send can land after the worker's first turn has
+begun, so the worker's first command is `check --wait`, which returns once the message is there.
+It reads and acks every batch until a check returns none. If the wait times out with nothing, it
+reports `failed` rather than start without the message.
 
 More than three one-way doors on one item means the shape wasn't settled. The tick shows the
-count, and the owner sends the item back to `mvc` rather than ruling again.
+count, and the owner sends the item back to `mvc` rather than answering again.
 
 The tick shows every attempt that didn't succeed, and the owner decides what follows, using
 Orca's verbs for it:
@@ -212,7 +219,7 @@ change pays:
 - **External effects** — sends, deletes, payments; anything that cannot be recalled.
 - **Test contracts** — changing what an existing test asserts.
 
-Contradicting the shape or a ruling is always a question. Unsure → treat it as a one-way door and
+Contradicting the shape or an answer is always a question. Unsure → treat it as a one-way door and
 say so in the question. This list is wider than `mvc`'s today; see [Deferred](#deferred).
 
 Asking is not free: over-escalating is a defect like missing one. The rule changes only from
@@ -238,27 +245,27 @@ When every implementation Task of an item has completed, the tick script runs:
    they go in the report.
 2. **Surprise check**, an agent gate the tick starts as an Orca Task once the mechanical gate
    passes.
-   - **Inputs:** the shape, the item's questions and rulings read from the Run, the diff, the
+   - **Inputs:** the shape, the item's questions and answers read from the Run, the diff, the
      worker reports and the mechanical gate's results.
-   - **Objective:** list what a reader holding only the shape and rulings would not expect.
+   - **Objective:** list what a reader holding only the shape and answers would not expect.
    - **Verdict:** each surprise in one bin:
      - **logged assumption** — fine, listed in the report;
-     - **correctable** — contradicts the shape or a ruling where they settle what is right;
-     - **needs a ruling** — an unlogged one-way-door decision, or a contradiction the shape
+     - **correctable** — contradicts the shape or an answer where they settle what is right;
+     - **needs a decision** — an unlogged one-way-door decision, or a contradiction the shape
        doesn't settle; the script opens a gate on the item's Task for it, and it counts as a near
        miss.
-3. **No automatic rework.** Findings go in the report. The owner pushes as is, or rules what to
+3. **No automatic rework.** Findings go in the report. The owner pushes as is, or decides what to
    fix; the tick then starts a rework Task — a worker with the item's own objective plus the
    findings — and runs the gates once more when it completes. A worker handed findings works like
    any other worker; there is no separate correction role. How a rework attempt starts from the
-   item branch is open (OO-20), and is settled the first time one is ruled.
+   item branch is open (OO-20), and is settled the first time one is decided.
 
 The surprise check writes the item report, ordered surprise-first:
 
-1. Anything that contradicts the shape or a ruling — blocks pushing until ruled.
+1. Anything that contradicts the shape or an answer — blocks pushing until the owner decides.
 2. Mechanical gate results: failing commands, changed tests, changes outside the touchpoints.
 3. Assumptions the workers made (`S…/A…`).
-4. Questions asked during the item and their rulings (`S…/Q…`).
+4. Questions asked during the item and their answers (`S…/Q…`).
 5. Per requirement (`R…`): done or not, with test evidence.
 
 LLM reviewers miss about half of what they look for (ImpossibleBench 2025), which is why the
@@ -270,8 +277,8 @@ mechanical gate runs first and is never replaced.
 |---|---|---|
 | `to-orca` | Skill | Shape → Run, one Task per named part with dependencies; R and S IDs; show the DAG to the owner. No splitting decisions. How much each spec holds beyond the shape is open (OO-19). |
 | `orca-worker` | Skill | How to work an Orca Task (see [Where policy lives](#where-policy-lives)). |
-| Tick script | Script, tested against recorded Orca JSON | Runs as the Run's coordinator. `status`: questions with no reply, read from the Run's inbox without consuming it, and pending gates (needs-a-ruling surprises), with their item's door count; failed or crashed attempts with attempt counts; items ready for gating. `rule`: reply to a question with the owner's ruling. `advance`: start ready Tasks under the cap, retry with `--retry-of` and send the new attempt the Task's questions and rulings, or cancel a Task when the owner says so, release settled workers. `gate`: run the mechanical gate on an item, then start the surprise check. Holds the surprise check's Task spec. Never pushes, never edits code, holds no state. |
-| `orca-tick` | Skill, run by the owner | Calls `status`; shows each question, surprise, failure and report; hands rulings to `rule`; asks retry or cancel after a failure; calls `advance` and `gate`. Runs no Orca command the script covers. |
+| Tick script | Script, tested against recorded Orca JSON | Runs as the Run's coordinator. `status`: questions with no reply, read from the Run's inbox without consuming it, and pending gates (needs-a-decision surprises), with their item's door count; failed or crashed attempts with attempt counts; items ready for gating. `reply`: reply to a question with the owner's answer. `advance`: start ready Tasks under the cap, retry with `--retry-of`, send each new attempt its starting message, or cancel a Task when the owner says so, release settled workers. `gate`: run the mechanical gate on an item, then start the surprise check. Holds the surprise check's Task spec. Never pushes, never edits code, holds no state. |
+| `orca-tick` | Skill, run by the owner | Calls `status`; shows each question, surprise, failure and report; hands answers to `reply`; asks retry or cancel after a failure; calls `advance` and `gate`. Runs no Orca command the script covers. |
 | Rules | Committed repo files | `.claude/settings.json` with the scoped allowlist and the `git push` deny; the check commands file; the constraints below. |
 
 ## Constraints
@@ -283,7 +290,7 @@ mechanical gate runs first and is never replaced.
   from `main`. A Task reads `completed` when its worker reports done, before the owner lands it,
   so the tick starts a dependent Task only once every parent's branch is merged into `main`.
 - One item in flight until one has run cleanly end to end; then at most three.
-- Orca is the only task state, and the only record of questions and rulings.
+- Orca is the only task state, and the only record of questions and answers.
 - Orca's model is used as its orchestration guide describes, never worked around. When a piece
   of this design needs Orca to behave otherwise, the design changes, not the use of Orca.
 - No silence-based kills. A stale worker is shown in the tick; act only on positive evidence that
@@ -308,10 +315,10 @@ Captured so they aren't lost; each waits for evidence from a trial run.
 ### Workflow
 
 - **Scheduled tick.** Run the tick script's `advance` and `gate` from launchd, so Tasks start and
-  items are gated without the owner present; rulings still go through the skill. OO-1 showed Orca
+  items are gated without the owner present; answers still go through the skill. OO-1 showed Orca
   can be driven from launchd with no Orca terminal. Trigger: ticking by hand is the bottleneck.
 - **Automatic rework round.** One rework attempt started without the owner when the mechanical
-  gate fails or the surprise check finds something correctable. Trigger: the owner rules "fix it"
+  gate fails or the surprise check finds something correctable. Trigger: the owner decides "fix it"
   on most findings. Needs OO-20.
 - **Attempt limits enforced, not shown.** The tick stops dispatching an item after three one-way
   doors, and sends a Task to the owner after three crashes in a row, without asking. Arrives with
@@ -329,7 +336,7 @@ Captured so they aren't lost; each waits for evidence from a trial run.
 - **Worker-declared transient failures.** A `Blocked:` subject for a failure the worker judges
   environmental (network, rate limit, flaky tool), which the tick retries under its cap without the
   owner. Deferred because a worker's diagnosis is weak evidence (a failing test is easily called
-  flaky) and an unattended retry hides a real defect. Trigger: the owner keeps ruling reported
+  flaky) and an unattended retry hides a real defect. Trigger: the owner keeps deciding reported
   failures "just retry".
 
 ### mvc
@@ -343,8 +350,8 @@ Captured so they aren't lost; each waits for evidence from a trial run.
   conversation, so `to-orca` inherits them instead of numbering by position.
 - **Every requirement observable.** A closing check that each requirement is given/when/then or
   says why it can't be, so no worker invents acceptance.
-- **Rulings as round-0 input.** A re-run after too many one-way doors reads the item's rulings
-  from its Run as facts, so the grill doesn't re-ask what the owner already ruled.
+- **Answers as round-0 input.** A re-run after too many one-way doors reads the item's answers
+  from its Run as facts, so the grill doesn't re-ask what the owner already answered.
 
 ## Trial
 
@@ -355,8 +362,8 @@ items, run one at a time in order:
    manager, bundler, test runner (precedent), dependencies.
 2. Task view — a tree of tasks grouped by status. Hinge: read Orca state through
    `orca orchestration ... --json`, or some other way (consumers, data).
-3. Owner queue — a view of Tasks awaiting a ruling with a count in the status bar, opening the
-   question. Hinge: may anything in the extension act on Orca state, such as recording a ruling or
+3. Owner queue — a view of Tasks awaiting an answer with a count in the status bar, opening the
+   question. Hinge: may anything in the extension act on Orca state, such as replying to a question or
    retrying a Task (external effects)?
 
 ## Known Orca behaviour
@@ -425,7 +432,7 @@ Smoke-tested on Orca 1.4.221:
 - `worker_done --outcome failed` moves the Task straight to `failed` and leaves the Dispatch's
   `failure_count` at 0. Four such attempts in a row, chained with `--retry-of`, and a
   `worker-stop` among them, all left it at 0; each retry was accepted. A question costs nothing
-  against Orca's limit, so there is nothing for a retry after a ruling to reset.
+  against Orca's limit, so there is nothing for a retry after an answer to reset.
 - `failure_count` rises only when Orca itself sees the attempt end: the worker's terminal process
   exits without a report (`last_failure` "Agent process ended"), the terminal is closed, preamble
   injection fails, or (read from the bundle, not tested) an escalation arrives once the worker has
@@ -493,8 +500,7 @@ Smoke-tested on Orca 1.4.222:
   thread. A question whose asker is no longer live is closed.
 - Replying to the question of an attempt that has ended (the worker asked, timed out, then sent
   `worker_done`) is refused with `dispatch_inactive` ("Question … is closed because its Dispatch is
-  inactive"). Nothing is sent. Such a ruling reaches the next attempt only through the rulings
-  file.
+  inactive"). Nothing is sent. Such an answer reaches the next attempt only as a message the coordinator sends it.
 - One terminal coordinates one Run at a time. `run-create` rebinds the terminal to the new Run.
   After that, `check --peek --run <first run>` is `consumer_fenced`. `run-use --id <first run>`
   binds it back: `consumer_generation` went from 1 to 3, the second Run's `coordinator_handle`
@@ -509,6 +515,26 @@ Smoke-tested on Orca 1.4.222:
   a literal backslash, non-ASCII and blank lines intact. `result.reportPath` is null without
   `--report-path`. The worker's own copy turned a tab in the spec into spaces; Orca stored the
   tab in the spec and the body as sent.
+- A retry gets its Task's earlier questions and answers through `send --to dispatch:<id>`. Three
+  Sonnet `claude` attempts on one Task in the trial repo, under the scoped settings above, each
+  chained with `worker-start --retry-of` into the same worktree: the first asked, timed out and
+  reported `failed`; the coordinator sent the second that Q1 had no answer yet and the third the answer blue,
+  and the third wrote blue and reported `succeeded`.
+- The message is never injected. Neither retry saw it in its context, and neither transcript
+  had a user turn beyond the preamble. Each worker read it with its own consuming `check
+  --terminal <handle>` as a `status` message (`to_handle` `dispatch:<id>`, `thread_id` null),
+  then acked the delivery. A worker that never runs `check` never sees it.
+- It arrives when sent before the worker's first turn. `worker-start` returns only once the
+  agent's turn has started (`stage` `input_accepted`, `turnStart` `observed`), so the tick's send
+  after it lands during the first turn. The Dispatch ID is in `worker-list --run` earlier, while
+  the Dispatch is `pending` and its terminal still being created; a send then was accepted
+  three seconds before `worker-start` returned and was in the worker's first `check`.
+- A single `check` can miss a send that lands after it; `check --wait` doesn't. A worker whose
+  first command was `check --terminal <handle> --wait --timeout-ms 100000 --json` blocked 30
+  seconds with no prompt, until the coordinator's message arrived, then returned it. Its `check
+  --ack <delivery_id>` acked that batch and returned the next message, sent two seconds later, as
+  a new delivery; the ack after that returned none. A worker reads and acks until a check returns
+  no `deliveryId`.
 
 Read from the guide, `--help` and the bundled code on Orca 1.4.221 and 1.4.222, not smoke-tested:
 

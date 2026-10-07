@@ -9,16 +9,34 @@ How to work an Orca Task. How to sequence the work is yours.
 
 ## Authority
 
-The shape file named in the Task spec is authoritative, and so are the rulings on this Task's
+The shape file named in the Task spec is authoritative, and so are the answers to this Task's
 questions: the replies to your own asks, and any the coordinator sends you from an earlier
-attempt. The spec is a view of them. Read the shape and those rulings before anything else. Where
-the spec and the shape or a ruling disagree, that is a question.
+attempt. The spec is a view of them. Read the shape and those answers before anything else. Where
+the spec and the shape or an answer disagree, that is a question.
+
+The coordinator sends every attempt a starting message: this Task's earlier questions and
+answers, or that there are none. It never appears in your prompt and may arrive after you start,
+so your first command waits for it:
+
+```bash
+orca orchestration check --terminal <handle> --wait --timeout-ms 100000 --json
+```
+
+Read every message in the batch, then ack it. The ack checks again, so read and ack each batch it
+returns until one has no `deliveryId`:
+
+```bash
+orca orchestration check --terminal <handle> --ack <delivery_id> --json
+```
+
+If the wait times out with nothing, send `worker_done --outcome failed` saying no starting message
+arrived. Never start without it.
 
 ## The door rule
 
-For each decision the shape and rulings don't settle:
+For each decision the shape and answers don't settle:
 
-- **Settled** in the shape or a ruling → follow it.
+- **Settled** in the shape or an answer → follow it.
 - **Two-way door** → decide, log it as an assumption, carry on.
 - **One-way door** → ask a question.
 
@@ -36,7 +54,7 @@ A one-way door is costly to undo once shipped because someone outside this chang
 - **External effects** - sends, deletes, payments; anything that cannot be recalled.
 - **Test contracts** - changing what an existing test asserts.
 
-Contradicting the shape or a ruling is always a question. Unsure → treat it as a one-way door and
+Contradicting the shape or an answer is always a question. Unsure → treat it as a one-way door and
 say so in the question. Over-escalating is a defect like missing one: a two-way door is yours.
 
 ## Questions
@@ -51,7 +69,7 @@ Stance: <a strong opinion, weakly held, reasoning inline>
 Wrong if: <the condition that refutes the stance>
 Rules out: <what agreeing costs>
 One-way door: <what makes it costly to reverse, and who pays>
-Meanwhile: <what stays parked until the ruling, and what is already done>
+Meanwhile: <what stays parked until the answer, and what is already done>
 ```
 
 Ask with the whole block:
@@ -67,8 +85,8 @@ Keep the message ID it returns. A timeout exits 1 with `timedOut: true` and leav
 pending: carry on with what it doesn't park, and at each checkpoint run `ask --resume
 <message_id>` with the same timeout. When only parked work is left, run the resume with
 `--timeout-ms 1800000`, Orca's maximum, as a background command and end your turn; you wake when
-it exits. On a timeout, start it again. The reply is a ruling. Never send `worker_done` to stop
-on a question.
+it exits. On a timeout, start it again. The reply is the answer: follow it, whether it decides the
+question or hands it back to you. Never send `worker_done` to stop on a question.
 
 No option lists in the stance. Never ask through a local prompt; no one is at the keyboard.
 
@@ -101,7 +119,7 @@ Requirements: R1 - done, <test that shows it> | not done, <why>
 Assumptions: S1/A1 - <decision>; rules out <...>
 Checks: <command> - pass | fail
 Follow-ups: <proposed work outside this Task>
-Questions: S1/Q1 - <message ID> - <ruling, or pending>
+Questions: S1/Q1 - <message ID> - <answer, or pending>
 ```
 
 Propose follow-ups in the report; never create Tasks. Finish with:
@@ -114,5 +132,5 @@ EOF
 )"
 ```
 
-Take the task ID, dispatch ID and `--from` handle from your preamble; without them Orca settles
-nothing.
+Take the task ID, dispatch ID and handle (`--from`, `--terminal`) from your preamble; without
+them Orca settles nothing.
