@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Read", "Edit", "Write",
+      "Bash(orca orchestration:*)",
+      "Bash(git status:*)", "Bash(git diff:*)", "Bash(git add:*)", "Bash(git commit:*)",
+      "Bash(npm run typecheck:*)"
+    ],
+    "deny": ["Bash(git push:*)"]
+  }
+}
