@@ -22,7 +22,7 @@ tasks:
       recorded whether worker_done settles the Task, as seen by task-list, when no terminal
       consumes the inbox; and whether the owner's terminal can be the inbox reader while the
       tick only reads Task state
-    status: todo
+    status: done
   - id: OO-3
     kind: unknown
     step: Smoke-test question outcomes against Orca's three-failure limit

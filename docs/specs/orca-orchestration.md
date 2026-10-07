@@ -320,13 +320,27 @@ Smoke-tested on Orca 1.4.221:
   Talk to a worker through the orchestration verbs.
 - A `claude` worker started without permission settings stopped at a prompt for its own
   `orca orchestration send`. That is OO-4's question.
+- A valid `worker_done` settles the Task with no inbox reader. Nobody ran `check`; `task-list`
+  showed the Task `completed` within ten seconds of the send, while the message sat in the Run
+  mailbox unread, never delivered or acknowledged. Reading and acking it later changed no Task
+  or Dispatch state. The tick reads Task state only; the inbox belongs to the owner.
+- `run-create` binds the Run to the terminal it runs under, even from a child process with every
+  `ORCA_*` variable removed: Orca identifies the caller by process, not environment. So the
+  owner's terminal that runs `to-orca` is the Run's inbox reader. It ran `check` and `--ack`
+  while `task-list`, `worker-list` and `worker-release` ran beside it, and was not fenced. Here
+  those tick calls ran as children of the owner's terminal; OO-1 ran them from launchd.
+- `worker-start --task … --retry-of <dispatch_id>` starts a fresh attempt on a Task left `blocked`
+  by `worker-stop`.
+- A worker that settled `succeeded` in `--worktree current` reads `resource.state: user_owned` with
+  `nextAction` `none`, and its terminal stays live. `worker-list` names no release, so the tick
+  leaves it. Whether a `new-top-level` worker behaves the same is untested.
 
 Read from the guide and `--help` on Orca 1.4.221, not smoke-tested:
 
 - Task statuses are `pending, ready, dispatched, completed, failed, blocked`; `task-create --deps`
   takes a JSON array; `task-list --ready` lists what can start; `worker-start` refuses a Task with
   unmet dependencies (`task_not_startable`).
-- `worker_done` with `--outcome` and `--report-path` settles the Task.
+- `worker_done` takes `--report-path` alongside `--outcome`.
 - `worker-start --task … --retry-of <dispatch_id>` retries; a Task fails after three consecutive
   failed attempts.
 - After an unknown result, a mutation is retried with the `--retry-request <uuid>` Orca reported,
