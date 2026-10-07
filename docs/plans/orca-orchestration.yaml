@@ -48,20 +48,28 @@ tasks:
   - id: OO-6
     kind: unknown
     step: Rule when an item splits into several Tasks and how the shape says so
+    # Ruled: one Task per item by default; whether an item splits is the owner's call at the mvc
+    # grill, and to-orca copies the split. How the shape encodes parts belongs to mvc and to-orca,
+    # outside this plan (see OO-8). A sequence costs an owner merge per part (OO-7).
     done_when: >-
       default one Task per item is confirmed or amended, and the shape has a way to name
       independent parts and strict sequences
-    status: todo
+    status: done
   - id: OO-7
     kind: unknown
     step: Rule the base branch of a dependent Task
     done_when: >-
       ruled between branching from the parent Task's branch (stacked) and branching from main
       after the owner lands the parent; Constraints updated
-    status: todo
+    # Ruled: from main. A Task reads completed when its worker reports done, before the owner has
+    # landed it, so the tick starts a Task with deps only once every parent's branch is merged
+    # into main. Stacking on the parent's branch is deferred.
+    status: done
   - id: OO-8
     kind: unknown
     step: Check mvc's shape export against what to-orca reads
+    # Owned by the owner's mvc session, outside this plan's Run, with OO-9 and OO-19; the owner
+    # reports back here.
     done_when: >-
       a real export is written to a durable path and carries every field the shape-to-Task
       table reads, plus the split (OO-6); or the mvc changes needed are listed (mvc lives
@@ -71,6 +79,7 @@ tasks:
   - id: OO-9
     kind: known
     step: Write the to-orca skill
+    # Built in the owner's mvc session with OO-8 and OO-19, not dispatched from this plan.
     done_when: >-
       reads a shape, creates the Run and one Task per part with dependencies, each spec as
       ruled in OO-19; assigns R and S IDs from the shape; makes no splitting decision of its own
@@ -90,8 +99,9 @@ tasks:
     step: Write the dispatch tick and its tests
     done_when: >-
       a stateless script reads its per-repo config (agent, model, cap, base branch, gate
-      commands), dispatches ready Tasks under the cap, retries ruled questions, applies the
-      three-door stop, releases finished workers, and is tested against recorded Orca JSON
+      commands), dispatches ready Tasks under the cap, holds a Task with deps until each parent's
+      branch is merged into main, retries ruled questions, applies the three-door stop, releases
+      finished workers, and is tested against recorded Orca JSON
     depends_on: [OO-1, OO-2, OO-3, OO-4, OO-7]
     status: todo
   - id: OO-12
@@ -166,6 +176,7 @@ tasks:
   - id: OO-19
     kind: unknown
     step: Rule what to-orca adds to a Task spec beyond pointing at the shape
+    # Ruled in the owner's mvc session with OO-8 and OO-9; reported back here.
     done_when: >-
       with a real export in hand, ruled whether a Task spec is the shape path, the rulings path
       and the part's name, or also carries fields transcribed from the shape-to-Task table

@@ -262,7 +262,8 @@ mechanical gate runs first and is never replaced.
   Workers run under the trial repo's committed `.claude/settings.json`: a scoped allowlist and a
   `git push` deny, never a bypass of permissions.
 - Every code-changing worker runs in its own worktree (`worker-start --worktree new-top-level`),
-  from `main` or, for a dependent Task, as ruled in OO-7.
+  from `main`. A Task reads `completed` when its worker reports done, before the owner lands it,
+  so the tick starts a dependent Task only once every parent's branch is merged into `main`.
 - One item in flight until one has run cleanly end to end; then at most three.
 - Orca is the only task state. The rulings file and the measure log are records, not task state.
 - No silence-based kills. A stale worker goes to the inbox; act only on positive evidence that it
