@@ -115,17 +115,18 @@ tasks:
     # mechanics. Scheduling it is deferred until ticking by hand is the bottleneck.
     step: Write the tick script and its tests
     done_when: >-
-      a stateless script, tested against recorded Orca JSON, run as the Run's coordinator, with
-      four commands. status lists open questions from the Run's inbox and pending gates, each with
-      the item's one-way-door count, failed or crashed attempts with their attempt count, and items
-      ready for gating. rule replies to a question with the owner's ruling and appends it to the
-      rulings file with the next D ID naming the Task. advance starts ready Tasks under the cap
-      (agent, model, cap and base branch as flags with defaults), holding a Task with deps until
-      each parent's branch is merged into main, retries with --retry-of or cancels a Task when the
-      owner says so, and releases settled workers. gate runs the
-      check commands from the repo's committed file on the item branch and flags changed test
-      files and files outside the touchpoints. Never pushes, never edits code, holds no state
-    depends_on: [OO-1, OO-2, OO-3, OO-4, OO-5, OO-7, OO-23]
+      a stateless script, tested against recorded Orca JSON, run as the Run's coordinator, with four
+      commands. status lists questions with no reply, read from the Run's inbox without consuming it
+      (check --peek or inbox --full, never plain check), and pending gates, each with the item's
+      one-way-door count, failed or crashed attempts with their attempt count, and items ready for
+      gating. rule replies to a question with the owner's ruling (reply --id); nothing else records
+      it. advance starts ready Tasks under the cap (agent, model, cap and base branch as flags with
+      defaults), holding a Task with deps until each parent's branch is merged into main, retries
+      with --retry-of and sends the new attempt the Task's questions and rulings (send --to
+      dispatch:<id>), or cancels a Task when the owner says so, and releases settled workers. gate
+      runs the check commands from the repo's committed file on the item branch and flags changed
+      test files and files outside the touchpoints. Never pushes, never edits code, holds no state
+    depends_on: [OO-1, OO-2, OO-3, OO-4, OO-5, OO-7, OO-23, OO-24]
     status: todo
   - id: OO-12
     kind: known
@@ -142,10 +143,10 @@ tasks:
     # an item's Task that has already completed is untested.
     step: Add the surprise check gate to the tick script
     done_when: >-
-      the script holds the gate's Task spec: inputs (shape, rulings, diff, worker reports,
-      mechanical gate results), objective and the three bins; gate starts it once the mechanical
-      gate passes, it writes the item report in surprise-first order, and the script opens a
-      gate on the item's Task for each needs-a-ruling surprise
+      the script holds the gate's Task spec: inputs (shape, the item's questions and rulings read
+      from the Run, diff, worker reports, mechanical gate results), objective and the three bins;
+      gate starts it once the mechanical gate passes, it writes the item report in surprise-first
+      order, and the script opens a gate on the item's Task for each needs-a-ruling surprise
     depends_on: [OO-11]
     status: todo
   - id: OO-14
@@ -187,10 +188,12 @@ tasks:
     # merge-ready, and are freed with worker-release once settled. Until OO-10 lands a Task spec
     # carries the item's step, done_when and the Question encoding inline; after, it names the
     # orca-worker skill. Questions arrive as ask messages in the Run's inbox, which this session
-    # reads as coordinator. A Task reading completed flips the item to done here. Workers never push; the owner reviews and lands each
-    # branch with git merge --ff-only on main once npm run typecheck passed on it, and if main
-    # moved the session rebases, reruns typecheck, and the owner merges again. Before OO-11 is
-    # dispatched its test command joins the allowlist in .claude/settings.json.
+    # reads as coordinator; until OO-11 lands it replies by hand with orca orchestration reply --id
+    # <message_id> --body "<ruling>". A Task reading completed flips the item to done here. Workers
+    # never push; the owner reviews and lands each branch with git merge --ff-only on main once npm
+    # run typecheck passed on it, and if main moved the session rebases, reruns typecheck, and the
+    # owner merges again. Before OO-11 is dispatched its test command joins the allowlist in
+    # .claude/settings.json.
     done_when: >-
       ruled yes or no with OO-3 and OO-4 in hand; if yes, the Run exists and holds build items
       only, each as a Task once its in-session dependencies are done
@@ -201,8 +204,8 @@ tasks:
     step: Rule what to-orca adds to a Task spec beyond pointing at the shape
     # Ruled in the owner's mvc session with OO-8 and OO-9; reported back here.
     done_when: >-
-      with a real export in hand, ruled whether a Task spec is the shape path, the rulings path
-      and the part's name, or also carries fields transcribed from the shape-to-Task table
+      with a real export in hand, ruled whether a Task spec is the shape path and the part's
+      name, or also carries fields transcribed from the shape-to-Task table
     depends_on: [OO-8]
     status: todo
   - id: OO-20
@@ -217,19 +220,20 @@ tasks:
     kind: known
     step: Write the orca-tick skill
     done_when: >-
-      the owner runs it in a window; it calls the tick script's status, shows each question,
-      needs-a-ruling surprise, failure and item report, hands free-text rulings to rule, asks
-      retry or cancel after a failure, and calls advance and gate; it runs no Orca command the
-      script covers, and stays short
+      the owner runs it in a window, in the Run's coordinator terminal (run-use at the start of each
+      session, since only the bound terminal can reply); it calls the tick script's status, shows
+      each question, needs-a-ruling surprise, failure and item report, hands free-text rulings to
+      rule, asks retry or cancel after a failure, and calls advance and gate; it runs no Orca
+      command the script covers, and stays short
     depends_on: [OO-11]
     status: todo
   - id: OO-22
     kind: known
     step: Switch the orca-worker skill's question to Orca's ask
     done_when: >-
-      a worker on a one-way door writes the question to its report, asks with the whole question
-      as ask --question and a timeout, carries on with what the question doesn't park, resumes
-      by message ID at its checkpoints and waits on the resume when nothing else is left; it never
+      a worker on a one-way door asks with the whole question as ask --question and a timeout,
+      carries on with what the question doesn't park, resumes by message ID at its checkpoints and
+      waits on the resume when nothing else is left; it never
       sends worker_done to stop on a question, and the Question subject is gone
     depends_on: [OO-5, OO-23]
     status: todo
@@ -247,3 +251,12 @@ tasks:
     # (dispatch_inactive). One terminal holds one Run at a time; run-use switches back. Details in
     # the spec's Known Orca behaviour.
     status: done
+  - id: OO-24
+    kind: unknown
+    step: Smoke-test handing a retry its Task's earlier questions and rulings
+    done_when: >-
+      recorded, with a claude worker in the trial repo started with worker-start --retry-of: whether
+      a message the coordinator sends with send --to dispatch:<id> reaches the new attempt, how the
+      worker sees it (injected, or read with check), and whether it arrives if sent before the
+      worker's first turn
+    status: todo

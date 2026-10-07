@@ -9,9 +9,10 @@ How to work an Orca Task. How to sequence the work is yours.
 
 ## Authority
 
-The shape file and its rulings file, named in the Task spec, are authoritative; the spec is a
-view of them. Read both before anything else. Where the spec and the shape or a ruling disagree,
-that is a question.
+The shape file named in the Task spec is authoritative, and so are the rulings on this Task's
+questions: the replies to your own asks, and any the coordinator sends you from an earlier
+attempt. The spec is a view of them. Read the shape and those rulings before anything else. Where
+the spec and the shape or a ruling disagree, that is a question.
 
 ## The door rule
 
@@ -40,10 +41,11 @@ say so in the question. Over-escalating is a defect like missing one: a two-way 
 
 ## Questions
 
-One decision per question, readable without opening anything else:
+One decision per question, readable without opening anything else. Number questions per Task
+like assumptions: `S1/Q1`, `S1/Q2`, ...
 
 ```
-**Q1.** <neutral question: answerable either way without the stance; concrete>
+**S1/Q1.** <neutral question: answerable either way without the stance; concrete>
 
 Stance: <a strong opinion, weakly held, reasoning inline>
 Wrong if: <the condition that refutes the stance>
@@ -52,19 +54,21 @@ One-way door: <what makes it costly to reverse, and who pays>
 Meanwhile: <what stays parked until the ruling, and what is already done>
 ```
 
-Write the question to your report, then ask with the whole block:
+Ask with the whole block:
 
 ```bash
 orca orchestration ask --timeout-ms 60000 --json --question "$(cat <<'EOF'
-<the Q1 block>
+<the S1/Q1 block>
 EOF
 )"
 ```
 
-Keep the message ID it returns. The timeout leaves the question pending: carry on with what it
-doesn't park, and at each checkpoint run `ask --resume <message_id>` with the same timeout. When
-only parked work is left, wait on the resume with `--timeout-ms 1800000`, Orca's maximum, again
-on each timeout. The reply is a ruling. Never send `worker_done` to stop on a question.
+Keep the message ID it returns. A timeout exits 1 with `timedOut: true` and leaves the question
+pending: carry on with what it doesn't park, and at each checkpoint run `ask --resume
+<message_id>` with the same timeout. When only parked work is left, run the resume with
+`--timeout-ms 1800000`, Orca's maximum, as a background command and end your turn; you wake when
+it exits. On a timeout, start it again. The reply is a ruling. Never send `worker_done` to stop
+on a question.
 
 No option lists in the stance. Never ask through a local prompt; no one is at the keyboard.
 
@@ -87,7 +91,7 @@ Never push.
 
 ## Report
 
-Write the report to the path the Task names; it is never committed.
+The report is the `worker_done` body; Orca keeps it on the Task.
 
 ```
 # <task ID>: <one line>
@@ -97,15 +101,17 @@ Requirements: R1 - done, <test that shows it> | not done, <why>
 Assumptions: S1/A1 - <decision>; rules out <...>
 Checks: <command> - pass | fail
 Follow-ups: <proposed work outside this Task>
-Questions: Q1 - <message ID> - <ruling, or pending>
+Questions: S1/Q1 - <message ID> - <ruling, or pending>
 ```
 
 Propose follow-ups in the report; never create Tasks. Finish with:
 
 ```bash
 orca orchestration send --type worker_done --task-id <task> --dispatch-id <dispatch> \
-  --from <handle> --outcome succeeded|failed --subject "<one line>" --report-path <report> \
-  --body "<what you did, what you found, what's left>"
+  --from <handle> --outcome succeeded|failed --subject "<one line>" --body "$(cat <<'EOF'
+<the report>
+EOF
+)"
 ```
 
 Take the task ID, dispatch ID and `--from` handle from your preamble; without them Orca settles
