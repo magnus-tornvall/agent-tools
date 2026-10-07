@@ -146,10 +146,19 @@ Keep it short: every line is an instruction an agent will follow at a cost.
    waits hours with a question open.
 
 More than three one-way doors on one item means the shape wasn't settled: the tick stops
-dispatching that item and the report sends it back to `mvc`. Orca enforces no attempt limit on
-`worker-start` (see [Known Orca behaviour](#known-orca-behaviour)), so the tick counts: questions
-by walking each Task's `retry_of_dispatch_id` chain, and real failures the same way, so a Task
-that keeps failing goes to the inbox instead of retrying forever.
+dispatching that item and the report sends it back to `mvc`.
+
+How the tick treats an attempt that didn't succeed:
+
+- **Ended without a report** (crash, kill, closed terminal; Orca records it) → retry. After three
+  in a row the Task goes to the inbox.
+- **Reported with a `Question:` subject** → wait for a ruling, then retry with `--retry-of`.
+- **Any other reported failure** → the inbox. Never retried without the owner; the report body
+  says why it failed.
+
+Orca enforces no attempt limit on `worker-start` (see
+[Known Orca behaviour](#known-orca-behaviour)), so the tick counts both questions and crashes by
+walking each Task's `retry_of_dispatch_id` chain.
 
 **What counts as a one-way door** — costly to undo once shipped because someone outside this
 change pays:
@@ -246,6 +255,11 @@ Captured so they aren't lost; each waits for evidence from a trial run.
   most common reason maintainers reject test-passing agent patches (METR 2026). Trigger: the first
   escape logged as a quality problem.
 - **IDs scoped across items** (e.g. `#58/D2`) once more than one item is in flight.
+- **Worker-declared transient failures.** A `Blocked:` subject for a failure the worker judges
+  environmental (network, rate limit, flaky tool), which the tick retries under its cap without the
+  owner. Deferred because a worker's diagnosis is weak evidence (a failing test is easily called
+  flaky) and an unattended retry hides a real defect. Trigger: the measure log shows reported
+  failures the owner ruled "just retry".
 
 ### mvc
 
@@ -271,6 +285,7 @@ Calibration signals, logged per item, read only after several items:
 - Questions answered from the shape or rulings → the worker isn't reading them.
 - Questions ruled "two-way door, decide it" → over-escalating.
 - Questions ruled on their merits → the real one-way doors; many means a thin shape.
+- Reported failures ruled "just retry" → transient failures reaching the owner.
 - Needs-a-ruling surprises → under-escalating, caught before merge.
 - Check flags (changed tests, changes outside touchpoints) → drift from the shape.
 - Escapes → under-escalating or under-checking. For each, record which door category should have
