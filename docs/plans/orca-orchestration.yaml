@@ -84,7 +84,7 @@ tasks:
       logging, tests from acceptance first, running the repo's checks before success, and the
       report format; says nothing about how to sequence the work, and stays short
     depends_on: [OO-3]
-    status: todo
+    status: done
   - id: OO-11
     kind: known
     step: Write the dispatch tick and its tests
