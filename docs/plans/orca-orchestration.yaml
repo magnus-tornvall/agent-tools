@@ -242,4 +242,8 @@ tasks:
       polling turns; that the coordinator terminal sees the question with check and check --peek
       and answers it with reply; what a reply to the ask of an attempt that has since ended does;
       and whether one terminal can coordinate a second Run with run-use and come back
-    status: todo
+    # Recorded on Orca 1.4.222 (Run run_cb7933432d5b): all of it works as the guide says. Orca caps
+    # a wait at 30 minutes, a timeout exits 1, and a reply to an ended attempt is refused
+    # (dispatch_inactive). One terminal holds one Run at a time; run-use switches back. Details in
+    # the spec's Known Orca behaviour.
+    status: done

@@ -166,7 +166,9 @@ the Task DAG, and never carry a worker's question.
 2. `ask` blocks only until its timeout; the question stays pending in Orca. The worker carries on
    with the work the question doesn't park and resumes the same question by message ID
    (`ask --resume <message_id>`) at its checkpoints. With nothing left that the question doesn't
-   park, it waits on the resume. It never sends `worker_done` to stop on a question.
+   park, it waits on the resume: it runs the resume in the background and ends its turn, and
+   starts the resume again each time it hits Orca's 30-minute cap. It never sends `worker_done`
+   to stop on a question.
 3. Tasks that depend on the asking Task stay pending until it completes; the rest of the DAG moves.
 4. The owner runs `orca-tick` in a scheduled window, in the terminal that is the Run's
    coordinator. The script reads the questions from the Run's inbox, and the skill shows each one.
@@ -174,8 +176,8 @@ the Task DAG, and never carry a worker's question.
    two-way door, decide it" as easy to type as an answer. The skill hands the answer to the
    script, which sends it with `reply --id <message_id>` and appends it to the rulings file.
 5. The worker's resume returns the ruling and it carries on in the same attempt. If the attempt
-   ended before the reply reached it, the next attempt reads the ruling from the rulings file with
-   the shape.
+   has ended, Orca refuses the reply, so the script only appends the ruling, and the next attempt
+   reads it from the rulings file with the shape.
 
 More than three one-way doors on one item means the shape wasn't settled. The tick shows the
 count, and the owner sends the item back to `mvc` rather than ruling again.
@@ -470,6 +472,36 @@ Smoke-tested on Orca 1.4.222:
 - `run-list` and `run-show` carry no open or closed field: only `id`, `objective`,
   `coordinator_handle`, `consumer_generation` and timestamps. A Run is a namespace and an inbox,
   not something that opens and closes.
+- A Sonnet `claude` worker in the trial repo, under the scoped settings above, asked with the
+  preamble's `ask --question … --timeout-ms 60000` and got no prompt. A timeout prints `ok: true`,
+  `timedOut: true`, `answer: null` and the `messageId`, but **exits 1**. The worker committed
+  more work, then `ask --resume <message_id>` at a checkpoint timed out the same way.
+- Orca caps `--timeout-ms` at 1800000 (30 minutes). It silently lowered a requested 3600000 and
+  reported the lower value in `timeoutMs`.
+- A worker waits without polling by running `ask --resume <message_id>` as a background Bash
+  command and ending its turn. Claude Code wakes it when the command exits. It sat idle 15 minutes
+  with no turns, and resumed 11 seconds after the reply. The resume returned `answer`,
+  `answerMessageId` and exit 0. A wait of hours costs one turn every 30 minutes to start the resume
+  again.
+- The coordinator saw the question with `check --peek` while the worker's `ask` was still
+  blocking, and with a consuming `check`. Its payload carries `taskId`, `dispatchId` and the
+  question text. Timeouts and resumes added no messages: one question is one inbox row however
+  often it is resumed. `reply --id <message_id> --body` returned the question as `answered` and
+  put a `status` message with `thread_id` set to the question's ID into the Dispatch's mailbox.
+- No inbox row carries a question's state. An answered question is one that has a reply in its
+  thread. A question whose asker is no longer live is closed.
+- Replying to the question of an attempt that has ended (the worker asked, timed out, then sent
+  `worker_done`) is refused with `dispatch_inactive` ("Question … is closed because its Dispatch is
+  inactive"). Nothing is sent. Such a ruling reaches the next attempt only through the rulings
+  file.
+- One terminal coordinates one Run at a time. `run-create` rebinds the terminal to the new Run.
+  After that, `check --peek --run <first run>` is `consumer_fenced`. `run-use --id <first run>`
+  binds it back: `consumer_generation` went from 1 to 3, the second Run's `coordinator_handle`
+  went to null, and the first Run's pending question was still there.
+- `inbox` is read-only. It lists messages across every Run, with `run_id`, `type`, `read` and
+  `payload`, and was never fenced. Both it and `check --peek --run` ran with the `ORCA_*`
+  environment stripped, but as children of the bound terminal, so whether they work from launchd
+  is untested.
 
 Read from the guide, `--help` and the bundled code on Orca 1.4.221 and 1.4.222, not smoke-tested:
 
@@ -481,14 +513,11 @@ Read from the guide, `--help` and the bundled code on Orca 1.4.221 and 1.4.222, 
 - The guide meant gates for coordinator-owned decisions on the Task DAG ("Do not create a gate
   merely to answer a worker's `ask`"); a worker uses `ask`. `gate-list` is scoped to one Run
   (`--run`).
-- A worker asks with `ask --question … --timeout-ms <n>`; a timeout leaves the question pending,
-  and `ask --resume <message_id>` picks it up. The coordinator answers with `reply --id
-  <message_id> --body`. A pending ask and a reply have durable recovery identities.
+- A pending ask and a reply have durable recovery identities.
 - `--question` has no length limit and keeps line breaks. Orca stores it as the message body
   under the fixed subject `Question`; `check` prints a multi-line body line by line, `check
   --json` returns it unchanged, and `inbox` shows only the subject unless `--full`.
-- `--timeout-ms` defaults to 600000 and is capped at 1800000 (30 minutes); a longer value is cut
-  to the cap.
+- `--timeout-ms` defaults to 600000.
 - The coordinator consumes its Run's inbox with `check`, processes every row of the batch and acks
   it; `check --peek` reads without consuming.
 - To cancel a Task: settle its worker with `worker-stop` or `worker-abandon`, then `task-update
