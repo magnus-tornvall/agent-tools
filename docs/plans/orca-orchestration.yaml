@@ -35,7 +35,8 @@ tasks:
     step: Smoke-test an unattended worker in the trial repo
     done_when: >-
       a worker started with worker-start finishes a small change with no permission prompt,
-      and a push from its worktree is refused
+      and a push from its worktree is refused; and whether the settled worker is one worker-list
+      names for release
     status: todo
   - id: OO-5
     kind: unknown
