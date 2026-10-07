@@ -227,8 +227,8 @@ tasks:
     kind: known
     step: Switch the orca-worker skill's question to Orca's ask
     done_when: >-
-      a worker on a one-way door writes the question to its report, asks with ask --question "<one
-      line>; see <report>" and a timeout, carries on with what the question doesn't park, resumes
+      a worker on a one-way door writes the question to its report, asks with the whole question
+      as ask --question and a timeout, carries on with what the question doesn't park, resumes
       by message ID at its checkpoints and waits on the resume when nothing else is left; it never
       sends worker_done to stop on a question, and the Question subject is gone
     depends_on: [OO-5, OO-23]

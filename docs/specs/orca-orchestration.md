@@ -161,7 +161,7 @@ the Task DAG, and never carry a worker's question.
 1. The worker hits a decision the shape and rulings don't settle. Two-way door: decide, record it
    as an assumption, continue. One-way door: write the question to its report in `mvc`'s format
    (neutral question, stance, Wrong if, Rules out, One-way door) plus a **Meanwhile** line naming
-   what stays parked, then `ask --question "<one line>; see <report>"` with a timeout. One
+   what stays parked, then `ask` with that whole block as `--question` and a timeout. One
    decision per question, readable without opening anything else.
 2. `ask` blocks only until its timeout; the question stays pending in Orca. The worker carries on
    with the work the question doesn't park and resumes the same question by message ID
@@ -471,7 +471,7 @@ Smoke-tested on Orca 1.4.222:
   `coordinator_handle`, `consumer_generation` and timestamps. A Run is a namespace and an inbox,
   not something that opens and closes.
 
-Read from the guide and `--help` on Orca 1.4.221 and 1.4.222, not smoke-tested:
+Read from the guide, `--help` and the bundled code on Orca 1.4.221 and 1.4.222, not smoke-tested:
 
 - Task statuses are `pending, ready, dispatched, completed, failed, blocked`; `task-create --deps`
   takes a JSON array; `task-list --ready` lists what can start; `worker-start` refuses a Task with
@@ -484,6 +484,11 @@ Read from the guide and `--help` on Orca 1.4.221 and 1.4.222, not smoke-tested:
 - A worker asks with `ask --question … --timeout-ms <n>`; a timeout leaves the question pending,
   and `ask --resume <message_id>` picks it up. The coordinator answers with `reply --id
   <message_id> --body`. A pending ask and a reply have durable recovery identities.
+- `--question` has no length limit and keeps line breaks. Orca stores it as the message body
+  under the fixed subject `Question`; `check` prints a multi-line body line by line, `check
+  --json` returns it unchanged, and `inbox` shows only the subject unless `--full`.
+- `--timeout-ms` defaults to 600000 and is capped at 1800000 (30 minutes); a longer value is cut
+  to the cap.
 - The coordinator consumes its Run's inbox with `check`, processes every row of the batch and acks
   it; `check --peek` reads without consuming.
 - To cancel a Task: settle its worker with `worker-stop` or `worker-abandon`, then `task-update

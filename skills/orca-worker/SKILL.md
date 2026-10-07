@@ -1,6 +1,6 @@
 ---
 name: orca-worker
-description: Use when working an Orca Task as a dispatched worker - a Task spec that names this skill, or a coordinator preamble with a task ID. Covers what is authoritative, when to decide and when to stop with a question, assumption IDs, tests, checks, and the report.
+description: Use when working an Orca Task as a dispatched worker - a Task spec that names this skill, or a coordinator preamble with a task ID. Covers what is authoritative, when to decide and when to ask a question, assumption IDs, tests, checks, and the report.
 ---
 
 # orca-worker
@@ -19,7 +19,7 @@ For each decision the shape and rulings don't settle:
 
 - **Settled** in the shape or a ruling → follow it.
 - **Two-way door** → decide, log it as an assumption, carry on.
-- **One-way door** → stop with a question.
+- **One-way door** → ask a question.
 
 A one-way door is costly to undo once shipped because someone outside this change pays:
 
@@ -40,15 +40,7 @@ say so in the question. Over-escalating is a defect like missing one: a two-way 
 
 ## Questions
 
-Write the question to your report, then stop with:
-
-```bash
-orca orchestration send --type worker_done --task-id <task> --dispatch-id <dispatch> \
-  --from <handle> --outcome failed --subject "Question: <one line>" --report-path <report>
-```
-
-Take the task ID, dispatch ID and `--from` handle from your preamble; without them Orca settles
-nothing. One decision per question, readable without opening anything else:
+One decision per question, readable without opening anything else:
 
 ```
 **Q1.** <neutral question: answerable either way without the stance; concrete>
@@ -59,6 +51,20 @@ Rules out: <what agreeing costs>
 One-way door: <what makes it costly to reverse, and who pays>
 Meanwhile: <what stays parked until the ruling, and what is already done>
 ```
+
+Write the question to your report, then ask with the whole block:
+
+```bash
+orca orchestration ask --timeout-ms 60000 --json --question "$(cat <<'EOF'
+<the Q1 block>
+EOF
+)"
+```
+
+Keep the message ID it returns. The timeout leaves the question pending: carry on with what it
+doesn't park, and at each checkpoint run `ask --resume <message_id>` with the same timeout. When
+only parked work is left, wait on the resume with `--timeout-ms 1800000`, Orca's maximum, again
+on each timeout. The reply is a ruling. Never send `worker_done` to stop on a question.
 
 No option lists in the stance. Never ask through a local prompt; no one is at the keyboard.
 
@@ -86,14 +92,21 @@ Write the report to the path the Task names; it is never committed.
 ```
 # <task ID>: <one line>
 
-Outcome: succeeded | failed | question
+Outcome: succeeded | failed
 Requirements: R1 - done, <test that shows it> | not done, <why>
 Assumptions: S1/A1 - <decision>; rules out <...>
 Checks: <command> - pass | fail
 Follow-ups: <proposed work outside this Task>
-Question: <only when stopping on one>
+Questions: Q1 - <message ID> - <ruling, or pending>
 ```
 
-Propose follow-ups in the report; never create Tasks. Finish with the same command as a question,
-with `--outcome succeeded` or `--outcome failed`, a one-line `--subject`, and a `--body` that
-summarises the report in three sentences: what you did, what you found, what's left.
+Propose follow-ups in the report; never create Tasks. Finish with:
+
+```bash
+orca orchestration send --type worker_done --task-id <task> --dispatch-id <dispatch> \
+  --from <handle> --outcome succeeded|failed --subject "<one line>" --report-path <report> \
+  --body "<what you did, what you found, what's left>"
+```
+
+Take the task ID, dispatch ID and `--from` handle from your preamble; without them Orca settles
+nothing.
