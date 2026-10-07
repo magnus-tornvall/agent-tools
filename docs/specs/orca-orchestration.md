@@ -2,33 +2,137 @@
 status: draft
 mvp: >-
   One trial item carried from an mvc shape to a merge-ready local branch through Orca, the owner
-  touching it only at the grill, at gate rulings, and at the report.
+  touching it only at the grill, at question rulings, and at the report.
+diagram: https://claude.ai/artifact/JyaBoUFzazVF4DUf9Db14c
+research: ../research/agentic-systems/report.md
+# Issue IDs are durable: never renumbered, never reused. New issues take the next free number.
+# kind: unknown = a question a smoke test or a ruling must answer before the dependent build;
+#       known  = settled work, only effort stands between it and done.
 tasks:
-  - id: 1
-    step: Smoke-test a worker blocked in ask across an hours-long wait
-    done_when: the worker resumes after a late reply, or the fallback below is adopted
+  - id: OO-1
+    kind: unknown
+    step: Smoke-test driving Orca from a process outside an Orca terminal
+    done_when: >-
+      a launchd or cron job runs task-list, worker-start, worker-list and worker-release, or
+      the terminal the tick needs is recorded
     status: todo
-  - id: 2
-    step: Smoke-test a gate on one Task
-    done_when: sibling Tasks still dispatch while it is open; whether Orca's UI shows it is recorded
+  - id: OO-2
+    kind: unknown
+    step: Smoke-test Task settlement without anyone reading the Run inbox
+    done_when: >-
+      recorded whether worker_done settles the Task, as seen by task-list, when no terminal
+      consumes the inbox; and whether the owner's terminal can be the inbox reader while the
+      tick only reads Task state
     status: todo
-  - id: 3
-    step: Write the worker addendum
+  - id: OO-3
+    kind: unknown
+    step: Smoke-test question outcomes against Orca's three-failure limit
+    done_when: >-
+      recorded whether an attempt that ends with a question counts toward the limit and whether
+      a retry after the ruling resets it; the question encoding is chosen to fit
     status: todo
-  - id: 4
-    step: Write the coordinator prompt
-    depends_on: [1, 2, 3]
+  - id: OO-4
+    kind: unknown
+    step: Smoke-test an unattended worker in the trial repo
+    done_when: >-
+      a worker started with worker-start finishes a small change with no permission prompt,
+      and a push from its worktree is refused
     status: todo
-  - id: 5
+  - id: OO-5
+    kind: unknown
+    step: Find how the inbox lists every Task awaiting a ruling across open Runs
+    done_when: >-
+      a command sequence lists each Task whose last attempt ended with a question, with the
+      question, across all open Runs
+    status: todo
+  - id: OO-6
+    kind: unknown
+    step: Rule when an item splits into several Tasks and how the shape says so
+    done_when: >-
+      default one Task per item is confirmed or amended, and the shape has a way to name
+      independent parts and strict sequences
+    status: todo
+  - id: OO-7
+    kind: unknown
+    step: Rule the base branch of a dependent Task
+    done_when: >-
+      ruled between branching from the parent Task's branch (stacked) and branching from main
+      after the owner lands the parent; Constraints updated
+    status: todo
+  - id: OO-8
+    kind: unknown
+    step: Check mvc's shape export against what to-orca reads
+    done_when: >-
+      a real export is written to a durable path and carries every field the shape-to-Task
+      table reads, plus the split (OO-6); or the mvc changes needed are listed (mvc lives
+      outside this repo; ask first)
+    depends_on: [OO-6]
+    status: todo
+  - id: OO-9
+    kind: known
+    step: Write the to-orca skill
+    done_when: >-
+      reads a shape, creates the Run, one Task per part with dependencies, and the surprise
+      check Task; assigns R and S IDs from the shape; makes no splitting decision of its own
+    depends_on: [OO-6, OO-8]
+    status: todo
+  - id: OO-10
+    kind: known
+    step: Write the trial repo's WORKFLOW.md
+    done_when: >-
+      front matter carries agent, model, concurrency cap, base branch and check commands; the
+      body covers authority of shape and rulings, the door rule, the question format, assumption
+      logging, tests from acceptance first, and the report format, and stays short
+    depends_on: [OO-3]
+    status: todo
+  - id: OO-11
+    kind: known
+    step: Write the dispatch tick and its tests
+    done_when: >-
+      a stateless script dispatches ready Tasks under the cap, retries ruled questions, applies
+      the three-door stop, releases finished workers, and is tested against recorded Orca JSON
+    depends_on: [OO-1, OO-2, OO-3, OO-4, OO-7]
+    status: todo
+  - id: OO-12
+    kind: known
+    step: Add the deterministic checks to the tick
+    done_when: >-
+      on an item branch the tick runs the check commands and flags changed test files and
+      files outside the touchpoints, with no model involved
+    depends_on: [OO-11]
+    status: todo
+  - id: OO-13
+    kind: known
+    step: Write the surprise check and correction Task specs
+    done_when: >-
+      the check sees only shape, rulings, diff, worker reports and check results, sorts each
+      surprise into a bin and writes the item report; one correction round is specified
+    status: todo
+  - id: OO-14
+    kind: known
     step: Write the inbox skill
-    depends_on: [2]
+    done_when: >-
+      lists Tasks awaiting a ruling and surprises needing one, shows each question, takes a
+      free-text answer, and appends it to the rulings file with a D ID naming the Task
+    depends_on: [OO-2, OO-5]
     status: todo
-  - id: 6
-    step: Owner runs mvc for the scaffold item, writing the shape to a durable path
+  - id: OO-15
+    kind: known
+    step: Set up the per-item measure log
+    done_when: >-
+      one place, outside Orca's task state, records owner touches, time, escapes by door
+      category and by quality, question outcomes, check flags and surprise bins per item
     status: todo
-  - id: 7
+  - id: OO-16
+    kind: known
+    step: Owner runs mvc and to-orca for the scaffold item
+    done_when: shape at a durable path; the item's Run and Tasks exist and the owner has seen the DAG
+    depends_on: [OO-8, OO-9]
+    status: todo
+  - id: OO-17
+    kind: known
     step: Run the scaffold item end to end
-    depends_on: [4, 5, 6]
+    depends_on: [OO-10, OO-11, OO-12, OO-13, OO-14, OO-15, OO-16]
     done_when: merge-ready local branch, report read, touches and time logged
     status: todo
 ---
@@ -53,6 +157,23 @@ interruptions — while the owner still understands what shipped.
   answer in scheduled windows.
 - **WIP limits** (Reinertsen): more items in flight without more throughput only lengthens lead
   time. Expected ceiling: 3–5 items, not 10.
+- **One writer per change; parallelism across items** (Cognition 2025–26; Anthropic multi-agent
+  research 2025; "Towards a Science of Scaling Agent Systems" 2025: −70% on sequential work, +81%
+  on decomposable work) → one agent
+  owns an item end to end; items run side by side.
+- **Control flow in code, judgement in agents** (Cemri et al. 2025: most multi-agent failures are
+  system design and agents misaligning with each other) → a deterministic tick dispatches; no
+  agent coordinates.
+- **Asking pays, when cheap and early** (Ambig-SWE 2025: up to +74% on underspecified tasks;
+  ImpossibleBench 2025: an explicit way to flag cut test cheating from 54% to 9%) → the grill
+  settles ambiguity up front, and a one-way door still stops the worker.
+- **Passing checks is not mergeable** (UTBoost 2025: 15.7% of passing patches wrong; METR 2026:
+  maintainers merged 24 points below the grader) → the tick owns the checks, and an agent with a
+  clean context looks for surprises.
+- **Long contexts degrade** (Chroma 2025; NoLiMa 2025) → after a ruling, start a fresh attempt
+  from the shape and rulings rather than resume a session parked for hours.
+- **Repo policy files help only when short** (Gloaguen et al. 2026: +4% success, up to +19% cost)
+  → keep `WORKFLOW.md` lean.
 - **Review effectiveness drops past ~400 LOC and 60–90 min** (SmartBear/Cisco) → the owner reviews
   decisions and evidence, not whole diffs.
 - **Out-of-the-loop and automation bias** (Bainbridge 1983; Endsley & Kiris 1995; Parasuraman &
@@ -61,75 +182,107 @@ interruptions — while the owner still understands what shipped.
 - **Self-perception is unreliable** (METR 2025: 19% slower, felt 20% faster) → measure touches,
   don't judge by feel.
 
+The evidence behind the newer bullets, with strength and disputed figures, is in the
+[research report](../research/agentic-systems/report.md).
+
 ## Approach
 
-`mvc` is the decision layer, Orca is the execution layer. Build only the glue between them.
+`mvc` is the decision layer, Orca is the execution layer and the only work state. Build only thin
+glue between them; put no agent in the control loop.
 
-- **`mvc` already does the planning handoff.** The grill settles every one-way door before code is
-  written, which is what a separate planner and brief would exist to do. Its shape file is the
-  agents' spec.
-- **Orca already does the coordination.** A Run is the mailbox, Tasks with dependencies are the
-  slices, `worker-start` gives each slice its own worktree, `ask` is the blocking question, and a
-  gate parks one task while the rest of the graph moves.
-- **The escalation rule is the door distinction.** Settled in the shape or a ruling → answered
-  from there. Two-way door → the worker decides, records it as an assumption, carries on. One-way
-  door → the owner decides. No other tiers.
+- **`mvc` stays a simple first step.** The grill settles every one-way door before code is written
+  and, when an item has parts, names the split. Its shape file is the agents' spec.
+- **`to-orca` transcribes the shape into a Run.** One Task per part, dependencies from the shape,
+  and a surprise check Task after them. It decides nothing; a split the shape doesn't name doesn't
+  happen.
+- **A stateless tick drives the DAG.** It reads Orca state, starts ready Tasks under a cap, runs
+  the deterministic checks, and holds nothing between runs.
+- **Workers get objectives, not roles.** One agent owns a Task end to end, guided by the repo's
+  `WORKFLOW.md`.
+- **The escalation rule is the door distinction.** Settled in the shape or a ruling → follow it.
+  Two-way door → the worker decides, records an assumption, carries on. One-way door → the worker
+  stops with a question and the owner rules. No other tiers.
+- **A surprise check runs after the fact and drives corrections.** It detects and sorts; it never
+  edits code.
 
 ## Flow
 
+System diagram, with each open question pinned to the part it blocks:
+[MVP map](https://claude.ai/artifact/JyaBoUFzazVF4DUf9Db14c).
+
 ```
-owner: mvc ─► shape file
-  ─► coordinator agent: run-create, task-create per slice (deps), worker-start per ready slice
-  ─► workers implement; one-way door ─► ask ─► coordinator gates the blocked task
-  ─► owner: inbox window, resolves gates ─► coordinator records the ruling, replies, worker resumes
-  ─► all slices done ─► coordinator runs lint/test/build on the integrated branch, writes the report
+owner: mvc grill ─► shape file ─► to-orca: Run, Tasks S1…Sn with deps, surprise check Task
+  ─► tick: worker-start per ready Task (cap), each in its own worktree
+  ─► worker implements; one-way door ─► question in report, worker_done failed, stop
+  ─► owner: inbox window, rules ─► ruling appended ─► tick starts a fresh attempt
+  ─► all parts done ─► tick: lint/test/build + diff checks on the item branch
+  ─► surprise check ─► correctable? one correction Task ─► checks again ─► item report
   ─► owner: reads report, pushes, opens PR
 ```
 
-The owner touches each item three times: the `mvc` grill, gate rulings (only when a one-way door
-surfaces), and the final report.
+The owner touches each item three times: the `mvc` grill (with `to-orca` in the same sitting),
+rulings (only when a one-way door surfaces), and the final report.
 
-## Shape → task spec
+## Shape → Task spec
 
-Each Task spec is self-contained and uses Orca's task-spec fields, filled from the shape file:
+`to-orca` writes each Task spec from the shape, using Orca's task-spec fields:
 
 | Task-spec field | From the shape |
 |---|---|
-| Target | `touchpoints` for this slice |
-| Change | the slice of `outcome` and `approach` it delivers |
+| Target | `touchpoints` for this part |
+| Change | the part of `outcome` and `approach` it delivers |
 | Constraints | `constraints`, `non_goals`, and the decision log's rejected alternatives |
-| Ownership | the files this slice may edit; everything else is read-only |
+| Ownership | the files this part may edit; everything else is read-only |
 | Observable acceptance | the `requirements` it satisfies, as given/when/then tests |
 
-Every spec carries the absolute paths of the shape file and the rulings file. Both are
-authoritative; the spec is a view of them.
+Every spec carries the absolute paths of the shape file, the rulings file and the repo's
+`WORKFLOW.md`, and says to read and follow all three. They are authoritative; the spec is a view
+of them. Policy edits in `WORKFLOW.md` take effect on the next attempt.
 
-**Two files, two owners.** The shape file is `mvc`'s export: written once, never edited by agents.
-Rulings made during the run go to `<shape-name>.rulings.md` beside it, appended by the coordinator
-only. A later `mvc` re-run replaces the shape without losing rulings. The shape must be written to
-a durable path, not the system temp directory.
+**Unit of work.** One Task per item by default. The shape may name independent parts (parallel
+Tasks) or a strict sequence (a chain); `to-orca` copies that and nothing else (OO-6). Several
+agents never write one change in parallel.
 
-**IDs.** The coordinator assigns them when slicing, so the report can point back: requirements
-`R1…` in the order the shape lists them, slices `S1…` as Task title prefixes, assumptions `A1…`
-and rulings `D1…` in the order they arise. IDs are never reused within an item.
+**Two files, two writers.** The shape file is `mvc`'s export: written once, never edited by
+agents. Rulings go to `<shape-name>.rulings.md` beside it, appended only by the inbox skill. A
+later `mvc` re-run replaces the shape without losing rulings. The shape must be written to a
+durable path, not the system temp directory.
+
+**IDs.** `to-orca` assigns requirements `R1…` in shape order and parts `S1…` as Task title
+prefixes. Workers number assumptions per Task (`S1/A1`). The inbox skill numbers rulings `D1…`,
+each naming the Task it answers. IDs are never reused within an item.
+
+## WORKFLOW.md
+
+One file in the trial repo holds the policy every attempt follows, in two parts:
+
+- **Front matter, read by the tick:** agent, model, concurrency cap, base branch, and the
+  lint/test/build commands.
+- **Body, read by workers:** shape and rulings are authoritative; the door rule and the list
+  below; the question format; assumptions logged with IDs; tests from the acceptance cases first,
+  and a requirement with no observable form gets a test the worker picks, logged as an
+  assumption; run the check commands before reporting success; the report format; propose
+  follow-ups in the report, never create Tasks.
+
+Keep it short: every line is an instruction an agent will follow at a cost.
 
 ## Mid-flight decisions
 
 1. The worker hits a decision the shape and rulings don't settle. Two-way door: decide, record it
-   as an assumption, continue. One-way door: `ask` the Run, in `mvc`'s question format (neutral
-   question, stance, Wrong if, Rules out, One-way door), plus a **Meanwhile** line naming what
-   stays parked. One decision per question, readable without opening anything else.
-2. The coordinator re-checks the shape and rulings. If they settle it, reply. If the worker
-   mis-classified a two-way door, reply with "decide it, record the assumption". Otherwise
-   `gate-create` on each Task that depends on the answer, and leave the `ask` pending.
-3. The owner opens the inbox in a scheduled window, reads each gate, and answers with
-   `gate-resolve --resolution "<free text>"`. Free text keeps "you are asking the wrong thing" as
-   easy to type as an answer.
-4. The coordinator appends the ruling to the rulings file, then replies to the pending `ask` with
-   it.
+   as an assumption, continue. One-way door: write the question to its report in `mvc`'s format
+   (neutral question, stance, Wrong if, Rules out, One-way door) plus a **Meanwhile** line naming
+   what stays parked, send `worker_done --outcome failed`, and stop. One decision per question,
+   readable without opening anything else. How the outcome is encoded depends on OO-3.
+2. Tasks that depend on the stopped Task stay pending; the rest of the DAG moves.
+3. The owner opens the inbox in a scheduled window, reads each question, and answers in free
+   text. Free text keeps "you are asking the wrong thing" and "that's a two-way door, decide it"
+   as easy to type as an answer. The inbox appends the ruling to the rulings file.
+4. On its next run, the tick starts a fresh attempt (`worker-start --task … --retry-of …`) for each
+   Task whose question has a ruling. The new attempt reads the ruling with the shape; no session
+   waits hours with a question open.
 
-More than three one-way doors surfacing on one item means the shape wasn't settled: the
-coordinator stops dispatching and reports it back as a reason to run `mvc` again.
+More than three one-way doors on one item means the shape wasn't settled: the tick stops
+dispatching that item and the report sends it back to `mvc`.
 
 **What counts as a one-way door** — costly to undo once shipped because someone outside this
 change pays:
@@ -151,39 +304,66 @@ say so in the question. This list is wider than `mvc`'s today; see [Deferred](#d
 Asking is not free: over-escalating is a defect like missing one. The rule changes only from
 evidence — an escape after merge — never on a calendar.
 
+## After the fact: checks, surprises, corrections
+
+When every implementation Task of an item has completed:
+
+1. **Deterministic checks**, run by the tick on the item branch with no model: the lint/test/build
+   commands from `WORKFLOW.md`, a flag for every changed test file, and a flag for every file
+   outside the shape's touchpoints. A failing command stops the item and goes to the owner: the
+   worker reported success on checks that don't pass.
+2. **Surprise check.** A Task with a clean context that sees only the shape, the rulings, the diff,
+   the worker reports and the check results — never worker transcripts, so it doesn't inherit
+   their reasoning. Its objective: list what a reader holding only the shape and rulings would not
+   expect, and sort each into a bin:
+   - **logged assumption** — fine, listed in the report;
+   - **correctable** — contradicts the shape or a ruling where they settle what is right;
+   - **needs a ruling** — an unlogged one-way-door decision, or a contradiction the shape doesn't
+     settle; it goes to the inbox and counts as a near miss.
+3. **One correction round.** If anything is correctable, the tick creates one correction Task with
+   the surprise list as its objective, then reruns the checks and the surprise check once. What
+   remains goes in the report. The checker never edits code: one writer per change.
+
+The surprise check writes the item report, ordered surprise-first:
+
+1. Anything that contradicts the shape or a ruling — blocks pushing until ruled.
+2. Check flags: changed tests, changes outside the touchpoints.
+3. Assumptions the workers made (`S…/A…`).
+4. Rulings made during the item (`D…`).
+5. Per requirement (`R…`): done or not, with test evidence.
+
+LLM reviewers miss about half of what they look for (ImpossibleBench 2025), so the surprise check
+adds to the deterministic checks and never replaces them.
+
 ## Pieces to build
 
 | Piece | Form | Contents |
 |---|---|---|
-| Coordinator | Agent prompt | Slice the shape into Tasks and assign IDs; the escalation rule; gate-on-ask; keep the rulings file; never push; release settled workers; final integration check and report. |
-| Worker addendum | Text appended to each Task spec | Shape and rulings are authoritative; ask only on one-way doors; record assumptions with IDs; tests from the acceptance cases first; a requirement with no observable form gets a test the worker picks, recorded as an assumption. |
-| Inbox | Skill | `gate-list` across open Runs, show each question, `gate-resolve` with the owner's answer. |
-
-The report is ordered surprise-first, so the owner reads what most needs a decision before what
-merely confirms:
-
-1. Anything that contradicts the shape or a ruling — blocks pushing until ruled.
-2. Changes outside the shape's touchpoints.
-3. Assumptions the workers made (`A…`).
-4. Rulings made at gates (`D…`).
-5. Per requirement (`R…`): done or not, with test evidence.
+| `to-orca` | Skill | Shape → Run, one Task per named part with dependencies, the surprise check Task; R and S IDs; show the DAG to the owner. No splitting decisions. |
+| `WORKFLOW.md` | File in the trial repo | Front matter for the tick, a short body for workers (see above). |
+| Dispatch tick | Script, run on a schedule | Start ready Tasks under the cap; retry ruled questions; three-door stop; checks on finished items; create the correction Task; release finished workers. Never pushes, never edits code, holds no state. |
+| Surprise check | Task spec template | Inputs, objective, the three bins, the report order. |
+| Inbox | Skill | List questions and needs-a-ruling surprises across open Runs, show each, append the owner's ruling with a D ID. |
 
 ## Constraints
 
-- Agents never push. The owner pushes and opens the PR after reading the report.
-- Every code-changing worker runs in its own worktree from `main`
-  (`worker-start --worktree new-top-level --base-branch main`).
+- Agents and the tick never push. The owner pushes and opens the PR after reading the report.
+- Every code-changing worker runs in its own worktree (`worker-start --worktree new-top-level`),
+  from `main` or, for a dependent Task, as ruled in OO-7.
 - One item in flight until one has run cleanly end to end; then at most three.
-- Orca is the only task state. No second tracker.
+- Orca is the only task state. The rulings file and the measure log are records, not task state.
+- No silence-based kills. A stale worker goes to the inbox; act only on positive evidence that it
+  has exited, as Orca's own recovery rules require.
 - Trial repo only: `~/dev/me/ai/vscode` (github.com/magnus-tornvall/vscode), local branches from
-  `main`. It is empty today, so the first item establishes the lint/test/build commands the
-  coordinator's integration check calls.
+  `main`. It is empty today, so the first item establishes the lint/test/build commands.
 
 ## Non-goals
 
-- backlog-md as the tracker — boundary. Orca tasks hold the state.
+- An issue tracker — boundary. Orca Tasks hold the state.
+- An agent in the control loop — boundary. The tick is code.
+- Several agents writing one change in parallel — boundary. Parallelism is across items.
 - Notifications — boundary. The owner opens the inbox on their own schedule.
-- Every reviewer-type agent — deferral; see [Deferred](#deferred).
+- A human review gate on intention — deferral; see [Deferred](#deferred).
 
 ## Deferred
 
@@ -191,18 +371,13 @@ Captured so they aren't lost; each waits for evidence from a trial run.
 
 ### Workflow
 
-- **Surprise check.** After all slices pass and before the report, a fresh agent sees only the
-  shape, the rulings, the diff and the logged assumptions — never worker transcripts, so it does
-  not inherit their reasoning — and lists what a reader holding only shape and rulings would not
-  expect. Each surprise lands in one bin: logged assumption (fine), unlogged decision (goes in the
-  report, counts as a near miss), contradiction (blocks pushing). It catches the failure nothing
-  else here sees: a worker that mis-classified a one-way door and never asked. Trigger to add it:
-  the first escape, or the first unlogged decision the owner finds in a diff.
-- **More review roles.** A code reviewer that sees only the diff (no spec, to avoid anchoring), a
-  conformance reviewer checking diff against shape, a fixer with one round, and a judge separate
-  from the finders. Add one only when an escape shows a gap it would have caught.
-- **A scheduled tick** instead of a live coordinator. Smoke-tested; the fallback if coordinator
-  sessions prove fragile.
+- **Intention review gate.** The owner judges whether the change does what was meant, from the
+  shape, the report and the evidence — not the code. Needs the quality review below first, or
+  quality escapes go unseen.
+- **Quality review.** A clean-context Task that sees only the diff and the repo, no shape (to avoid
+  anchoring), with the objective "would a maintainer of this repo merge this?". Code quality is the
+  most common reason maintainers reject test-passing agent patches (METR 2026). Trigger: the first
+  escape logged as a quality problem.
 - **IDs scoped across items** (e.g. `#58/D2`) once more than one item is in flight.
 
 ### mvc
@@ -213,7 +388,7 @@ Captured so they aren't lost; each waits for evidence from a trial run.
   missing. Precedent matters most for agents, which copy what exists. One definition in one place,
   so this spec and `mvc` can't drift.
 - **IDs in the shape file.** Requirements and decision-log entries carry IDs that outlive the
-  conversation, so the coordinator inherits them instead of numbering by position.
+  conversation, so `to-orca` inherits them instead of numbering by position.
 - **Every requirement observable.** A closing check that each requirement is given/when/then or
   says why it can't be, so no worker invents acceptance.
 - **Rulings as round-0 input.** A re-run after too many one-way doors reads the rulings file as
@@ -226,11 +401,14 @@ manual implementation over 3–5 items.
 
 Calibration signals, logged per item, read only after several items:
 
-- `ask`s answered from the shape or rulings → the worker isn't reading them.
-- `ask`s sent back as two-way doors → over-escalating.
-- Gates → the real one-way doors; many means a thin shape.
-- Escapes → under-escalating. For each, record which door category should have fired; that is the
-  only input that changes the escalation rule.
+- Questions answered from the shape or rulings → the worker isn't reading them.
+- Questions ruled "two-way door, decide it" → over-escalating.
+- Questions ruled on their merits → the real one-way doors; many means a thin shape.
+- Needs-a-ruling surprises → under-escalating, caught before merge.
+- Check flags (changed tests, changes outside touchpoints) → drift from the shape.
+- Escapes → under-escalating or under-checking. For each, record which door category should have
+  fired, or that it was a quality problem; those are the only inputs that change the escalation
+  rule or bring the quality review forward.
 
 ## Trial
 
@@ -241,8 +419,9 @@ items, run one at a time in order:
    manager, bundler, test runner (precedent), dependencies.
 2. Task view — a tree of tasks grouped by status. Hinge: read Orca state through
    `orca orchestration ... --json`, or some other way (consumers, data).
-3. Owner queue — a view of open gates with a count in the status bar, opening the question.
-   Hinge: may anything in the extension resolve a gate (external effects)?
+3. Owner queue — a view of Tasks awaiting a ruling with a count in the status bar, opening the
+   question. Hinge: may anything in the extension act on Orca state, such as recording a ruling or
+   retrying a Task (external effects)?
 
 ## Known Orca behaviour
 
@@ -259,9 +438,21 @@ Smoke-tested on Orca 1.4.220:
 - `ask` timing out leaves the question pending; the worker resumes it by message ID.
 - `gate-resolve --resolution` takes free text; `gate-create --options` is optional.
 
-Unverified, and tasks 1–2 above: whether a worker blocked in `ask` survives an hours-long wait —
-fallback: the worker sends `worker_done --outcome failed` with the question, and the coordinator
-re-dispatches the Task after the ruling — and whether a gate on one Task leaves its siblings
-dispatchable and shows in Orca's UI.
+Read from the guide and `--help` on Orca 1.4.221, not smoke-tested:
+
+- Task statuses are `pending, ready, dispatched, completed, failed, blocked`; `task-create --deps`
+  takes a JSON array; `task-list --ready` lists what can start; `worker-start` refuses a Task with
+  unmet dependencies (`task_not_startable`).
+- `worker_done` with `--outcome` and `--report-path` settles the Task.
+- `worker-start --task … --retry-of <dispatch_id>` retries; a Task fails after three consecutive
+  failed attempts.
+- Every mutation takes `--retry-request <id>`, and `request-show` tells whether it took effect.
+- Automations always launch an agent (`--prompt` and `--provider` are required), so the tick is a
+  script, not an automation.
+- "Absence never authorizes stop, abandon, retry, or release": only proven exit or a finished
+  transcript with no `worker_done` allows acting on a silent worker.
+
+Unverified: everything tracked as an open `kind: unknown` in the frontmatter, each with its
+fallback where one exists.
 
 Ask before writing outside this repo.
