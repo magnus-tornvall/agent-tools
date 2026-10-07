@@ -22,19 +22,24 @@ interruptions — while the owner still understands what shipped.
   research 2025; "Towards a Science of Scaling Agent Systems" 2025: −70% on sequential work, +81%
   on decomposable work) → one agent
   owns an item end to end; items run side by side.
-- **Control flow in code, judgement in agents** (Cemri et al. 2025: most multi-agent failures are
-  system design and agents misaligning with each other) → a deterministic tick dispatches; no
-  agent coordinates.
+- **Boundaries in code, process in agents** (OpenAI on Symphony: "treating agents as rigid nodes
+  in a state machine doesn't work well"; Cemri et al. 2025: most multi-agent failures are system
+  design and agents misaligning with each other) → a deterministic tick dispatches and enforces
+  what no agent may move; no agent coordinates. How a Task gets done belongs to the agent that
+  owns it, working from an objective and a toolbox, so a better model does more without more glue.
 - **Asking pays, when cheap and early** (Ambig-SWE 2025: up to +74% on underspecified tasks;
   ImpossibleBench 2025: an explicit way to flag cut test cheating from 54% to 9%) → the grill
   settles ambiguity up front, and a one-way door still stops the worker.
 - **Passing checks is not mergeable** (UTBoost 2025: 15.7% of passing patches wrong; METR 2026:
-  maintainers merged 24 points below the grader) → the tick owns the checks, and an agent with a
-  clean context looks for surprises.
+  maintainers merged 24 points below the grader) and **self-review is weak** (ImpossibleBench
+  2025: agents cheated on about half of impossible tasks; LLM monitors caught 42–50%) → whoever
+  produces a change never certifies it. Required gates the producer can neither skip nor steer
+  stand between every code change and the owner.
 - **Long contexts degrade** (Chroma 2025; NoLiMa 2025) → after a ruling, start a fresh attempt
   from the shape and rulings rather than resume a session parked for hours.
 - **Repo policy files help only when short** (Gloaguen et al. 2026: +4% success, up to +19% cost)
-  → keep `WORKFLOW.md` lean.
+  → always-loaded repo files hold only repo facts; the worker protocol is a skill, loaded when
+  an agent works an Orca Task.
 - **Review effectiveness drops past ~400 LOC and 60–90 min** (SmartBear/Cisco) → the owner reviews
   decisions and evidence, not whole diffs.
 - **Out-of-the-loop and automation bias** (Bainbridge 1983; Endsley & Kiris 1995; Parasuraman &
@@ -49,22 +54,27 @@ The evidence behind the newer bullets, with strength and disputed figures, is in
 ## Approach
 
 `mvc` is the decision layer, Orca is the execution layer and the only work state. Build only thin
-glue between them; put no agent in the control loop.
+glue between them; put no agent in the control loop. Code holds the boundaries; agents hold the
+process.
 
 - **`mvc` stays a simple first step.** The grill settles every one-way door before code is written
   and, when an item has parts, names the split. Its shape file is the agents' spec.
-- **`to-orca` transcribes the shape into a Run.** One Task per part, dependencies from the shape,
-  and a surprise check Task after them. It decides nothing; a split the shape doesn't name doesn't
-  happen.
-- **A stateless tick drives the DAG.** It reads Orca state, starts ready Tasks under a cap, runs
-  the deterministic checks, and holds nothing between runs.
-- **Workers get objectives, not roles.** One agent owns a Task end to end, guided by the repo's
-  `WORKFLOW.md`.
+- **`to-orca` turns the shape into a Run.** One Task per part, dependencies from the shape. It
+  decides nothing; a split the shape doesn't name doesn't happen. How much it adds beyond pointing
+  each Task at the shape is open until a real shape has been run (OO-19).
+- **A stateless tick enforces boundaries, not process.** It reads Orca state, starts ready Tasks
+  under a cap, runs the required gates, releases finished workers, and holds nothing between runs.
+  It never decides how a Task is done.
+- **Workers own a Task with a toolbox.** One agent owns a Task end to end from an objective: the
+  shape and rulings, the repo's own commands, the `orca-worker` skill, Orca's orchestration verbs,
+  and any subagents it chooses to use on its own work. Better models use the same toolbox better;
+  nothing in the harness has to change.
 - **The escalation rule is the door distinction.** Settled in the shape or a ruling → follow it.
   Two-way door → the worker decides, records an assumption, carries on. One-way door → the worker
   stops with a question and the owner rules. No other tiers.
-- **A surprise check runs after the fact and drives corrections.** It detects and sorts; it never
-  edits code.
+- **The producer never certifies.** Every code change passes required gates the worker can neither
+  skip nor steer: mechanical checks first, then agent gates with a clean context. A gate detects
+  and sorts; it never edits code. What it finds goes back to a worker on the item.
 
 ## Flow
 
@@ -72,12 +82,12 @@ System diagram, with each open question pinned to the part it blocks:
 [MVP map](https://claude.ai/artifact/JyaBoUFzazVF4DUf9Db14c).
 
 ```
-owner: mvc grill ─► shape file ─► to-orca: Run, Tasks S1…Sn with deps, surprise check Task
+owner: mvc grill ─► shape file ─► to-orca: Run, Tasks S1…Sn with deps
   ─► tick: worker-start per ready Task (cap), each in its own worktree
-  ─► worker implements; one-way door ─► question in report, worker_done failed, stop
+  ─► worker implements with its toolbox; one-way door ─► question in report, worker_done failed
   ─► owner: inbox window, rules ─► ruling appended ─► tick starts a fresh attempt
-  ─► all parts done ─► tick: lint/test/build + diff checks on the item branch
-  ─► surprise check ─► correctable? one correction Task ─► checks again ─► item report
+  ─► all parts done ─► mechanical gate on the item branch ─► surprise check gate
+  ─► findings? one rework attempt by a worker ─► gates again ─► item report
   ─► owner: reads report, pushes, opens PR
 ```
 
@@ -86,7 +96,9 @@ rulings (only when a one-way door surfaces), and the final report.
 
 ## Shape → Task spec
 
-`to-orca` writes each Task spec from the shape, using Orca's task-spec fields:
+`to-orca` writes each Task spec from the shape, using Orca's task-spec fields. This table is the
+starting guess: running a real shape decides whether the spec needs more than a pointer to the
+shape and the part's name (OO-19).
 
 | Task-spec field | From the shape |
 |---|---|
@@ -96,9 +108,9 @@ rulings (only when a one-way door surfaces), and the final report.
 | Ownership | the files this part may edit; everything else is read-only |
 | Observable acceptance | the `requirements` it satisfies, as given/when/then tests |
 
-Every spec carries the absolute paths of the shape file, the rulings file and the repo's
-`WORKFLOW.md`, and says to read and follow all three. They are authoritative; the spec is a view
-of them. Policy edits in `WORKFLOW.md` take effect on the next attempt.
+Every spec carries the absolute paths of the shape file and the rulings file, says to read and
+follow both, and names the `orca-worker` skill. The shape and rulings are authoritative; the spec
+is a view of them. Edits to the skill take effect on the next attempt.
 
 **Unit of work.** One Task per item by default. The shape may name independent parts (parallel
 Tasks) or a strict sequence (a chain); `to-orca` copies that and nothing else (OO-6). Several
@@ -113,19 +125,27 @@ durable path, not the system temp directory.
 prefixes. Workers number assumptions per Task (`S1/A1`). The inbox skill numbers rulings `D1…`,
 each naming the Task it answers. IDs are never reused within an item.
 
-## WORKFLOW.md
+## Where policy lives
 
-One file in the trial repo holds the policy every attempt follows, in two parts:
+Each piece of policy goes where its reader already looks, so no single file has to serve both the
+tick and the workers:
 
-- **Front matter, read by the tick:** agent, model, concurrency cap, base branch, and the
-  lint/test/build commands.
-- **Body, read by workers:** shape and rulings are authoritative; the door rule and the list
-  below; the question format; assumptions logged with IDs; tests from the acceptance cases first,
-  and a requirement with no observable form gets a test the worker picks, logged as an
-  assumption; run the check commands before reporting success; the report format; propose
-  follow-ups in the report, never create Tasks.
+| Policy | Home | Read by |
+|---|---|---|
+| Agent, model, concurrency cap, base branch, the gate commands | The tick's config, per repo | The tick |
+| Lint/test/build commands, repo conventions | The repo itself: its manifests and `AGENTS.md`/`CLAUDE.md` | Workers, the way any agent finds them |
+| How to work an Orca Task | The `orca-worker` skill | Workers |
+| What a worker may run, the `git push` deny | The repo's committed `.claude/settings.json` | Claude Code, enforced |
 
-Keep it short: every line is an instruction an agent will follow at a cost.
+The `orca-worker` skill says: the shape and rulings are authoritative; the door rule and the
+list below; the question format; assumptions logged with IDs; tests from the acceptance cases
+first, and a requirement with no observable form gets a test the worker picks, logged as an
+assumption; run the repo's checks before reporting success; the report format; propose follow-ups
+in the report, never create Tasks. It is loaded only when an agent works an Orca Task, and its
+lines are instructions an agent follows at a cost, so keep it short.
+
+The gate commands in the tick's config are the repo's own commands, named again so the tick can
+run them without a model. Nothing here tells a worker how to sequence its work.
 
 ## Mid-flight decisions
 
@@ -180,45 +200,60 @@ say so in the question. This list is wider than `mvc`'s today; see [Deferred](#d
 Asking is not free: over-escalating is a defect like missing one. The rule changes only from
 evidence — an escape after merge — never on a calendar.
 
-## After the fact: checks, surprises, corrections
+## Required gates
+
+The worker that produced a change never certifies it. Every code change passes the gates below
+before the owner sees it. The tick runs them, so a worker can neither skip them nor choose their
+inputs. A worker may still use reviewers of its own while it works; those are its toolbox, not
+gates, and count for nothing here.
+
+A gate is either mechanical or an agent with a clean context. An agent gate is defined by a
+contract, not a role: fixed inputs, one objective, a verdict format. It never sees worker
+transcripts, so it doesn't inherit their reasoning, and it never edits code: one writer per
+change. Mechanical gates run first, and an agent gate never replaces them.
 
 When every implementation Task of an item has completed:
 
-1. **Deterministic checks**, run by the tick on the item branch with no model: the lint/test/build
-   commands from `WORKFLOW.md`, a flag for every changed test file, and a flag for every file
-   outside the shape's touchpoints. A failing command stops the item and goes to the owner: the
-   worker reported success on checks that don't pass.
-2. **Surprise check.** A Task with a clean context that sees only the shape, the rulings, the diff,
-   the worker reports and the check results — never worker transcripts, so it doesn't inherit
-   their reasoning. Its objective: list what a reader holding only the shape and rulings would not
-   expect, and sort each into a bin:
-   - **logged assumption** — fine, listed in the report;
-   - **correctable** — contradicts the shape or a ruling where they settle what is right;
-   - **needs a ruling** — an unlogged one-way-door decision, or a contradiction the shape doesn't
-     settle; it goes to the inbox and counts as a near miss.
-3. **One correction round.** If anything is correctable, the tick creates one correction Task with
-   the surprise list as its objective, then reruns the checks and the surprise check once. What
-   remains goes in the report. The checker never edits code: one writer per change.
+1. **Mechanical gate**, run by the tick on the item branch with no model: the gate commands from
+   its config, a flag for every changed test file, and a flag for every file outside the shape's
+   touchpoints. A failing command is a finding: the worker reported success on checks that don't
+   pass. The flags are not findings; they go in the report.
+2. **Surprise check**, an agent gate the tick starts as a Task once the mechanical gate passes.
+   - **Inputs:** the shape, the rulings, the diff, the worker reports and the mechanical gate's
+     results.
+   - **Objective:** list what a reader holding only the shape and rulings would not expect.
+   - **Verdict:** each surprise in one bin:
+     - **logged assumption** — fine, listed in the report;
+     - **correctable** — contradicts the shape or a ruling where they settle what is right;
+     - **needs a ruling** — an unlogged one-way-door decision, or a contradiction the shape
+       doesn't settle; it goes to the inbox and counts as a near miss.
+3. **One rework round.** If the mechanical gate failed or anything is correctable, the tick starts
+   one rework attempt on the item branch: a worker with the item's own objective plus the
+   findings. Then the gates run once more. A worker handed findings from gates works like any
+   other worker; there is no separate correction role. What remains after the second pass goes in
+   the report, and a command that still fails stops the item and goes to the owner. How a
+   completed Task takes a rework attempt in Orca is open (OO-20).
 
 The surprise check writes the item report, ordered surprise-first:
 
 1. Anything that contradicts the shape or a ruling — blocks pushing until ruled.
-2. Check flags: changed tests, changes outside the touchpoints.
+2. Mechanical gate flags: changed tests, changes outside the touchpoints.
 3. Assumptions the workers made (`S…/A…`).
 4. Rulings made during the item (`D…`).
 5. Per requirement (`R…`): done or not, with test evidence.
 
-LLM reviewers miss about half of what they look for (ImpossibleBench 2025), so the surprise check
-adds to the deterministic checks and never replaces them.
+LLM reviewers miss about half of what they look for (ImpossibleBench 2025), which is why the
+mechanical gate runs first and is never replaced.
 
 ## Pieces to build
 
 | Piece | Form | Contents |
 |---|---|---|
-| `to-orca` | Skill | Shape → Run, one Task per named part with dependencies, the surprise check Task; R and S IDs; show the DAG to the owner. No splitting decisions. |
-| `WORKFLOW.md` | File in the trial repo | Front matter for the tick, a short body for workers (see above). |
-| Dispatch tick | Script, run on a schedule | Start ready Tasks under the cap; retry ruled questions; three-door stop; checks on finished items; create the correction Task; release finished workers. Never pushes, never edits code, holds no state. |
-| Surprise check | Task spec template | Inputs, objective, the three bins, the report order. |
+| `to-orca` | Skill | Shape → Run, one Task per named part with dependencies; R and S IDs; show the DAG to the owner. No splitting decisions. How much each spec holds beyond the shape is open (OO-19). |
+| `orca-worker` | Skill | How to work an Orca Task (see [Where policy lives](#where-policy-lives)). |
+| Tick config | File per repo | Agent, model, concurrency cap, base branch, gate commands. |
+| Dispatch tick | Script, run on a schedule | Start ready Tasks under the cap; retry ruled questions; three-door stop; run the mechanical gate and start the agent gates on finished items; start the rework attempt; release finished workers. Never pushes, never edits code, holds no state. |
+| Surprise check | Agent gate definition | Inputs, objective, the three bins, the report order. |
 | Inbox | Skill | List questions and needs-a-ruling surprises across open Runs, show each, append the owner's ruling with a D ID. |
 
 ## Constraints
@@ -239,6 +274,8 @@ adds to the deterministic checks and never replaces them.
 
 - An issue tracker — boundary. Orca Tasks hold the state.
 - An agent in the control loop — boundary. The tick is code.
+- A worker certifying its own change — boundary. Required gates certify.
+- Code that scripts how a worker does its Task — boundary. The tick enforces limits and gates.
 - Several agents writing one change in parallel — boundary. Parallelism is across items.
 - Notifications — boundary. The owner opens the inbox on their own schedule.
 - A human review gate on intention — deferral; see [Deferred](#deferred).
@@ -252,10 +289,13 @@ Captured so they aren't lost; each waits for evidence from a trial run.
 - **Intention review gate.** The owner judges whether the change does what was meant, from the
   shape, the report and the evidence — not the code. Needs the quality review below first, or
   quality escapes go unseen.
-- **Quality review.** A clean-context Task that sees only the diff and the repo, no shape (to avoid
-  anchoring), with the objective "would a maintainer of this repo merge this?". Code quality is the
-  most common reason maintainers reject test-passing agent patches (METR 2026). Trigger: the first
-  escape logged as a quality problem.
+- **Quality review**, a second agent gate. Inputs: the diff and the repo, no shape (to avoid
+  anchoring). Objective: "would a maintainer of this repo merge this?". Verdict: merge as is, or
+  the changes a maintainer would ask for. Code quality is the most common reason maintainers reject
+  test-passing agent patches (METR 2026). Trigger: the first escape logged as a quality problem.
+- **More responsibility to workers.** Letting a worker decide the split or choose how to wait on a
+  one-way door instead of stopping. Trigger: the measure log shows questions or splits the worker
+  would have handled as well as the owner.
 - **IDs scoped across items** (e.g. `#58/D2`) once more than one item is in flight.
 - **Worker-declared transient failures.** A `Blocked:` subject for a failure the worker judges
   environmental (network, rate limit, flaky tool), which the tick retries under its cap without the
@@ -289,7 +329,9 @@ Calibration signals, logged per item, read only after several items:
 - Questions ruled on their merits → the real one-way doors; many means a thin shape.
 - Reported failures ruled "just retry" → transient failures reaching the owner.
 - Needs-a-ruling surprises → under-escalating, caught before merge.
-- Check flags (changed tests, changes outside touchpoints) → drift from the shape.
+- Mechanical gate flags (changed tests, changes outside touchpoints) → drift from the shape.
+- Gate findings sent to rework, and what survived it → how much the gates catch that the worker's
+  own toolbox didn't; the evidence for loosening or adding gates.
 - Escapes → under-escalating or under-checking. For each, record which door category should have
   fired, or that it was a quality problem; those are the only inputs that change the escalation
   rule or bring the quality review forward.

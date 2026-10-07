@@ -72,41 +72,45 @@ tasks:
     kind: known
     step: Write the to-orca skill
     done_when: >-
-      reads a shape, creates the Run, one Task per part with dependencies, and the surprise
-      check Task; assigns R and S IDs from the shape; makes no splitting decision of its own
-    depends_on: [OO-6, OO-8]
+      reads a shape, creates the Run and one Task per part with dependencies, each spec as
+      ruled in OO-19; assigns R and S IDs from the shape; makes no splitting decision of its own
+    depends_on: [OO-6, OO-8, OO-19]
     status: todo
   - id: OO-10
     kind: known
-    step: Write the trial repo's WORKFLOW.md
+    step: Write the orca-worker skill
     done_when: >-
-      front matter carries agent, model, concurrency cap, base branch and check commands; the
-      body covers authority of shape and rulings, the door rule, the question format, assumption
-      logging, tests from acceptance first, and the report format, and stays short
+      covers authority of shape and rulings, the door rule, the question format, assumption
+      logging, tests from acceptance first, running the repo's checks before success, and the
+      report format; says nothing about how to sequence the work, and stays short
     depends_on: [OO-3]
     status: todo
   - id: OO-11
     kind: known
     step: Write the dispatch tick and its tests
     done_when: >-
-      a stateless script dispatches ready Tasks under the cap, retries ruled questions, applies
-      the three-door stop, releases finished workers, and is tested against recorded Orca JSON
+      a stateless script reads its per-repo config (agent, model, cap, base branch, gate
+      commands), dispatches ready Tasks under the cap, retries ruled questions, applies the
+      three-door stop, releases finished workers, and is tested against recorded Orca JSON
     depends_on: [OO-1, OO-2, OO-3, OO-4, OO-7]
     status: todo
   - id: OO-12
     kind: known
-    step: Add the deterministic checks to the tick
+    step: Add the mechanical gate to the tick
     done_when: >-
-      on an item branch the tick runs the check commands and flags changed test files and
-      files outside the touchpoints, with no model involved
+      on an item branch the tick runs the gate commands and flags changed test files and
+      files outside the touchpoints, with no model involved; a failing command is a finding
     depends_on: [OO-11]
     status: todo
   - id: OO-13
     kind: known
-    step: Write the surprise check and correction Task specs
+    step: Add the surprise check gate and the rework round to the tick
     done_when: >-
-      the check sees only shape, rulings, diff, worker reports and check results, sorts each
-      surprise into a bin and writes the item report; one correction round is specified
+      the gate is defined by inputs (shape, rulings, diff, worker reports, mechanical gate
+      results), objective and the three bins, and writes the item report; the tick starts it
+      once the mechanical gate passes, sends findings to one rework attempt on the item branch,
+      and runs the gates once more
+    depends_on: [OO-12, OO-20]
     status: todo
   - id: OO-14
     kind: known
@@ -121,7 +125,8 @@ tasks:
     step: Set up the per-item measure log
     done_when: >-
       one place, outside Orca's task state, records owner touches, time, escapes by door
-      category and by quality, question outcomes, check flags and surprise bins per item
+      category and by quality, question outcomes, gate flags, surprise bins and what survived
+      rework per item
     status: todo
   - id: OO-16
     kind: known
@@ -146,4 +151,19 @@ tasks:
       ruled yes or no with OO-3 and OO-4 in hand; if yes, the Run exists with every open item
       and its deps, and task-list --ready names the next one
     depends_on: [OO-3, OO-4]
+    status: todo
+  - id: OO-19
+    kind: unknown
+    step: Rule what to-orca adds to a Task spec beyond pointing at the shape
+    done_when: >-
+      with a real export in hand, ruled whether a Task spec is the shape path, the rulings path
+      and the part's name, or also carries fields transcribed from the shape-to-Task table
+    depends_on: [OO-8]
+    status: todo
+  - id: OO-20
+    kind: unknown
+    step: Smoke-test giving a completed Task a rework attempt
+    done_when: >-
+      recorded whether a completed Task can be moved back and restarted with --retry-of, or a
+      rework Task must be created; and how the attempt's worktree starts from the item branch
     status: todo
