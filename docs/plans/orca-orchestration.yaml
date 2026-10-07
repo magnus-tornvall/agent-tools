@@ -122,6 +122,8 @@ tasks:
     status: todo
   - id: OO-15
     kind: known
+    # Parked: no measuring until the setup has been tried for a while. Its first Task
+    # (task_8f10032e9e35) completed, but the result was discarded unmerged.
     step: Set up the per-item measure log
     done_when: >-
       one place, outside Orca's task state, records owner touches, time, escapes by door
@@ -137,8 +139,8 @@ tasks:
   - id: OO-17
     kind: known
     step: Run the scaffold item end to end
-    depends_on: [OO-10, OO-11, OO-12, OO-13, OO-14, OO-15, OO-16]
-    done_when: merge-ready local branch, report read, touches and time logged
+    depends_on: [OO-10, OO-11, OO-12, OO-13, OO-14, OO-16]
+    done_when: merge-ready local branch, report read
     status: todo
   - id: OO-18
     kind: unknown
