@@ -2,9 +2,9 @@ status: draft
 mvp: >-
   One trial item carried from an mvc shape to a merge-ready local branch through Orca, the owner
   touching it only at the grill, at question rulings, and at the report.
-diagram: https://claude.ai/artifact/JyaBoUFzazVF4DUf9Db14c
 research: ../research/agentic-systems/report.md
 # Issue IDs are durable: never renumbered, never reused. New issues take the next free number.
+# status: todo | done | dropped (kept so the ID stays taken).
 # kind: unknown = a question a smoke test or a ruling must answer before the dependent build;
 #       known  = settled work, only effort stands between it and done.
 tasks:
@@ -40,10 +40,17 @@ tasks:
     status: done
   - id: OO-5
     kind: unknown
-    step: Find how the inbox lists every Task awaiting a ruling across open Runs
+    # Ruled: questions are Orca decision gates, to rely on Orca as much as possible; the Question
+    # subject convention is dropped. Fallback if a worker may not open a gate on its own Task: the
+    # worker stops without it, and the tick script opens the gate from the report (coordinator-
+    # owned, as Orca's guide intends).
+    step: Smoke-test a worker stopping on a one-way door with a decision gate
     done_when: >-
-      a command sequence lists each Task whose last attempt ended with a question, with the
-      question, across all open Runs
+      recorded whether a worker may run gate-create on its own dispatched Task; what the Task,
+      Dispatch and failure_count read after it then sends worker_done --outcome failed; whether
+      gate-list --run --status pending lists the gate; whether gate-resolve changes the Task's
+      status, and whether worker-start --retry-of then starts a fresh attempt; and "open Runs"
+      defined, since run-list carries no open or closed field
     status: todo
   - id: OO-6
     kind: unknown
@@ -96,50 +103,56 @@ tasks:
     status: done
   - id: OO-11
     kind: known
-    step: Write the dispatch tick and its tests
+    # Run by the orca-tick skill (OO-21), not on a schedule; takes over OO-12 and OO-14's
+    # mechanics. Scheduling it is deferred until ticking by hand is the bottleneck.
+    step: Write the tick script and its tests
     done_when: >-
-      a stateless script reads its per-repo config (agent, model, cap, base branch, gate
-      commands), dispatches ready Tasks under the cap, holds a Task with deps until each parent's
-      branch is merged into main, retries ruled questions, applies the three-door stop, releases
-      finished workers, and is tested against recorded Orca JSON
-    depends_on: [OO-1, OO-2, OO-3, OO-4, OO-7]
+      a stateless script, tested against recorded Orca JSON, with four commands. status lists
+      pending gates across open Runs with the item's one-way-door count, other failed or crashed
+      attempts with their attempt count, and items ready for gating. rule resolves a gate with
+      the owner's ruling and appends it to the rulings file with the next D ID naming the Task.
+      advance retries Tasks whose gate is resolved with --retry-of, starts ready Tasks under the cap
+      (agent, model, cap and base branch as flags with defaults), holding a Task with deps until
+      each parent's branch is merged into main, and releases settled workers. gate runs the
+      check commands from the repo's committed file on the item branch and flags changed test
+      files and files outside the touchpoints. Never pushes, never edits code, holds no state
+    depends_on: [OO-1, OO-2, OO-3, OO-4, OO-5, OO-7]
     status: todo
   - id: OO-12
     kind: known
+    # Folded into OO-11: the tick script's gate command is the mechanical gate.
     step: Add the mechanical gate to the tick
     done_when: >-
       on an item branch the tick runs the gate commands and flags changed test files and
       files outside the touchpoints, with no model involved; a failing command is a finding
     depends_on: [OO-11]
-    status: todo
+    status: dropped
   - id: OO-13
     kind: known
-    step: Add the surprise check gate and the rework round to the tick
+    # The automatic rework round is deferred; the owner rules any rework from the report.
+    step: Add the surprise check gate to the tick script
     done_when: >-
-      the gate is defined by inputs (shape, rulings, diff, worker reports, mechanical gate
-      results), objective and the three bins, and writes the item report; the tick starts it
-      once the mechanical gate passes, sends findings to one rework attempt on the item branch,
-      and runs the gates once more
-    depends_on: [OO-12, OO-20]
+      the script holds the gate's Task spec: inputs (shape, rulings, diff, worker reports,
+      mechanical gate results), objective and the three bins; gate starts it once the mechanical
+      gate passes, it writes the item report in surprise-first order, and the script opens a
+      gate on the item's Task for each needs-a-ruling surprise
+    depends_on: [OO-11]
     status: todo
   - id: OO-14
     kind: known
+    # Folded into OO-11 (status, rule) and OO-21 (showing questions, taking rulings).
     step: Write the inbox skill
     done_when: >-
       lists Tasks awaiting a ruling and surprises needing one, shows each question, takes a
       free-text answer, and appends it to the rulings file with a D ID naming the Task
     depends_on: [OO-2, OO-5]
-    status: todo
+    status: dropped
   - id: OO-15
     kind: known
-    # Parked: no measuring until the setup has been tried for a while. Its first Task
-    # (task_8f10032e9e35) completed, but the result was discarded unmerged.
+    # Dropped with the measure log concept. Its Task (task_8f10032e9e35) completed, but the
+    # result was discarded unmerged.
     step: Set up the per-item measure log
-    done_when: >-
-      one place, outside Orca's task state, records owner touches, time, escapes by door
-      category and by quality, question outcomes, gate flags, surprise bins and what survived
-      rework per item
-    status: todo
+    status: dropped
   - id: OO-16
     kind: known
     step: Owner runs mvc and to-orca for the scaffold item
@@ -149,7 +162,7 @@ tasks:
   - id: OO-17
     kind: known
     step: Run the scaffold item end to end
-    depends_on: [OO-10, OO-11, OO-12, OO-13, OO-14, OO-16]
+    depends_on: [OO-10, OO-11, OO-13, OO-16, OO-21, OO-22]
     done_when: merge-ready local branch, report read
     status: todo
   - id: OO-18
@@ -184,8 +197,28 @@ tasks:
     status: todo
   - id: OO-20
     kind: unknown
+    # Not blocking: needed only the first time the owner rules a rework.
     step: Smoke-test giving a completed Task a rework attempt
     done_when: >-
       recorded whether a completed Task can be moved back and restarted with --retry-of, or a
       rework Task must be created; and how the attempt's worktree starts from the item branch
+    status: todo
+  - id: OO-21
+    kind: known
+    step: Write the orca-tick skill
+    done_when: >-
+      the owner runs it in a window; it calls the tick script's status, shows each question,
+      needs-a-ruling surprise, failure and item report, hands free-text rulings to rule, asks
+      retry or abandon after a failure, and calls advance and gate; it runs no Orca command the
+      script covers, and stays short
+    depends_on: [OO-11]
+    status: todo
+  - id: OO-22
+    kind: known
+    step: Switch the orca-worker skill's question to a decision gate
+    done_when: >-
+      a worker stopping on a one-way door opens a gate on its own Task with the one-line question
+      and the report path, then sends worker_done --outcome failed with the report path and no
+      Question subject; or, if OO-5 found a worker may not open a gate, it stops without one
+    depends_on: [OO-5]
     status: todo
