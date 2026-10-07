@@ -40,9 +40,15 @@ say so in the question. Over-escalating is a defect like missing one: a two-way 
 
 ## Questions
 
-Write the question to your report, then stop with
-`worker_done --outcome failed --subject "Question: <one line>" --report-path <report>`. One
-decision per question, readable without opening anything else:
+Write the question to your report, then stop with:
+
+```bash
+orca orchestration send --type worker_done --task-id <task> --dispatch-id <dispatch> \
+  --from <handle> --outcome failed --subject "Question: <one line>" --report-path <report>
+```
+
+Take the task ID, dispatch ID and `--from` handle from your preamble; without them Orca settles
+nothing. One decision per question, readable without opening anything else:
 
 ```
 **Q1.** <neutral question: answerable either way without the stance; concrete>
@@ -88,5 +94,6 @@ Follow-ups: <proposed work outside this Task>
 Question: <only when stopping on one>
 ```
 
-Propose follow-ups in the report; never create Tasks. The `worker_done` body summarises the
-report in three sentences: what you did, what you found, what's left.
+Propose follow-ups in the report; never create Tasks. Finish with the same command as a question,
+with `--outcome succeeded` or `--outcome failed`, a one-line `--subject`, and a `--body` that
+summarises the report in three sentences: what you did, what you found, what's left.
