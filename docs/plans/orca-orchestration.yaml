@@ -143,15 +143,24 @@ tasks:
   - id: OO-18
     kind: unknown
     step: Rule whether the rest of this plan runs as an Orca Run driven from one session
-    # The idea: one Run, one Task per open item with depends_on as deps; "pick up the next task"
-    # is task-list --ready; work done in-session closes with task-update --status completed;
-    # build items are dispatched to workers with the session as coordinator, the tick by hand,
-    # so the owner rules on worker questions through the inbox. This file stays the record.
+    # Ruled yes for build items only. Run run_5280d7831611; the session is its coordinator and
+    # runs the tick by hand, passing --run on every call. In-session items (rulings, smoke tests,
+    # docs) get no Task; this file's status and depends_on stay their only record. A build item's
+    # Task, titled with its plan ID, is created once every in-session item it depends on is done
+    # here; --deps only links build Tasks that exist together. Workers start in agent-tools with
+    # worker-start --worktree new-top-level from main, one at a time until one item comes back
+    # merge-ready, and are freed with worker-release once settled. Until OO-10 lands a Task spec
+    # carries the item's step, done_when and the Question encoding inline; after, it names the
+    # orca-worker skill. Questions are read with task-list --status failed --run. A Task reading
+    # completed flips the item to done here. Workers never push; the owner reviews and lands each
+    # branch with git merge --ff-only on main once npm run typecheck passed on it, and if main
+    # moved the session rebases, reruns typecheck, and the owner merges again. Before OO-11 is
+    # dispatched its test command joins the allowlist in .claude/settings.json.
     done_when: >-
-      ruled yes or no with OO-3 and OO-4 in hand; if yes, the Run exists with every open item
-      and its deps, and task-list --ready names the next one
+      ruled yes or no with OO-3 and OO-4 in hand; if yes, the Run exists and holds build items
+      only, each as a Task once its in-session dependencies are done
     depends_on: [OO-3, OO-4]
-    status: todo
+    status: done
   - id: OO-19
     kind: unknown
     step: Rule what to-orca adds to a Task spec beyond pointing at the shape
