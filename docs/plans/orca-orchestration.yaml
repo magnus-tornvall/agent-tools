@@ -135,3 +135,15 @@ tasks:
     depends_on: [OO-10, OO-11, OO-12, OO-13, OO-14, OO-15, OO-16]
     done_when: merge-ready local branch, report read, touches and time logged
     status: todo
+  - id: OO-18
+    kind: unknown
+    step: Rule whether the rest of this plan runs as an Orca Run driven from one session
+    # The idea: one Run, one Task per open item with depends_on as deps; "pick up the next task"
+    # is task-list --ready; work done in-session closes with task-update --status completed;
+    # build items are dispatched to workers with the session as coordinator, the tick by hand,
+    # so the owner rules on worker questions through the inbox. This file stays the record.
+    done_when: >-
+      ruled yes or no with OO-3 and OO-4 in hand; if yes, the Run exists with every open item
+      and its deps, and task-list --ready names the next one
+    depends_on: [OO-3, OO-4]
+    status: todo
