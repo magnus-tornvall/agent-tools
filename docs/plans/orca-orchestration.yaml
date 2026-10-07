@@ -1,0 +1,136 @@
+status: draft
+mvp: >-
+  One trial item carried from an mvc shape to a merge-ready local branch through Orca, the owner
+  touching it only at the grill, at question rulings, and at the report.
+diagram: https://claude.ai/artifact/JyaBoUFzazVF4DUf9Db14c
+research: ../research/agentic-systems/report.md
+# Issue IDs are durable: never renumbered, never reused. New issues take the next free number.
+# kind: unknown = a question a smoke test or a ruling must answer before the dependent build;
+#       known  = settled work, only effort stands between it and done.
+tasks:
+  - id: OO-1
+    kind: unknown
+    step: Smoke-test driving Orca from a process outside an Orca terminal
+    done_when: >-
+      a launchd or cron job runs task-list, worker-start, worker-list and worker-release, or
+      the terminal the tick needs is recorded
+    status: todo
+  - id: OO-2
+    kind: unknown
+    step: Smoke-test Task settlement without anyone reading the Run inbox
+    done_when: >-
+      recorded whether worker_done settles the Task, as seen by task-list, when no terminal
+      consumes the inbox; and whether the owner's terminal can be the inbox reader while the
+      tick only reads Task state
+    status: todo
+  - id: OO-3
+    kind: unknown
+    step: Smoke-test question outcomes against Orca's three-failure limit
+    done_when: >-
+      recorded whether an attempt that ends with a question counts toward the limit and whether
+      a retry after the ruling resets it; the question encoding is chosen to fit
+    status: todo
+  - id: OO-4
+    kind: unknown
+    step: Smoke-test an unattended worker in the trial repo
+    done_when: >-
+      a worker started with worker-start finishes a small change with no permission prompt,
+      and a push from its worktree is refused
+    status: todo
+  - id: OO-5
+    kind: unknown
+    step: Find how the inbox lists every Task awaiting a ruling across open Runs
+    done_when: >-
+      a command sequence lists each Task whose last attempt ended with a question, with the
+      question, across all open Runs
+    status: todo
+  - id: OO-6
+    kind: unknown
+    step: Rule when an item splits into several Tasks and how the shape says so
+    done_when: >-
+      default one Task per item is confirmed or amended, and the shape has a way to name
+      independent parts and strict sequences
+    status: todo
+  - id: OO-7
+    kind: unknown
+    step: Rule the base branch of a dependent Task
+    done_when: >-
+      ruled between branching from the parent Task's branch (stacked) and branching from main
+      after the owner lands the parent; Constraints updated
+    status: todo
+  - id: OO-8
+    kind: unknown
+    step: Check mvc's shape export against what to-orca reads
+    done_when: >-
+      a real export is written to a durable path and carries every field the shape-to-Task
+      table reads, plus the split (OO-6); or the mvc changes needed are listed (mvc lives
+      outside this repo; ask first)
+    depends_on: [OO-6]
+    status: todo
+  - id: OO-9
+    kind: known
+    step: Write the to-orca skill
+    done_when: >-
+      reads a shape, creates the Run, one Task per part with dependencies, and the surprise
+      check Task; assigns R and S IDs from the shape; makes no splitting decision of its own
+    depends_on: [OO-6, OO-8]
+    status: todo
+  - id: OO-10
+    kind: known
+    step: Write the trial repo's WORKFLOW.md
+    done_when: >-
+      front matter carries agent, model, concurrency cap, base branch and check commands; the
+      body covers authority of shape and rulings, the door rule, the question format, assumption
+      logging, tests from acceptance first, and the report format, and stays short
+    depends_on: [OO-3]
+    status: todo
+  - id: OO-11
+    kind: known
+    step: Write the dispatch tick and its tests
+    done_when: >-
+      a stateless script dispatches ready Tasks under the cap, retries ruled questions, applies
+      the three-door stop, releases finished workers, and is tested against recorded Orca JSON
+    depends_on: [OO-1, OO-2, OO-3, OO-4, OO-7]
+    status: todo
+  - id: OO-12
+    kind: known
+    step: Add the deterministic checks to the tick
+    done_when: >-
+      on an item branch the tick runs the check commands and flags changed test files and
+      files outside the touchpoints, with no model involved
+    depends_on: [OO-11]
+    status: todo
+  - id: OO-13
+    kind: known
+    step: Write the surprise check and correction Task specs
+    done_when: >-
+      the check sees only shape, rulings, diff, worker reports and check results, sorts each
+      surprise into a bin and writes the item report; one correction round is specified
+    status: todo
+  - id: OO-14
+    kind: known
+    step: Write the inbox skill
+    done_when: >-
+      lists Tasks awaiting a ruling and surprises needing one, shows each question, takes a
+      free-text answer, and appends it to the rulings file with a D ID naming the Task
+    depends_on: [OO-2, OO-5]
+    status: todo
+  - id: OO-15
+    kind: known
+    step: Set up the per-item measure log
+    done_when: >-
+      one place, outside Orca's task state, records owner touches, time, escapes by door
+      category and by quality, question outcomes, check flags and surprise bins per item
+    status: todo
+  - id: OO-16
+    kind: known
+    step: Owner runs mvc and to-orca for the scaffold item
+    done_when: shape at a durable path; the item's Run and Tasks exist and the owner has seen the DAG
+    depends_on: [OO-8, OO-9]
+    status: todo
+  - id: OO-17
+    kind: known
+    step: Run the scaffold item end to end
+    depends_on: [OO-10, OO-11, OO-12, OO-13, OO-14, OO-15, OO-16]
+    done_when: merge-ready local branch, report read, touches and time logged
+    status: todo
