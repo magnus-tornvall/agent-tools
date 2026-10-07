@@ -299,6 +299,28 @@ Smoke-tested on Orca 1.4.220:
 - `ask` timing out leaves the question pending; the worker resumes it by message ID.
 - `gate-resolve --resolution` takes free text; `gate-create --options` is optional.
 
+Smoke-tested on Orca 1.4.221:
+
+- The tick needs no Orca terminal. A launchd job with no `ORCA_*` environment and no `caller` in
+  `orca status` ran `task-list --run`, `worker-start --run --task --worktree --agent`,
+  `worker-list --run` and `worker-release --dispatch`, all exiting 0. Passing `--run` on every
+  call is enough; the tick never runs `run-use`, so it never fences the owner's terminal.
+- `worker-start` moves the Task to `dispatched`, so the next tick's `task-list` no longer shows
+  it as `ready`. That status, not a request ID, is what stops a second tick from starting it twice.
+- `--retry-request` only accepts the UUID Orca issued for an earlier request; a caller-chosen key
+  is refused with `invalid_argument`.
+- Release what `worker-list` names: a settled worker's `projection.nextAction.argv` is
+  `worker-release --dispatch <id>`. Its `terminalState` can be `retained` rather than
+  `reclaimable` (it was after `worker-stop`), so filtering on `reclaimable` misses it.
+- `worker-stop` settles the Dispatch as `failed` and leaves the Task `blocked`.
+- A `worker_done` without `--dispatch-id` is rejected and settles nothing; the Task stays
+  `dispatched`. It still reaches the Run's inbox as a `worker_done` whose payload carries
+  `_orcaLifecycleRejection` (`missing_dispatch_id`), so only an inbox reader sees why.
+- `orca terminal send` to a supervised worker's terminal is refused with `agent_prompt_blocked`.
+  Talk to a worker through the orchestration verbs.
+- A `claude` worker started without permission settings stopped at a prompt for its own
+  `orca orchestration send`. That is OO-4's question.
+
 Read from the guide and `--help` on Orca 1.4.221, not smoke-tested:
 
 - Task statuses are `pending, ready, dispatched, completed, failed, blocked`; `task-create --deps`
@@ -307,7 +329,8 @@ Read from the guide and `--help` on Orca 1.4.221, not smoke-tested:
 - `worker_done` with `--outcome` and `--report-path` settles the Task.
 - `worker-start --task … --retry-of <dispatch_id>` retries; a Task fails after three consecutive
   failed attempts.
-- Every mutation takes `--retry-request <id>`, and `request-show` tells whether it took effect.
+- After an unknown result, a mutation is retried with the `--retry-request <uuid>` Orca reported,
+  and `request-show` tells whether it took effect.
 - Automations always launch an agent (`--prompt` and `--provider` are required), so the tick is a
   script, not an automation.
 - "Absence never authorizes stop, abandon, retry, or release": only proven exit or a finished

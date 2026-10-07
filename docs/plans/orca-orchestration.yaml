@@ -14,7 +14,7 @@ tasks:
     done_when: >-
       a launchd or cron job runs task-list, worker-start, worker-list and worker-release, or
       the terminal the tick needs is recorded
-    status: todo
+    status: done
   - id: OO-2
     kind: unknown
     step: Smoke-test Task settlement without anyone reading the Run inbox
