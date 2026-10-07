@@ -224,6 +224,8 @@ adds to the deterministic checks and never replaces them.
 ## Constraints
 
 - Agents and the tick never push. The owner pushes and opens the PR after reading the report.
+  Workers run under the trial repo's committed `.claude/settings.json`: a scoped allowlist and a
+  `git push` deny, never a bypass of permissions.
 - Every code-changing worker runs in its own worktree (`worker-start --worktree new-top-level`),
   from `main` or, for a dependent Task, as ruled in OO-7.
 - One item in flight until one has run cleanly end to end; then at most three.
@@ -340,7 +342,20 @@ Smoke-tested on Orca 1.4.221:
 - `orca terminal send` to a supervised worker's terminal is refused with `agent_prompt_blocked`.
   Talk to a worker through the orchestration verbs.
 - A `claude` worker started without permission settings stopped at a prompt for its own
-  `orca orchestration send`. That is OO-4's question.
+  `orca orchestration send`. `worker-start` has no permission flag: the worker launches as the
+  owner's new-agent-tab setting says.
+- A scoped `.claude/settings.json` on the worktree's base branch is enough for an unattended
+  `claude` worker. It allows `Read`, `Edit`, `Write`, `Bash(orca orchestration:*)` and
+  `Bash(git status|diff|add|commit:*)`, and denies `Bash(git push:*)`. A Sonnet worker in a
+  `new-top-level` worktree of the trial repo edited, committed and sent `worker_done` with no
+  prompt. Its `git push --dry-run origin HEAD` was refused at once ("Permission to use Bash with
+  command git push … has been denied"); git never ran and the remote was unchanged. A compound
+  command containing the push was refused whole, so the worker split it and edited with `Write`.
+  The deny matches the command prefix, so it stops an agent's ordinary push, not a determined one
+  (`git -C . push` would not match).
+- A settled `new-top-level` worker is releasable: `terminalState` `reclaimable`, `nextAction`
+  `worker-release --dispatch <id>`, liveness still `live`. Releasing it left the worktree and its
+  branch. Only a `--worktree current` worker reads `user_owned` with nothing to release.
 - A valid `worker_done` settles the Task with no inbox reader. Nobody ran `check`; `task-list`
   showed the Task `completed` within ten seconds of the send, while the message sat in the Run
   mailbox unread, never delivered or acknowledged. Reading and acking it later changed no Task
@@ -354,7 +369,7 @@ Smoke-tested on Orca 1.4.221:
   by `worker-stop`.
 - A worker that settled `succeeded` in `--worktree current` reads `resource.state: user_owned` with
   `nextAction` `none`, and its terminal stays live. `worker-list` names no release, so the tick
-  leaves it. Whether a `new-top-level` worker behaves the same is untested.
+  leaves it.
 - `worker_done --outcome failed` moves the Task straight to `failed` and leaves the Dispatch's
   `failure_count` at 0. Four such attempts in a row, chained with `--retry-of`, and a
   `worker-stop` among them, all left it at 0; each retry was accepted. A question costs nothing
@@ -380,7 +395,8 @@ Smoke-tested on Orca 1.4.221:
 - `worker-start --terminal` refuses a terminal Orca doesn't recognise as an agent
   (`agent_unconfigured`), even one running a process named `claude`.
 - A Haiku worker given a vague spec improvised its own `worker_done` and stalled at a permission
-  prompt for a command with a shell variable in it. Input for OO-4.
+  prompt for a command with a shell variable in it. A precise spec and the scoped settings above
+  avoided both.
 
 Read from the guide and `--help` on Orca 1.4.221, not smoke-tested:
 

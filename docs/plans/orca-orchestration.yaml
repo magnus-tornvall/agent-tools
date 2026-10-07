@@ -37,7 +37,7 @@ tasks:
       a worker started with worker-start finishes a small change with no permission prompt,
       and a push from its worktree is refused; and whether the settled worker is one worker-list
       names for release
-    status: todo
+    status: done
   - id: OO-5
     kind: unknown
     step: Find how the inbox lists every Task awaiting a ruling across open Runs
