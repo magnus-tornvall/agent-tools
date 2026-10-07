@@ -48,8 +48,7 @@ Candidates span:
   or a recognised catalogue such as OWASP. It is provenance for an assumption, and grounds a
   stance. Where the repo departs from it, the repo is the fact - say so once;
 - what only the user can decide: intent, priority between outcomes, constraints from outside the
-  repo, direction the code cannot show, and whether the change ships as parts when the material
-  shows separable ones;
+  repo, direction the code cannot show;
 - risks, prompted by these axes: architecture and mechanism, security, operations and
   maintenance, dependencies and integration. Requirements risk needs no prompt - it already shows
   up as an unknown.
@@ -248,10 +247,13 @@ One-way door: consumers - public API clients branch on the status code (`docs/ap
   payload, a caller, a value) and the outcome under each live reading. A third reading is a third
   Then, never a second When. More than three outcomes, or readings that agree on this input, mean
   it does not discriminate. Find a sharper one.
+- **A Given every reading shares.** The Given and When hold under each live reading. A Given that
+  presupposes one reading turns the other Then into a contradiction, not a prediction.
 - **Observable Thens.** Each Then is what an observer would see: a status, a value, a rendered
   state, a log line.
 - **Each outcome cites its reading.** A short parenthetical after the outcome gives the provenance
   that makes that reading live. An outcome no settled material supports is invented; drop it.
+  Fewer than two supported outcomes means no example: ask in the stance form.
 - **Stance is a ranking.** It names the expected pick with its reasoning, and keeps **Wrong if**.
   **Rules out** lists what each outcome costs: only what the outcome excludes under any
   mechanism. A mechanism the outcome doesn't force stays open.
@@ -285,8 +287,7 @@ candidate takes one exit:
 3. Neither: the change is too big to define within the budget. Report that and propose how to
    decompose it: name the parts and whether they are independent or a strict sequence, so each
    can be grilled on its own. The split signal is the most valuable output - never raise the
-   ceiling to avoid it. It lives in the report, never in a shape: a shape only holds `parts` the
-   owner chose.
+   ceiling to avoid it. It lives in the report and writes no shape.
 
 ## Change requests
 
@@ -340,19 +341,9 @@ touchpoints:
 ---
 ```
 
-With a split the owner chose, `parts` replaces `touchpoints`:
-
-```yaml
-parts:
-  relation: independent | sequence
-  items:
-    - name: <part>
-      requirements: [R1, R2]
-      touchpoints:
-        - <path/to/file.ext:symbol>
-```
-
-The reported block has no comments and no unfilled placeholders - it is copied verbatim.
+The reported block has no comments and no unfilled placeholders - it is copied verbatim. It must
+parse as YAML: quote any free-text value that contains `: ` or ` #`, or starts with a character
+YAML treats specially (`[`, `{`, `&`, `*`, `!`, `|`, `>`, `%`, `@`, a quote, or a backtick).
 
 - `outcome` is the one scalar, with no weasel words. Every other field is a collection; an empty
   one is a statement, not an omission.
@@ -363,10 +354,6 @@ The reported block has no comments and no unfilled placeholders - it is copied v
 - Every requirement is observable - given/when/then - or says why it cannot be. Most come from
   assumptions written that way; the rest from settled examples.
 - `touchpoints` are the expected blast radius: a change outside them needs an explanation.
-- `parts` appear only when the owner split the change; one part means no `parts`. In a sequence,
-  list order is the order. Every requirement belongs to exactly one part. In a sequence, one that
-  holds only once several parts land goes to the part after which it first holds; with
-  independent parts, it means they are not independent - say so and ask.
 - `type` is explicit on each non-goal: it decides whether reopening one is a question or a mistake.
 - Risks have no field. A settled risk lands as a constraint (mitigated), a typed non-goal
   (avoided), or an accepted risk recorded in the decision log with what accepting it costs. A risk
