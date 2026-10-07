@@ -26,7 +26,8 @@ Touches no git. Writes no code, plan, or tasks. Writes one file, only on request
 4. **Hard timebox: three rounds** - so that "we'll decide later" costs something. The user may
    lower it; the grill never raises it. Unspent rounds are not owed. "The budget" below means
    whatever the timebox currently is.
-5. **Append-only, stable IDs.** Questions keep their numbers; a retired number is never reused.
+5. **Append-only, stable IDs.** Questions, assumptions, requirements, and decisions keep their
+   numbers; a retired number is never reused.
 6. **Nothing leaves untyped.** Every open item exits as a boundary, a deferral, or the split
    signal.
 
@@ -43,8 +44,8 @@ Candidates span:
 
 - what the repo settles;
 - what established domain guidance settles: a standard, the vendor's documented recommendation,
-  or a recognised catalogue such as OWASP. A two-way fork it answers is an assumption, not a
-  question. Where the repo departs from it, the repo is the fact - say so once;
+  or a recognised catalogue such as OWASP. It is provenance for an assumption, and grounds a
+  stance. Where the repo departs from it, the repo is the fact - say so once;
 - what only the user can decide: intent, priority between outcomes, constraints from outside the
   repo, direction the code cannot show;
 - risks, prompted by these axes: architecture and mechanism, security, operations and
@@ -55,7 +56,7 @@ Axes are prompts only. One that turns up nothing produces no candidate and no li
 
 Look first for: precedent for the thing being added (kills a branch, not a leaf), the touched code
 and its callers, the repo's convention and decision docs, git history for the area, the dependency
-manifest, the test setup.
+manifest, the test setup, and any prior decision record or shape file the user passed in.
 
 The explorer returns, per candidate, the answer with `file:line` or **unknown** - looked for, not
 found. Absence is a finding. Split a candidate that is both: the constraint the repo imposes is a
@@ -63,21 +64,36 @@ fact, the requirement it cannot know is unknown. Stop when every candidate is an
 
 Classify each candidate:
 
-- **Fact** - with provenance. A shape already settled in this conversation is a fact, its
-  provenance the user's answer: transfer it, never re-derive it.
+- **Fact** - with provenance. A prior decision is a fact with its record as provenance, never
+  re-asked: a shape already settled in this conversation, a record or shape file the user points
+  to, or one among the repo's decision docs.
 - **Assumption** - inferred from settled material (the outcome, a user answer, a cited fact, cited
-  domain guidance), reported with what it follows from. Silence accepts it, a word corrects it. Use
-  this instead of a question whenever the answer is predictable and the item is a two-way door. A
-  one-way door is never an assumption: predictable or not, it becomes a question, because silence
-  must not settle what is costly to undo. One assumption is never provenance for another - that is
-  a guess with a paper trail.
-- **Unknown** - looked for, not found; it becomes a question.
+  domain guidance). Silence accepts it, a word corrects it. Every two-way door is an assumption,
+  even when the grill cannot predict the answer; one it could not predict is marked
+  **uncertain**. An assumption about an observable outcome is written as
+  `given <context>, when <event>, then <outcome>`, so it lands in `requirements` as written. One
+  assumption is never provenance for another - that is a guess with a paper trail.
+- **Unknown** - looked for, not found. It becomes a question when it is a one-way door or intent
+  only the user can decide; otherwise an uncertain assumption.
 
-**Doors.** Mark each candidate that decides something costly to reverse once shipped as a
-**one-way door**, with provenance for why: a public route or API shape, a persisted column or
-type, a contract another service consumes, a dependency others will build on, a data migration.
-Everything else is a two-way door. A mark without provenance still counts as a door, and the map
-reports its reason as unconfirmed.
+A one-way door is never an assumption: predictable or not, it becomes a question, because silence
+must not settle what is costly to undo.
+
+**Doors.** A **one-way door** is a decision someone outside this change pays to undo once it
+ships. Mark each one with provenance for who pays. Prompts for who that is:
+
+- consumers - a route, API shape, file format, or contract another service, team, or tool reads;
+- data - a persisted column, type, or format, or a migration;
+- architecture - a boundary or pattern other code will build on;
+- infrastructure - provisioned resources, environments, deployment config;
+- precedent - a convention others will copy;
+- dependencies - a package or service others will build on;
+- security - a permission, a trust boundary, an exposure;
+- external effects - anything sent, charged, or published;
+- test contracts - an acceptance test or fixture others assert against.
+
+Unsure counts as a door. A mark without provenance still counts, and the map reports its reason as
+unconfirmed. Everything else is a two-way door.
 
 Invent nothing. A guess must never be indistinguishable from a decision the user made.
 
@@ -86,9 +102,17 @@ shape, a version - or for the established guidance on a fork. Primary sources on
 the package's own stated requirements, spec text, the guidance's own publisher. Two searches per
 candidate; no primary source means unknown. Never for approach comparison.
 
-Report the map before round 1: **facts**, **assumptions**, **ruled out**, **unknowns**. One-way
-doors are marked on their entries; they get no section of their own. Corrections are volunteered
-and off-budget.
+Report the map before round 1, keyed by ID so the user can correct by ID:
+
+- **unknowns** and **one-way doors** in full - they become the questions;
+- **assumptions** one line each, uncertain first, without provenance;
+- **ruled out**;
+- **facts** as a count, listed only when the user asks.
+
+Provenance is shown on request ("why A2?"). Corrections are volunteered and off-budget.
+
+**Zero rounds.** With no one-way door and no open user-only intent, nothing is asked: the shape
+follows the map in the same reply.
 
 **Risks ride on decisions.** A risk is never ruled on its own - one decision, one touch. No
 likelihood/impact scoring.
@@ -105,8 +129,8 @@ and agreement makes it an accepted risk.
 ### Rounds 1 to 3 - ask, re-derive
 
 Each round is one batch of up to **four** questions, asked together, answered together. Minimum
-two - except a final single question, when it is all the frontier holds. A round is spent when
-asked, however many answers come back.
+two - except a single question, when it is the only orthogonal one the frontier holds. A round is
+spent when asked, however many answers come back.
 
 **Orthogonal.** No answer may change whether another question in the same batch is worth asking.
 When in doubt, hold it back.
@@ -119,14 +143,14 @@ since the last reply: entries newly settled, corrected, or withdrawn, one line e
 unchanged is restated.
 
 **Ranking.** Greedy by information gain: branch-pruning beats leaf-closing. A question carrying
-a **Risk** or **One-way door** line can win a slot it would not win on pruning alone. Zero-gain
-questions - rule nothing out, or have a predictable answer - are never asked; a one-way door is
-never zero-gain. A round that can only muster those means the frontier is closed.
+a **Risk** or **One-way door** line can win a slot it would not win on pruning alone. Only one-way
+doors and user-only intent are asked. Zero-gain questions - rule nothing out - are never asked; a
+one-way door is never zero-gain. A round that can only muster those means the frontier is closed.
 
-**Open, not asked.** A branch-pruning candidate the batch could not hold gets one line under the
-round: the question itself, shortened. The user promotes or closes it; unaddressed, it stays
-listed. Leaf-closing overflow is dropped silently. The list is never its own section in the
-report - at close, each entry takes an exhaustion exit, usually a deferral.
+**Open, not asked.** Every candidate the batch could not hold gets one line under the round: the
+question itself, shortened. The user promotes or closes it; unaddressed, it stays listed. The list
+is never its own section in the report - at close, each entry takes an exhaustion exit, usually a
+deferral.
 
 **Unanswered is not accepted.** In the reply reporting the round, ask once why a question was
 skipped: unclear means clarify and re-ask within the round (off-budget); premature means it stays
@@ -146,16 +170,20 @@ easy to type as an answer. Two forms:
 - **Stance** - for a decision whose readings differ in mechanism, structure, or cost, but not in
   anything an input can show.
 - **Example** - specification by example: for a decision whose live readings produce different
-  observable outcomes for the same input. Use it whenever such an input exists: judging a key
-  example is cheaper than arguing a proposition, and the answer is already an acceptance test.
+  observable outcomes for the same input, when the grill cannot rank them or the decision is a
+  one-way door. Judging a key example is cheaper than arguing a proposition, and the answer is
+  already an acceptance test. Outcomes the grill can rank make an assumption in given/when/then.
 
 ```
-**Q1.** Does the CSP value need to differ between staging and production?
+**Q1.** Where is a cancelled order's reason stored?
 
-Stance: No — one string from an env var, no code difference. Staging and production serve
-the same routes from the same bundle.
-Wrong if: a script or reporting endpoint loads in one environment and not the other.
-Rules out: per-env code branches, and any policy registry.
+Stance: A nullable `cancel_reason` column on `orders`. Cancellation is a status on the order
+(`app/Models/Order.php:41`), and the nightly export already reads that table
+(`reports/OrderExport.php:18`).
+Wrong if: an order can be cancelled, reinstated, and cancelled again, each with its own reason.
+Rules out: a separate cancellations table, and keeping the reason only in the event log.
+One-way door: data - a persisted column the nightly export ships to finance
+(`reports/OrderExport.php:18`).
 ```
 
 The question is the first line, after its number - no title label, no markers before it.
@@ -198,16 +226,18 @@ A key example in Given/When/Then: the question states the Given and the When, ea
 Then.
 
 ```
-**Q1.** Given one shared CSP string, when staging serves `/checkout` with
-`cdn.staging.example.net/pay.js` (production doesn't load it), what happens?
+**Q1.** Given order 812 belongs to tenant A, when a tenant-B token calls `GET /api/orders/812`,
+what does the caller see?
 
-🅰 Then the script is blocked until the host is in the shared allowlist. (one-string reading)
-🅱 Then the script loads — staging has its own policy value. (`config/staging.php:14`)
+🅰 Then `404 Not Found`, the same as for an order that doesn't exist. (`docs/api.md:88`: "never
+reveal another tenant's IDs")
+🅱 Then `403 Forbidden`. (`app/Http/Middleware/Tenant.php:23` returns 403 cross-tenant)
 
-Stance: 🅰 — the staging origin is a config leftover.
-Wrong if: QA serves unreleased assets from that host.
-Rules out: 🅰 rules out per-env policy values; 🅱 rules out a single string.
-One-way door: the CSP header is public.
+Stance: 🅰 - the API guide's rule covers reads; the middleware's 403 was written for writes
+(`Tenant.php:20`), where the caller already holds the ID.
+Wrong if: a client already branches on 403 to show "request access".
+Rules out: 🅰 rules out telling a caller the order exists; 🅱 rules out hiding other tenants' IDs.
+One-way door: consumers - public API clients branch on the status code (`docs/api.md:12`).
 ```
 
 - **One Given/When, two Thens.** A concrete context and event the user can check (a route, a
@@ -219,7 +249,8 @@ One-way door: the CSP header is public.
 - **Each outcome cites its reading.** A short parenthetical after the outcome gives the provenance
   that makes that reading live. An outcome no settled material supports is invented; drop it.
 - **Stance is a ranking.** It names the expected pick with its reasoning, and keeps **Wrong if**.
-  **Rules out** lists what each outcome costs.
+  **Rules out** lists what each outcome costs: only what the outcome excludes under any
+  mechanism. A mechanism the outcome doesn't force stays open.
 - **Three kinds of answer.** A pick of one outcome settles it. **Neither** states the right
   outcome, which settles the example and usually opens a reading nobody listed. **Either** means
   the divergence does not matter, and rules out pinning a test on it.
@@ -248,8 +279,10 @@ candidate takes one exit:
    the user's word, and the deferral names what it blocks: nothing that lands on the door ships
    until it is decided. That block lands in `constraints`.
 3. Neither: the change is too big to define within the budget. Report that and propose how to
-   decompose it. The split signal is the most valuable output - never raise the ceiling to avoid
-   it.
+   decompose it: name the parts and whether they are independent or a strict sequence, so each
+   can be grilled on its own. The split signal is the most valuable output - never raise the
+   ceiling to avoid it. It lives in the report, never in a shape: a shape only holds `parts` the
+   owner chose.
 
 ## Change requests
 
@@ -288,7 +321,8 @@ Then the shape, as spec-ready frontmatter plus body, so a consumer copies rather
 ---
 outcome: <one sentence - what is true once this ships>
 requirements:
-  - <something the outcome needs>
+  R1: given <context>, when <event>, then <outcome>
+  R2: not observable, <why> - <something the outcome needs>
 non_goals:
   - item: <what is not being built>
     type: boundary | deferral
@@ -302,14 +336,32 @@ touchpoints:
 ---
 ```
 
+With a split the owner chose, `parts` replaces `touchpoints`:
+
+```yaml
+parts:
+  relation: independent | sequence
+  items:
+    - name: <part>
+      requirements: [R1, R2]
+      touchpoints:
+        - <path/to/file.ext:symbol>
+```
+
 The reported block has no comments and no unfilled placeholders - it is copied verbatim.
 
-- `outcome` is the one scalar. Every other field is a collection; an empty one is a statement, not
-  an omission.
+- `outcome` is the one scalar, with no weasel words. Every other field is a collection; an empty
+  one is a statement, not an omission.
 - Problem space vs solution space. `outcome`, `requirements`, `non_goals` are the what;
   `approach` (mechanism chosen), `constraints` (limits on it), `touchpoints` (files and symbols it
   lands on) are the how. A stance naming a file, symbol, technology, or value is how - never a
   requirement.
+- Every requirement is observable - given/when/then - or says why it cannot be. Most come from
+  assumptions written that way; the rest from settled examples.
+- `touchpoints` are the expected blast radius: a change outside them needs an explanation.
+- `parts` appear only when the owner split the change; one part means no `parts`. In a sequence,
+  list order is the order. Every requirement belongs to exactly one part - one that holds only
+  once several parts land goes to the part after which it first holds.
 - `type` is explicit on each non-goal: it decides whether reopening one is a question or a mistake.
 - Risks have no field. A settled risk lands as a constraint (mitigated), a typed non-goal
   (avoided), or an accepted risk recorded in the decision log with what accepting it costs. A risk
@@ -320,11 +372,12 @@ The reported block has no comments and no unfilled placeholders - it is copied v
   answer lands in the decision log as a non-constraint with the input it covers. The rejected
   outcome is that decision's rejected alternative.
 
-The body under the frontmatter is the decision log, ADR-style but only three parts per decision:
-the decision, its rejected alternatives, its provenance. Not optional, not a summary - it is the
-only record of the pruned branches. An assumption that reached the close uncorrected keeps its
-label: silence accepted it, the user did not decide it. A decision on a one-way door keeps
-its mark in the decision log, so a reviewer can see which entries cost most to reopen.
+The body under the frontmatter is the decision log, ADR-style but only three parts per decision,
+each entry keyed `D1…`: the decision, its rejected alternatives, its provenance. Not optional,
+not a summary - it is the only record of the pruned branches. An assumption that reached the close
+uncorrected keeps its label: silence accepted it, the user did not decide it. A decision on a
+one-way door keeps its mark in the decision log, so a reviewer can see which entries cost most to
+reopen.
 
 ## Persisting the shape
 
@@ -345,42 +398,11 @@ Then fail closed, in order. Each check that fails says so and stops - never fall
 another case. Stopping is free: the shape is still in context and re-invocation asks nothing.
 
 1. The resolved directory must exist. No `mkdir`: a missing path is a typo.
-2. Never clobber. An existing file is replaced only if it is itself a shape file - frontmatter
-   with the reported fields. Otherwise name it and stop.
+2. Never clobber. An existing file is replaced only on the user's word. Otherwise name it and
+   stop.
 
 Report the absolute path written.
 
 The file is the report, verbatim - no approval, round count, frontier, or anything the report
-lacks. Same outcome resolves to the same name and replaces it; a different outcome gets a new
-file. Export, not state: nothing reads a shape file back, round 0 included.
-
-## Checklist
-
-Beyond the invariants:
-
-- Asks nothing the repository already answers.
-- Reports every assumption with the material it follows from.
-- Hands the user no two-way fork that cited domain guidance already settles.
-- Never takes the later of two contradicting answers without naming both.
-- Max four orthogonal, atomic questions per round; never pads a batch with zero-gain questions.
-- Never rewords a re-ask, reserves a slot for an unanswered question, or replaces a question.
-- Lists branch-pruning overflow instead of discarding it.
-- Questions are neutral, concrete, and presuppose nothing unsettled; stances are argued, never
-  recommendations, never paired with option lists, and always carry a Wrong if.
-- Asks as an example whenever an input discriminates the live readings; every outcome is observable
-  and cites the reading it follows from.
-- Marks one-way doors with provenance in round 0; never makes one an assumption, never lets
-  pruning alone crowd one out, and never defers one without the user's word.
-- Opens each round with its questions; reports the record once and only deltas after; restates
-  what a question rests on instead of pointing to it; puts nothing before the question but its
-  number.
-- Rules no risk on its own: it rides on a question, an assumption, or a stance's Rules out.
-  Silence never avoids one, and a question carrying a Risk line is never deferred. A settled risk
-  lands as a constraint, a typed non-goal, or an accepted risk - or is dropped if its answer
-  changed nothing. Never drops an avoided risk. Names no empty risk axis.
-- Nothing enters what ships after round 1 without a change request.
-- No how-stance reported as a requirement; no web search for approach comparison.
-- No weasel words in the outcome or in what ships.
-- No file unasked or before the frontier closes; nothing in it beyond the report; no comments or
-  unfilled placeholders.
-- Fails closed on a missing directory or a non-shape file; never reads a shape file back.
+lacks. When the user passed in a prior shape, they decide whether the new one replaces it, merges
+into it, or goes to a new file.
