@@ -18,7 +18,8 @@ Touches no git. Writes no code, plan, or tasks. Writes one file, only on request
 1. **No citation, no claim.** Every fact carries provenance: `file:line`, the user's answer, or a
    primary-source URL. General framework knowledge is not provenance, and a citation proving
    something adjacent is worse than none - it makes a guess look checked. An assumption satisfies
-   this by citing the settled material it follows from.
+   this by citing the settled material it follows from. An **uncertain** assumption cites what it
+   leans on, or says it has nothing - the mark is what keeps it apart from a decision.
 2. **The grill proposes, the user decides.** It never settles the shape, admits an item, or avoids
    a risk on the user's behalf.
 3. **Settled is closed.** Reopening requires new information. Idempotent: re-invoked on a settled
@@ -26,8 +27,8 @@ Touches no git. Writes no code, plan, or tasks. Writes one file, only on request
 4. **Hard timebox: three rounds** - so that "we'll decide later" costs something. The user may
    lower it; the grill never raises it. Unspent rounds are not owed. "The budget" below means
    whatever the timebox currently is.
-5. **Append-only, stable IDs.** Questions, assumptions, requirements, and decisions keep their
-   numbers; a retired number is never reused.
+5. **Append-only, stable IDs.** Questions (`Q1…`), assumptions (`A1…`), requirements (`R1…`),
+   and decisions (`D1…`) keep their numbers; a retired number is never reused.
 6. **Nothing leaves untyped.** Every open item exits as a boundary, a deferral, or the split
    signal.
 
@@ -47,7 +48,8 @@ Candidates span:
   or a recognised catalogue such as OWASP. It is provenance for an assumption, and grounds a
   stance. Where the repo departs from it, the repo is the fact - say so once;
 - what only the user can decide: intent, priority between outcomes, constraints from outside the
-  repo, direction the code cannot show;
+  repo, direction the code cannot show, and whether the change ships as parts when the material
+  shows separable ones;
 - risks, prompted by these axes: architecture and mechanism, security, operations and
   maintenance, dependencies and integration. Requirements risk needs no prompt - it already shows
   up as an unknown.
@@ -71,8 +73,9 @@ Classify each candidate:
   domain guidance). Silence accepts it, a word corrects it. Every two-way door is an assumption,
   even when the grill cannot predict the answer; one it could not predict is marked
   **uncertain**. An assumption about an observable outcome is written as
-  `given <context>, when <event>, then <outcome>`, so it lands in `requirements` as written. One
-  assumption is never provenance for another - that is a guess with a paper trail.
+  `given <context>, when <event>, then <outcome>`. It lands in `requirements` when it passes the
+  deletion test, otherwise in `approach`, `constraints`, or the decision log. One assumption is
+  never provenance for another - that is a guess with a paper trail.
 - **Unknown** - looked for, not found. It becomes a question when it is a one-way door or intent
   only the user can decide; otherwise an uncertain assumption.
 
@@ -102,12 +105,13 @@ shape, a version - or for the established guidance on a fork. Primary sources on
 the package's own stated requirements, spec text, the guidance's own publisher. Two searches per
 candidate; no primary source means unknown. Never for approach comparison.
 
-Report the map before round 1, keyed by ID so the user can correct by ID:
+Report the map in the same reply as round 1, keyed by ID so the user can correct by ID. Every
+entry is one line - the questions carry the full text:
 
-- **unknowns** and **one-way doors** in full - they become the questions;
-- **assumptions** one line each, uncertain first, without provenance;
+- **asked** - one-way doors and user-only intent, each pointing to its question;
+- **assumptions** - uncertain first, without provenance;
 - **ruled out**;
-- **facts** as a count, listed only when the user asks.
+- **facts** - a count, listed only when the user asks.
 
 Provenance is shown on request ("why A2?"). Corrections are volunteered and off-budget.
 
@@ -135,8 +139,8 @@ spent when asked, however many answers come back.
 **Orthogonal.** No answer may change whether another question in the same batch is worth asking.
 When in doubt, hold it back.
 
-**Report the record once.** Rounds do not repeat the map. Provenance is shown again only when the
-user asks for it ("why A2?"), and always lands in the decision log.
+**Report the record once.** Rounds do not repeat the map. Provenance is shown only when the user
+asks for it ("why A2?"), and always lands in the decision log.
 
 **Questions first.** A round reply opens with its questions. After them come only the changes
 since the last reply: entries newly settled, corrected, or withdrawn, one line each. Nothing
@@ -205,8 +209,8 @@ The question is the first line, after its number - no title label, no markers be
 - **Rules out** - what agreeing costs.
 - **Risk** - only when the question bears on one: the risk and its provenance, one line under
   Rules out.
-- **One-way door** - only when the decision is costly to reverse: what makes it so, with its
-  provenance, one line under Rules out (below **Risk** when both).
+- **One-way door** - only on a one-way door: who pays to undo it, with provenance, one line under
+  Rules out (below **Risk** when both).
 - **Atomic** - one decision per question. A stance needing "and", or a Rules out covering half of
   it, is two questions. The ceiling counts decisions, not blocks.
 - **Open-ended** - no option lists in the stance form; options plus a stance is a ballot with a
@@ -322,7 +326,7 @@ Then the shape, as spec-ready frontmatter plus body, so a consumer copies rather
 outcome: <one sentence - what is true once this ships>
 requirements:
   R1: given <context>, when <event>, then <outcome>
-  R2: not observable, <why> - <something the outcome needs>
+  R2: <something the outcome needs> - not observable, <why>
 non_goals:
   - item: <what is not being built>
     type: boundary | deferral
@@ -360,8 +364,9 @@ The reported block has no comments and no unfilled placeholders - it is copied v
   assumptions written that way; the rest from settled examples.
 - `touchpoints` are the expected blast radius: a change outside them needs an explanation.
 - `parts` appear only when the owner split the change; one part means no `parts`. In a sequence,
-  list order is the order. Every requirement belongs to exactly one part - one that holds only
-  once several parts land goes to the part after which it first holds.
+  list order is the order. Every requirement belongs to exactly one part. In a sequence, one that
+  holds only once several parts land goes to the part after which it first holds; with
+  independent parts, it means they are not independent - say so and ask.
 - `type` is explicit on each non-goal: it decides whether reopening one is a question or a mistake.
 - Risks have no field. A settled risk lands as a constraint (mitigated), a typed non-goal
   (avoided), or an accepted risk recorded in the decision log with what accepting it costs. A risk
