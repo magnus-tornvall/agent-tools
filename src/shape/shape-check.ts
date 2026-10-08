@@ -1,5 +1,5 @@
 /**
- * Checks that a file is a shape any producer can hand to orca-start.
+ * Checks that a file is a shape: it conforms to the shape schema.
  *
  *   bun src/shape/shape-check.ts <file>
  *
