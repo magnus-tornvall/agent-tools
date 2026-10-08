@@ -1,0 +1,64 @@
+<main>
+  <label>Run ID <input id="run" placeholder="run_0123456789ab" size="22"></label>
+  <button id="terminal">Status in terminal</button>
+  <button id="fetch">Fetch status</button>
+  <pre id="out"></pre>
+</main>
+<style>
+  body { font: 13px system-ui; color: var(--foreground); background: var(--background); margin: 8px; }
+  pre { white-space: pre-wrap; }
+  button { margin: 4px 4px 4px 0; }
+</style>
+<script>
+  var PORT = 47821;
+  var RUN_ID = /^run_[0-9a-f]{12}$/;
+  var out = document.getElementById("out");
+  var pending = {};
+  var next = 0;
+
+  function show(text) { out.textContent = text; }
+
+  function call(action, params) {
+    var requestId = "r" + next++;
+    return new Promise(function (resolve, reject) {
+      pending[requestId] = { resolve: resolve, reject: reject };
+      window.parent.postMessage({ type: "orca-panel-action", requestId: requestId, action: action, params: params }, "*");
+    });
+  }
+
+  window.addEventListener("message", function (event) {
+    var data = event.data;
+    if (event.source !== window.parent || !data || data.type !== "orca-panel-action-result") return;
+    var waiting = pending[data.requestId];
+    if (!waiting) return;
+    delete pending[data.requestId];
+    if (data.ok) waiting.resolve(data.value);
+    else waiting.reject(new Error(data.errorCode + ": " + data.error));
+  });
+
+  function run() {
+    var value = document.getElementById("run").value.trim();
+    if (!RUN_ID.test(value)) { show("Not a Run ID: " + value); return null; }
+    return value;
+  }
+
+  document.getElementById("terminal").onclick = function () {
+    var id = run();
+    if (!id) return;
+    call("workspace.readContext").then(function (context) {
+      if (!context || context.terminals.length === 0) throw new Error("the active worktree has no terminal");
+      return call("terminal.sendText", { terminalId: context.terminals[0].id, text: "bun run tick status --run " + id, enter: true });
+    }).then(
+      function (result) { show("sent, accepted: " + result.accepted); },
+      function (error) { show("terminal route failed: " + error.message); }
+    );
+  };
+
+  document.getElementById("fetch").onclick = function () {
+    var id = run();
+    if (!id) return;
+    fetch("http://127.0.0.1:" + PORT + "/status?run=" + id).then(function (response) {
+      return response.text();
+    }).then(show, function (error) { show("fetch route failed: " + error.name + ": " + error.message); });
+  };
+</script>

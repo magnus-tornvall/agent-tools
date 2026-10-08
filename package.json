@@ -5,6 +5,8 @@
   "scripts": {
     "shape-schema": "bun src/shape/shape.ts",
     "build-skills": "bun src/build-skills.ts",
+    "tick": "bun src/orca/tick.ts",
+    "build-plugin": "bun build plugins/tick-status/worker.ts --target node --format esm --outfile plugins/tick-status/dist/worker.mjs",
     "test": "bun test",
     "typecheck": "tsc --noEmit"
   },

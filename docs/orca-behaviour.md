@@ -185,6 +185,40 @@ that allows `Read`, `Edit`, `Write`, `Bash(orca orchestration:*)` and
   same fields, `options` as a JSON string and `resolution` null. `gate-resolve` takes the gate as
   `--id`.
 
+## Plugin routes for tick status, Orca 1.4.222
+
+The prototype is `plugins/tick-status/`. Plugins are `experimental`, and Orca publishes no docs for them;
+what follows was read from the installed app's own manifest schema and host API, then exercised as
+far as it can be without the Orca window. Nothing below was observed in the window: the owner
+installs the plugin from its folder and fills in "Window result" for each route.
+
+- Manifest: `orca-plugin.json` with `manifestVersion` 1, `id`, `publisher`, `name`, `version`,
+  `engines.orca` as `>=x.y.z`, `pluginApi` 1, `main` (the worker, required for a command with no
+  built-in `action`), `contributes.commands[]` (`id`, `title`, `context`), `contributes.panels[]`
+  (`id`, `title`, `icon`, `entry`), and `capabilities[]` of `{ "kind": ... }`. Orca's own
+  `parsePluginManifest` accepts the plugin's manifest. The worker is loaded with `import()`, so it
+  is an ES module with a default-exported `activate` function that registers command handlers;
+  the bundle is `.mjs` for that reason.
+- A command invoked from the command palette reaches the worker with `pluginKey` and `commandId`
+  only, so it carries no Run ID. The prototype's command takes `args.runId` when given and else
+  reads the Run ID from `~/.orca/tick-status-run`.
+- A panel is a `sandbox="allow-scripts"` iframe; it can call only `workspace.readContext`,
+  `terminal.sendText` and `notifications.show` (through `postMessage` of
+  `{ type: "orca-panel-action", requestId, action, params }`, answered by
+  `orca-panel-action-result`). `storage`, `secrets`, `settings` and events are worker-only.
+  Calls are capped at 30 per 10 seconds and 64 KiB each. `terminal.sendText` needs an explicit
+  `terminalId`, which `workspace.readContext` supplies from the focused worktree.
+- `tick status` opens a gate on a failed surprise check that has none, so a route that runs it
+  can change a Run in that one case; it is the same effect as running `tick status` by hand.
+
+| Route | Works on 1.4.222 | Evidence |
+| --- | --- | --- |
+| P1 command and notification | Worker half works: not yet seen in the window | Orca's own `plugin-host-entry.js` loaded the bundle, ran `tick-status.show` for a real Run against the real `orca` CLI, and made the `notifications.show` host call with the counts. Whether the palette lists the command and the notification appears is the owner's to try. |
+| P2 panel button to terminal | Not yet seen in the window | Source: the panel may call `workspace.readContext` and `terminal.sendText`, and the manifest grants `workspace:read` and `terminal:send`. The panel sends `bun run tick status --run R` with Enter to the first terminal of the focused worktree. |
+| P3 panel fetch from a localhost worker | Fails, from source; the error is not yet seen in the window | The panel shell sets `Content-Security-Policy: default-src 'none'; connect-src 'none'; ...`, and a panel's own CSP can only tighten it, so `fetch` to `http://127.0.0.1:47821` is blocked. The worker half works: its server returned `tick status`'s text for a Run when fetched from outside the panel. The panel prints `fetch route failed: <name>: <message>` with the browser's error. |
+
+Window result (owner fills in): P1 ______  P2 ______  P3 ______ (error text: ______)
+
 ## Read, not smoke-tested, on Orca 1.4.221 and 1.4.222
 
 - Task statuses are `pending, ready, dispatched, completed, failed, blocked`; `task-create --deps`
