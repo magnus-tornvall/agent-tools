@@ -2,6 +2,7 @@
 name: mvc
 description: Initiate a minimal viable change by grilling the user down a design tree until its shape is settled - what ships, what does not and why, and what each decision ruled out. Writes the settled shape to one file on request, so it survives the conversation.
 disable-model-invocation: true
+compatibility: Requires Bun
 ---
 
 # mvc
@@ -11,7 +12,7 @@ ships, what does not and why, and what each decision ruled out. Ask greedily by 
 the question whose answer prunes the most - then re-derive the frontier.
 
 Touches no git. Writes no code, plan, or tasks. Writes one file, only on request - see
-[Persisting the shape](#persisting-the-shape).
+[Persisting the shape](#persisting-the-shape) - besides the temp file it checks the report in.
 
 ## Invariants
 
@@ -28,7 +29,7 @@ Touches no git. Writes no code, plan, or tasks. Writes one file, only on request
    lower it; the grill never raises it. Unspent rounds are not owed. "The budget" below means
    whatever the timebox currently is.
 5. **Append-only, stable IDs.** Questions (`Q1…`), assumptions (`A1…`), requirements (`R1…`),
-   and decisions (`D1…`) keep their numbers; a retired number is never reused.
+   non-goals (`N1…`), and decisions (`D1…`) keep their numbers; a retired number is never reused.
 6. **Nothing leaves untyped.** Every open item exits as a boundary, a deferral, or the split
    signal.
 
@@ -320,39 +321,23 @@ reasoning, and never withhold one because the idea wasn't the user's.
 First, one check on the closed set: has any shipping item become redundant given the rest? Nothing
 else is re-examined - everything else was settled on entry.
 
-Then the shape, as spec-ready frontmatter plus body, so a consumer copies rather than translates:
+Then the shape, as one YAML document conforming to the shape schema, so a consumer copies rather
+than translates. `assets/example.yaml` is a filled-in shape: follow its keys and nesting exactly.
+There is no markdown body - the decision log is the `decisions` key.
 
-```yaml
----
-outcome: <one sentence - what is true once this ships>
-requirements:
-  R1: given <context>, when <event>, then <outcome>
-  R2: <something the outcome needs> - not observable, <why>
-non_goals:
-  - item: <what is not being built>
-    type: boundary | deferral
-    reason: <the line that separates it, or why not now>
-approach:
-  - <a mechanism chosen>
-constraints:
-  - <a limit the mechanism must respect>
-touchpoints:
-  - <path/to/file.ext:symbol>
----
-```
-
-The reported block has no comments and no unfilled placeholders - it is copied verbatim. It must
-parse as YAML: quote any free-text value that contains `: ` or ` #`, or starts with a character
-YAML treats specially (`[`, `{`, `&`, `*`, `!`, `|`, `>`, `%`, `@`, a quote, or a backtick).
+The reported document has no comments and no unfilled placeholders - it is copied verbatim. It
+must parse as YAML: quote any free-text value that contains `: ` or ` #`, or starts with a
+character YAML treats specially (`[`, `{`, `&`, `*`, `!`, `|`, `>`, `%`, `@`, a quote, or a
+backtick).
 
 - `outcome` is the one scalar, with no weasel words. Every other field is a collection; an empty
-  one is a statement, not an omission.
+  one is a statement, not an omission - except `requirements`, which holds at least one.
 - Problem space vs solution space. `outcome`, `requirements`, `non_goals` are the what;
   `approach` (mechanism chosen), `constraints` (limits on it), `touchpoints` (files and symbols it
   lands on) are the how. A stance naming a file, symbol, technology, or value is how - never a
   requirement.
-- Every requirement is observable - given/when/then - or says why it cannot be. Most come from
-  assumptions written that way; the rest from settled examples.
+- Every requirement is observable - `given`, `when`, `then` - or is a `text` with the `reason` it
+  cannot be. Most come from assumptions written that way; the rest from settled examples.
 - `touchpoints` are the expected blast radius: a change outside them needs an explanation.
 - `type` is explicit on each non-goal: it decides whether reopening one is a question or a mistake.
 - Risks have no field. A settled risk lands as a constraint (mitigated), a typed non-goal
@@ -364,17 +349,27 @@ YAML treats specially (`[`, `{`, `&`, `*`, `!`, `|`, `>`, `%`, `@`, a quote, or 
   answer lands in the decision log as a non-constraint with the input it covers. The rejected
   outcome is that decision's rejected alternative.
 
-The body under the frontmatter is the decision log, ADR-style but only three parts per decision,
-each entry keyed `D1…`: the decision, its rejected alternatives, its provenance. Not optional,
-not a summary - it is the only record of the pruned branches. An assumption that reached the close
-uncorrected keeps its label: silence accepted it, the user did not decide it. A decision on a
-one-way door keeps its mark in the decision log, so a reviewer can see which entries cost most to
-reopen.
+`decisions` is the decision log, ADR-style but only three parts per decision, each entry keyed
+`D1…`: `decision`, `rejected` (at least one alternative), `provenance`. Not optional, not a
+summary - it is the only record of the pruned branches. An assumption that reached the close
+uncorrected keeps its label as `decided_by: silence`: silence accepted it, the user did not decide
+it. A decision on a one-way door keeps its mark as `type: one_way_door`, with who pays to undo it
+in its `provenance`, so a reviewer can see which entries cost most to reopen. Question and
+assumption IDs appear only inside `provenance` - the schema has no key for them.
+
+### Checking the report
+
+Before the shape reaches the reply, write it to a file in the system temp directory and run
+`bun scripts/shape-check.js <file>` from this skill's root. Each line on stderr is
+`path: message`; fix the document and rerun until it exits 0. A fix changes form, never content:
+a violation only new content would fix - a decision with no rejected alternative, a shape with no
+requirement - goes to the user. Without Bun on the PATH, report the shape marked unchecked and
+write no file.
 
 ## Persisting the shape
 
 Only on request, and only once the frontier is closed - asked earlier, name the open questions and
-write nothing. The file is the report verbatim: nothing the report lacks. With no location given,
-`mvc-<slug>.md` in `.scratch` at the repo root, else the system temp directory. Never replace an
-existing file without the user's word; when they passed in a prior shape, they choose replace,
-merge, or a new file.
+write nothing. The file is the checked report verbatim: nothing the report lacks. An unchecked
+shape is not persisted. With no location given, `mvc-<slug>.yaml` in `.scratch` at the repo root,
+else the system temp directory. Never replace an existing file without the user's word; when they
+passed in a prior shape, they choose replace, merge, or a new file.
