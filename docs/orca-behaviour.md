@@ -215,9 +215,9 @@ installs the plugin from its folder and fills in "Window result" for each route.
 | --- | --- | --- |
 | P1 command and notification | Worker half works: not yet seen in the window | Orca's own `plugin-host-entry.js` loaded the bundle, ran `tick-status.show` for a real Run against the real `orca` CLI, and made the `notifications.show` host call with the counts. Whether the palette lists the command and the notification appears is the owner's to try. |
 | P2 panel button to terminal | Not yet seen in the window | Source: the panel may call `workspace.readContext` and `terminal.sendText`, and the manifest grants `workspace:read` and `terminal:send`. The panel sends `bun run tick status --run R` with Enter to the first terminal of the focused worktree. |
-| P3 panel fetch from a localhost worker | Fails, from source; the error is not yet seen in the window | The panel shell sets `Content-Security-Policy: default-src 'none'; connect-src 'none'; ...`, and a panel's own CSP can only tighten it, so `fetch` to `http://127.0.0.1:47821` is blocked. The worker half works: its server returned `tick status`'s text for a Run when fetched from outside the panel. The panel prints `fetch route failed: <name>: <message>` with the browser's error. |
+| P3 panel fetch from a localhost worker | Fails on 1.4.222; seen in the window | The panel shell sets `Content-Security-Policy: default-src 'none'; connect-src 'none'; ...`, and a panel's own CSP can only tighten it, so `fetch` to `http://127.0.0.1:47821` is blocked. The worker half works: its server returned `tick status`'s text for a Run when fetched from outside the panel. In the window the panel printed `fetch route failed: TypeError: Failed to fetch`, which is how a CSP-blocked `fetch` reports. |
 
-Window result (owner fills in): P1 ______  P2 ______  P3 ______ (error text: ______)
+Window result (owner fills in): P1 ______  P2 ______  P3 fails (error text: `TypeError: Failed to fetch`)
 
 ## Read, not smoke-tested, on Orca 1.4.221 and 1.4.222
 
