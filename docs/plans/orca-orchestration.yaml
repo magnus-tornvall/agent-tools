@@ -7,7 +7,7 @@ research: ../research/agentic-systems/report.md
 # reply for worker questions, gates only for coordinator-owned DAG decisions, --retry-of and Orca's
 # cancel. Never work around it; when this plan needs Orca to behave otherwise, the plan changes.
 # Issue IDs are durable: never renumbered, never reused. Done issues are removed; the highest ID
-# used so far is OO-29, and new issues take the next number after it.
+# used so far is OO-30, and new issues take the next number after it.
 # The shape schema (src/shape/shape.ts) is the contract between whatever produces a shape and
 # Orca: a user opts in by producing a conforming shape. mvc is one producer, not the contract.
 # Workers never see the whole shape; each Task spec is that Task's slice of it.
@@ -133,7 +133,7 @@ tasks:
       the owner's terminal; each skill that runs a script declares compatibility: Requires Bun
     depends_on: [OO-9, OO-21, OO-25, OO-28]
     status: todo
-  - id: OO-29
+  - id: OO-30
     kind: known
     step: Move the surprise check's procedure into a surprise-check skill
     # The procedure stops being frozen into the spec at creation: a check created before a skill
