@@ -63,7 +63,7 @@ tasks:
   - id: OO-17
     kind: known
     step: Run the scaffold item end to end
-    depends_on: [OO-16, OO-21, OO-26]
+    depends_on: [OO-16, OO-21]
     done_when: merge-ready local branch, report read
     status: todo
   - id: OO-20
@@ -97,16 +97,6 @@ tasks:
       alternatives that bear on it, constraints, touchpoints) passed as --spec=, and creates the
       surprise check from the whole shape depending on every implementation Task; a mutation with
       an unknown result is retried with Orca's --retry-request
-    depends_on: [OO-26]
-    status: todo
-  - id: OO-26
-    kind: known
-    step: Measure the surprise check against the typed shape
-    done_when: >-
-      surpriseCheckSpec takes a shape typed by the shape schema instead of a string: the check
-      measures the diff against the shape, each checked Task's spec and the answers, and reports
-      every requirement in the shape by its ID; the doc comment in surprise-check.ts and the
-      README say so
     status: todo
   - id: OO-28
     kind: known
@@ -144,5 +134,4 @@ tasks:
       report, reading the Run and Tasks from the spec's frontmatter; surpriseCheckSpec renders only
       the frontmatter, a line naming the skill and the shape as YAML; the doc comment in
       surprise-check.ts and the README say so
-    depends_on: [OO-26]
     status: todo
