@@ -1,17 +1,17 @@
 /**
  * The tick: the Run's coordinator, run by hand from the terminal bound to the Run.
  *
- *   bun src/tick.ts status  --run <run_id>
- *   bun src/tick.ts reply   --run <run_id> --id <message_id> --answer <text>
- *   bun src/tick.ts advance --run <run_id> [--agent claude] [--model sonnet] [--cap 1]
- *                           [--base-branch main] [--retry <task_id>]... [--cancel <task_id>]...
+ *   bun src/orca/tick.ts status  --run <run_id>
+ *   bun src/orca/tick.ts reply   --run <run_id> --id <message_id> --answer <text>
+ *   bun src/orca/tick.ts advance --run <run_id> [--agent claude] [--model sonnet] [--cap 1]
+ *                                [--base-branch main] [--retry <task_id>]... [--cancel <task_id>]...
  *
  * Orca is the only state: every call reads the Run afresh and nothing is kept between calls.
  * It never pushes and never touches code.
  */
 import { existsSync } from "node:fs";
 import { parseArgs } from "node:util";
-import { sh, succeeds } from "./shell.ts";
+import { sh, succeeds } from "../shell.ts";
 
 /** Runs one `orca orchestration` command with `--json` and returns its `result`. */
 export type Orca = (args: readonly string[]) => Promise<unknown>;
@@ -23,10 +23,10 @@ export type Git = {
 };
 
 const USAGE = [
-  "usage: bun src/tick.ts status  --run <run_id>",
-  "       bun src/tick.ts reply   --run <run_id> --id <message_id> --answer <text>",
-  "       bun src/tick.ts advance --run <run_id> [--agent claude] [--model sonnet] [--cap 1]",
-  "                               [--base-branch main] [--retry <task_id>]... [--cancel <task_id>]...",
+  "usage: bun src/orca/tick.ts status  --run <run_id>",
+  "       bun src/orca/tick.ts reply   --run <run_id> --id <message_id> --answer <text>",
+  "       bun src/orca/tick.ts advance --run <run_id> [--agent claude] [--model sonnet] [--cap 1]",
+  "                                    [--base-branch main] [--retry <task_id>]... [--cancel <task_id>]...",
 ].join("\n");
 
 const MAIN = "main";

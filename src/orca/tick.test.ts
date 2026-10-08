@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { tick, type Git, type Orca } from "./tick.ts";
 
 /**
- * Orca's JSON here is recorded from real Runs (src/fixtures/tick). No recorded Run had a worker
+ * Orca's JSON here is recorded from real Runs (src/orca/fixtures/tick). No recorded Run had a worker
  * still in flight, live, or named for release, so those states are patched onto recorded rows
  * with `patchWorker`, and each test shows what it changed.
  */

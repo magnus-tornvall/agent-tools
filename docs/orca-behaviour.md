@@ -4,7 +4,7 @@ What Orca actually does, found by running it or by reading its guide, `--help` a
 Each list names the Orca version it was checked on. Facts only: how this repo uses Orca lives in
 the code and skills.
 
-Terms: *the tick* is `src/tick.ts`, the script that coordinates a Run on the owner's behalf. *The
+Terms: *the tick* is `src/orca/tick.ts`, the script that coordinates a Run on the owner's behalf. *The
 trial repo* is `~/dev/me/ai/vscode`. *The scoped settings* are a committed `.claude/settings.json`
 that allows `Read`, `Edit`, `Write`, `Bash(orca orchestration:*)` and
 `Bash(git status|diff|add|commit:*)`, and denies `Bash(git push:*)`.
