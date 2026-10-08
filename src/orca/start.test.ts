@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { parseShape, type Shape } from "../shape/shape.ts";
 import { OrcaRefusal, type Orca } from "./orca.ts";
-import { start } from "./start.ts";
+import { help, start } from "./start.ts";
 import { surpriseCheckSpec } from "./surprise-check.ts";
 
 const SHAPE = readFileSync(new URL("../shape/fixtures/example.yaml", import.meta.url), "utf8");
@@ -225,5 +225,32 @@ describe("start", () => {
 
     expect(stopped).toContain("Run run_1 has S2 task_1, S1 task_2.");
     expect(stopped).toContain("the surprise check: not created: invalid_argument: bad deps");
+  });
+});
+
+describe("help", () => {
+  const script = new URL("./start.ts", import.meta.url).pathname;
+
+  test("its DAG example starts a Run from the example shape", async () => {
+    const example = help()
+      .split("\n")
+      .filter((line) => line.startsWith("  S"))
+      .join("\n");
+
+    const started = await start(SHAPE, example, fakeOrca().orca);
+
+    expect(Object.keys(started.tasks).sort()).toEqual(["S1", "S2"]);
+  });
+
+  test("is what the script prints for help, creating nothing", () => {
+    const result = Bun.spawnSync(["bun", script, "help"]);
+
+    expect({ code: result.exitCode, stdout: result.stdout.toString() }).toEqual({ code: 0, stdout: `${help()}\n` });
+  });
+
+  test("is what the script refuses with when the DAG is missing", () => {
+    const result = Bun.spawnSync(["bun", script, "shape.yaml"]);
+
+    expect({ code: result.exitCode, stderr: result.stderr.toString() }).toEqual({ code: 1, stderr: `${help()}\n` });
   });
 });

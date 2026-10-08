@@ -4,6 +4,8 @@
  *
  *   bun src/orca/start.ts <shape.yaml> <dag.yaml>
  *
+ * `bun src/orca/start.ts help` prints the usage and the DAG's format.
+ *
  * The DAG maps each Task's S ID to its title, the requirement IDs it owns, the non-goal and
  * decision IDs that bear on it, and the S IDs it depends on:
  *
@@ -26,7 +28,28 @@ import { orcaCli, OrcaRefusal, type Orca } from "./orca.ts";
 import { surpriseCheckSpec } from "./surprise-check.ts";
 import { taskSpec } from "./task-spec.ts";
 
-const USAGE = "usage: bun src/orca/start.ts <shape.yaml> <dag.yaml>";
+/** Names the script as run, not by its source path, so it reads right from the bundled copy. */
+export function help(): string {
+  return [
+    "usage: bun <this script> <shape.yaml> <dag.yaml>",
+    "",
+    "Creates a Run from the shape and the DAG the owner approved: each Task, then the surprise check",
+    "depending on every Task. Prints their IDs as JSON. The terminal that runs it becomes the Run's",
+    "coordinator.",
+    "",
+    "The DAG maps each Task's S ID to its title, the requirement IDs it owns, the non-goal and",
+    "decision IDs that bear on it, and the S IDs it comes after:",
+    "",
+    "  S1: { title: Store the reason, owns: [R1, R3], bears: [N1, D1] }",
+    "  S2: { title: Export the reason, owns: [R2], bears: [D1], after: [S1] }",
+    "",
+    "It refuses before any Orca call unless every requirement is owned by exactly one Task, every ID",
+    "the DAG names exists, and the dependencies form no cycle.",
+    "",
+    "  help",
+    "    Prints this.",
+  ].join("\n");
+}
 
 const SURPRISE_CHECK_TITLE = "Surprise check";
 
@@ -212,8 +235,10 @@ function message(error: unknown): string {
 
 if (import.meta.main) {
   const [shapeFile, dagFile, ...rest] = process.argv.slice(2);
-  if (shapeFile === undefined || dagFile === undefined || rest.length > 0) {
-    console.error(USAGE);
+  if (shapeFile === "help" && dagFile === undefined) {
+    console.log(help());
+  } else if (shapeFile === undefined || dagFile === undefined || rest.length > 0) {
+    console.error(help());
     process.exitCode = 1;
   } else {
     start(readFileSync(shapeFile, "utf8"), readFileSync(dagFile, "utf8"), orcaCli(process.cwd())).then(
