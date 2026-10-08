@@ -9,10 +9,9 @@ How to work an Orca Task. How to sequence the work is yours.
 
 ## Authority
 
-The shape file named in the Task spec is authoritative, and so are the answers to this Task's
-questions: the replies to your own asks, and any the coordinator sends you from an earlier
-attempt. The spec is a view of them. Read the shape and those answers before anything else. Where
-the spec and the shape or an answer disagree, that is a question.
+The Task spec is authoritative, and so are the answers to this Task's questions: the replies to
+your own asks, and any the coordinator sends you from an earlier attempt. Read the spec and those
+answers before anything else. Where the spec and an answer disagree, that is a question.
 
 The coordinator sends every attempt a starting message: this Task's earlier questions and
 answers, or that there are none. It never appears in your prompt and may arrive after you start,
@@ -34,9 +33,9 @@ arrived. Never start without it.
 
 ## The door rule
 
-For each decision the shape and answers don't settle:
+For each decision the spec and answers don't settle:
 
-- **Settled** in the shape or an answer → follow it.
+- **Settled** in the spec or an answer → follow it.
 - **Two-way door** → decide, log it as an assumption, carry on.
 - **One-way door** → ask a question.
 
@@ -54,7 +53,7 @@ A one-way door is costly to undo once shipped because someone outside this chang
 - **External effects** - sends, deletes, payments; anything that cannot be recalled.
 - **Test contracts** - changing what an existing test asserts.
 
-Contradicting the shape or an answer is always a question. Unsure → treat it as a one-way door and
+Contradicting the spec or an answer is always a question. Unsure → treat it as a one-way door and
 say so in the question. Over-escalating is a defect like missing one: a two-way door is yours.
 
 ## Questions
