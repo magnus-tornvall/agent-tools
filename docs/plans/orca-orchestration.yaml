@@ -27,8 +27,7 @@ tasks:
       given a conforming shape, proposes one or more Tasks with dependencies, each with a title,
       the requirement IDs it owns, and the non-goal and decision IDs that bear on it, and assigns
       S IDs per Task; once the owner approves the DAG, it hands the shape and that DAG unchanged to
-      OO-25's script
-    depends_on: [OO-25]
+      orca-start's script
     status: todo
   - id: OO-12
     kind: known
@@ -84,20 +83,6 @@ tasks:
       reply, asks retry or cancel after a failure, and calls advance and gate; it runs no Orca
       command the script covers, and stays short
     status: todo
-  - id: OO-25
-    kind: known
-    step: Write orca-start's script and the implementation Task spec template
-    done_when: >-
-      given a shape conforming to the shape schema and an approved DAG as typed input, with
-      dependencies by local key, the script validates both and refuses before any mutation when a
-      requirement is owned by no Task or the DAG names an unknown requirement, non-goal or decision
-      ID; it creates the Run with the shape's outcome as objective, creates the Tasks in dependency
-      order with each spec rendered from a taskSpec template as that Task's slice (item outcome,
-      its requirements under their shape IDs, the non-goals and decisions with their rejected
-      alternatives that bear on it, constraints, touchpoints) passed as --spec=, and creates the
-      surprise check from the whole shape depending on every implementation Task; a mutation with
-      an unknown result is retried with Orca's --retry-request
-    status: todo
   - id: OO-29
     kind: known
     step: Share mvc and the Orca skills as one Orca bundle
@@ -105,13 +90,12 @@ tasks:
     # them by paths relative to its own root: no skill depends on another's install path. Installs
     # are global only, so every worker worktree sees them; a receiver needs Bun. The JSON Schema
     # does not ship: shape-check --schema is the fix once a producer that doesn't use Zod needs it.
-    # orca-start's script joins build-skills once OO-25 writes it.
     done_when: >-
       mvc, orca-start, orca-tick and orca-worker are shared with orca skills share as one bundle
       named magnus-tornvall-agent-tools; installed globally on a machine with Bun and no checkout
       of this repository, mvc's shape-check passes its example and orca-tick's script runs from
       the owner's terminal; each skill that runs a script declares compatibility: Requires Bun
-    depends_on: [OO-9, OO-21, OO-25]
+    depends_on: [OO-9, OO-21]
     status: todo
   - id: OO-30
     kind: known
