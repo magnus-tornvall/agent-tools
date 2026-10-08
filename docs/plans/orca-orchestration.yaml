@@ -7,7 +7,7 @@ research: ../research/agentic-systems/report.md
 # reply for worker questions, gates only for coordinator-owned DAG decisions, --retry-of and Orca's
 # cancel. Never work around it; when this plan needs Orca to behave otherwise, the plan changes.
 # Issue IDs are durable: never renumbered, never reused. Done issues are removed; the highest ID
-# used so far is OO-30, and new issues take the next number after it.
+# used so far is OO-31, and new issues take the next number after it.
 # The shape schema (src/shape/shape.ts) is the contract between whatever produces a shape and
 # Orca: a user opts in by producing a conforming shape. mvc is one producer, not the contract.
 # Workers never see the whole shape; each Task spec is that Task's slice of it.
@@ -98,4 +98,19 @@ tasks:
       report, reading the Run and Tasks from the spec's frontmatter; surpriseCheckSpec renders only
       the frontmatter, a line naming the skill and the shape as YAML; the doc comment in
       surprise-check.ts and the README say so
+    status: todo
+  - id: OO-31
+    kind: known
+    step: Let orca-tick find the Run when it is given no Run ID
+    # orca-start's run-create binds its terminal to the new Run, so the terminal that ran orca-start
+    # holds the Run that orca-tick needs. That binding outlives the Run's relevance, so it is shown
+    # for confirmation, never used silently: advancing a stale Run starts workers on the wrong item.
+    # Every lookup goes through tick.js, since the skill never runs orca itself.
+    done_when: >-
+      tick.js has a current command wrapping run-current and a list command wrapping run-list, each
+      printing the Run ID and objective; invoked without a Run ID, orca-tick shows the bound Run and
+      asks the owner to confirm it, and when nothing is bound or the owner declines, shows the list
+      and takes the owner's pick; use then binds the chosen Run as before, and a pass given a Run ID
+      is unchanged
+    depends_on: [OO-9]
     status: todo
