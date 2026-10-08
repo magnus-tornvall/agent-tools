@@ -1,0 +1,31 @@
+{
+  "id": "28f1b2b8-d047-431f-9e1c-40ea048e4300",
+  "ok": true,
+  "result": {
+    "runId": "run_cb7933432d5b",
+    "legacyReadOnly": false,
+    "tasks": [
+      {
+        "id": "task_7479c953ab51",
+        "run_id": "run_cb7933432d5b",
+        "parent_id": null,
+        "created_by_terminal_handle": "term_2cab0da8-72d7-4cc0-b86c-b19b82b9c27b",
+        "created_by_pane_key": "52789d1d-db87-433b-b31f-ad4358f31e3e:3e5d5209-1937-4b6a-b07f-c66b124e50f2",
+        "created_by_process_incarnation": "cd0beb82-7687-437e-b12f-7c8959a056a7::/Users/magnustornvall/orca/workspaces/agent-tools/feat-issue-23@@e154bbae:f70f993f-68b6-4982-bc03-7096d6436e7b",
+        "created_by_run_generation": 1,
+        "task_title": "OO-23 ask/reply smoke",
+        "display_name": "OO-23 ask/reply smoke",
+        "spec": "OO-23 smoke test: ask and reply. Target: this worktree only, files smoke/oo23.txt and smoke/oo23-report.md. Never push. Use only Read, Write, Edit, and Bash commands that start with `orca orchestration`, `git status`, `git diff`, `git add` or `git commit`. Never use shell variables, pipes, `&&`, `sleep`, or any other command: they trigger a permission prompt nobody will answer. Type every ID literally.\n\nFor every `orca orchestration` command below, use the exact executable and flags your preamble gives for `ask` and `worker_done` (including any --from), adding only the flags shown here. Record every command you ran and its full JSON output, verbatim, in smoke/oo23-report.md as you go.\n\n1. Write smoke/oo23.txt containing the line `step 1`.\n2. Ask: `ask --question \"OO-23 Q1: should step 3 write alpha or beta? see smoke/oo23-report.md\" --timeout-ms 60000 --json`. It is expected to time out unanswered. Note the message ID it returns.\n3. Carry on without the answer: append `step 2` to smoke/oo23.txt, then `git add smoke` and `git commit -m \"smoke: step 2\"` (two separate commands).\n4. Checkpoint: `ask --resume <message ID> --timeout-ms 30000 --json`, in the foreground.\n5. If that also returned no answer, wait without polling: run `ask --resume <message ID> --timeout-ms 3600000 --json` with the Bash tool's run_in_background set to true, then end your turn. Do nothing until that background command finishes and you are woken. Do not check on it, do not sleep, do not poll.\n6. When the answer arrives, record it, append `step 3: <answer>` to smoke/oo23.txt, `git add smoke`, `git commit -m \"smoke: step 3\"`.\n7. Ask a second question that will not be answered in time: `ask --question \"OO-23 Q2: unanswered on purpose, see smoke/oo23-report.md\" --timeout-ms 20000 --json`. Record the output. Do not resume it.\n8. Commit the report (`git add smoke`, `git commit -m \"smoke: report\"`), then send worker_done with --outcome succeeded and --report-path smoke/oo23-report.md, and idle.\n\nAcceptance: smoke/oo23-report.md holds every command and its verbatim output; the branch has the three commits.",
+        "status": "completed",
+        "deps": "[]",
+        "result": "{\"provenance\":\"worker_report\",\"outcome\":\"succeeded\",\"messageId\":\"msg_6513a82007d8\",\"reportedBy\":\"term_408c3e08-52b1-4872-a63c-d54913393acd\",\"subject\":\"OO-23 smoke complete\",\"body\":\"Ran the OO-23 ask/reply smoke test: Q1 timed out at 60s and again at the 30s checkpoint, then the background resume returned the answer 'alpha', which I wrote as step 3. Q2 was left unanswered as intended (timed out at 20s, not resumed). smoke/oo23-report.md holds every command with verbatim output and the branch has the three commits (step 2, step 3, report); nothing was pushed and nothing is left.\",\"completedBy\":\"term_408c3e08-52b1-4872-a63c-d54913393acd\",\"filesModified\":[\"smoke/oo23.txt\",\"smoke/oo23-report.md\"],\"reportPath\":\"smoke/oo23-report.md\",\"completedAt\":\"2026-10-07T18:29:50.932Z\"}",
+        "created_at": "2026-10-07 18:12:24",
+        "completed_at": "2026-10-07T18:29:50.932Z"
+      }
+    ],
+    "count": 1
+  },
+  "_meta": {
+    "runtimeId": "bdcc8947-0619-448d-9910-7d7a24ae1a0e"
+  }
+}

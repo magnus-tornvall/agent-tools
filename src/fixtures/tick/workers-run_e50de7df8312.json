@@ -1,0 +1,222 @@
+{
+  "id": "d6580996-1010-41b5-9f98-e29a855461b5",
+  "ok": true,
+  "result": {
+    "workers": [
+      {
+        "dispatchId": "ctx_c2b8ae5f6828",
+        "taskId": "task_5ef77e8af34d",
+        "runId": "run_e50de7df8312",
+        "workerState": "unsupervised",
+        "dispatchStatus": "failed",
+        "agentTerminalHandle": "term_1db871da-fd34-4390-949a-a1166ef89763",
+        "terminalState": "retained",
+        "resource": null,
+        "projection": {
+          "id": "ctx_c2b8ae5f6828",
+          "dispatchId": "ctx_c2b8ae5f6828",
+          "taskId": "task_5ef77e8af34d",
+          "runId": "run_e50de7df8312",
+          "role": "worker",
+          "parent": null,
+          "provider": null,
+          "host": {
+            "kind": "local",
+            "id": "local"
+          },
+          "workspace": null,
+          "stage": {
+            "worker": "unsupervised",
+            "dispatch": "failed",
+            "detail": null,
+            "activity": "unknown"
+          },
+          "outcome": "failed",
+          "liveness": {
+            "verdict": "exited",
+            "source": "execution_host"
+          },
+          "evidence": {
+            "durable": true,
+            "liveStatus": "unavailable",
+            "lastObservedAt": null
+          },
+          "resource": {
+            "state": "absent",
+            "reason": "unsupervised"
+          },
+          "nextAction": {
+            "kind": "recover",
+            "argv": [
+              "orchestration",
+              "worker-read",
+              "--dispatch",
+              "ctx_c2b8ae5f6828"
+            ]
+          },
+          "attention": {
+            "categories": [
+              "failure",
+              "interruption"
+            ],
+            "requiresAction": true
+          }
+        }
+      },
+      {
+        "dispatchId": "ctx_dd69b245269b",
+        "taskId": "task_3f7cc52640da",
+        "runId": "run_e50de7df8312",
+        "workerState": "stopped",
+        "dispatchStatus": "failed",
+        "agentTerminalHandle": "term_59f487b7-eec2-49e0-b0f2-eeff4fe9280e",
+        "terminalState": "released",
+        "resource": {
+          "id": "wtr_e4e50c730df6",
+          "ownershipState": "released",
+          "releaseState": "released",
+          "retainedReason": null,
+          "terminalHandle": "term_59f487b7-eec2-49e0-b0f2-eeff4fe9280e",
+          "worktreeId": "cd0beb82-7687-437e-b12f-7c8959a056a7::/Users/magnustornvall/orca/workspaces/agent-tools/feat-task_3f7cc52640da-attempt2",
+          "endpointId": "bdcc8947-0619-448d-9910-7d7a24ae1a0e",
+          "endpointIncarnation": "cd0beb82-7687-437e-b12f-7c8959a056a7::/Users/magnustornvall/orca/workspaces/agent-tools/feat-task_3f7cc52640da-attempt2@@b0e9915c:c68f2e6d-cc89-470f-86f9-3edf65f790ac",
+          "originDispatchId": "ctx_dd69b245269b",
+          "ownerDispatchId": "ctx_dd69b245269b",
+          "releaseRequestedAt": "2026-10-07 13:44:06",
+          "releaseCompletedAt": "2026-10-07 13:44:06",
+          "releaseError": null,
+          "recoveryAttemptCount": 0,
+          "lastRecoveryAt": null,
+          "archive": {
+            "source": null,
+            "status": "unavailable"
+          }
+        },
+        "projection": {
+          "id": "ctx_dd69b245269b",
+          "dispatchId": "ctx_dd69b245269b",
+          "taskId": "task_3f7cc52640da",
+          "runId": "run_e50de7df8312",
+          "role": "worker",
+          "parent": null,
+          "provider": null,
+          "host": {
+            "kind": "local",
+            "id": "local"
+          },
+          "workspace": {
+            "id": "cd0beb82-7687-437e-b12f-7c8959a056a7::/Users/magnustornvall/orca/workspaces/agent-tools/feat-task_3f7cc52640da-attempt2",
+            "kind": "folder_or_worktree"
+          },
+          "stage": {
+            "worker": "stopped",
+            "dispatch": "failed",
+            "detail": "process_stopped",
+            "activity": "unknown"
+          },
+          "outcome": "failed",
+          "liveness": {
+            "verdict": "exited",
+            "source": "resource_release"
+          },
+          "evidence": {
+            "durable": true,
+            "liveStatus": "unavailable",
+            "lastObservedAt": null
+          },
+          "resource": {
+            "state": "released"
+          },
+          "nextAction": {
+            "kind": "none",
+            "argv": []
+          },
+          "attention": {
+            "categories": [
+              "approval",
+              "failure"
+            ],
+            "requiresAction": true
+          }
+        }
+      },
+      {
+        "dispatchId": "ctx_b67b8737f9ba",
+        "taskId": "task_3f7cc52640da",
+        "runId": "run_e50de7df8312",
+        "workerState": "unsupervised",
+        "dispatchStatus": "failed",
+        "agentTerminalHandle": "term_1db871da-fd34-4390-949a-a1166ef89763",
+        "terminalState": "retained",
+        "resource": null,
+        "projection": {
+          "id": "ctx_b67b8737f9ba",
+          "dispatchId": "ctx_b67b8737f9ba",
+          "taskId": "task_3f7cc52640da",
+          "runId": "run_e50de7df8312",
+          "role": "worker",
+          "parent": null,
+          "provider": null,
+          "host": {
+            "kind": "local",
+            "id": "local"
+          },
+          "workspace": null,
+          "stage": {
+            "worker": "unsupervised",
+            "dispatch": "failed",
+            "detail": null,
+            "activity": "unknown"
+          },
+          "outcome": "failed",
+          "liveness": {
+            "verdict": "unverifiable",
+            "reason": "unsupervised_settled"
+          },
+          "evidence": {
+            "durable": true,
+            "liveStatus": "unavailable",
+            "lastObservedAt": null
+          },
+          "resource": {
+            "state": "absent",
+            "reason": "unsupervised"
+          },
+          "nextAction": {
+            "kind": "inspect",
+            "argv": [
+              "orchestration",
+              "worker-show",
+              "--dispatch",
+              "ctx_b67b8737f9ba"
+            ]
+          },
+          "attention": {
+            "categories": [
+              "approval",
+              "failure"
+            ],
+            "requiresAction": true
+          }
+        }
+      }
+    ],
+    "counts": {
+      "retained": 2,
+      "released": 1
+    },
+    "page": {
+      "limit": 100,
+      "total": 3,
+      "hasMore": false,
+      "nextCursor": null
+    },
+    "scope": {
+      "run": "run_e50de7df8312",
+      "source": "flag"
+    }
+  },
+  "_meta": {
+    "runtimeId": "bdcc8947-0619-448d-9910-7d7a24ae1a0e"
+  }
+}
