@@ -2,7 +2,7 @@
 
 The tick: a script that coordinates an Orca Run on the owner's behalf, run by
 hand from the terminal bound to the Run, plus the skills its workers follow. Also the
-shape schema: the contract for what any producer hands to to-orca.
+shape schema: the contract for what any producer hands to orca-start.
 
 ```
 $ bun src/orca/tick.ts status  --run <run_id>
@@ -24,7 +24,7 @@ From this repository's root, `bun run tick <command> …` does the same thing.
 Every attempt `advance` starts first gets a message carrying the questions earlier
 attempts at the same Task asked, with their answers. It is sent even when there are none.
 
-An item's surprise check is a Task like any other, created by to-orca's script from
+An item's surprise check is a Task like any other, created by orca-start's script from
 `surpriseCheckSpec` and recognised by `kind: surprise-check` in its spec's frontmatter.
 It fails when it finds a surprise that needs a decision; the owner reads its report
 under failed attempts and rules by resolving the gate, which sets the check `ready` for
@@ -45,7 +45,7 @@ A shape is one YAML document: the outcome, requirements keyed `R1…`, non-goals
 `src/shape/shape.ts` is the one definition; `src/shape/fixtures/example.yaml` is a
 filled-in example.
 
-Any producer whose shape passes `shape-check` can feed to-orca. mvc is one producer,
+Any producer whose shape passes `shape-check` can feed orca-start. mvc is one producer,
 not the contract.
 
 ```
@@ -58,6 +58,14 @@ violation and exits 1. Keys the schema does not define are violations.
 `src/shape/shape.schema.json` is generated from the Zod schema for editors and for
 anything not written in TypeScript. After changing the schema, run `bun run shape-schema`;
 a test fails while the committed file is stale.
+
+## Skills that run scripts
+
+A skill shared through Orca must work without this repository, so each skill carries the
+scripts and assets it runs in its own `scripts/` and `assets/`, built from `src/`:
+`skills/mvc` gets `shape-check.js` and the filled-in example, `skills/orca-tick` gets
+`tick.js`. They run with `bun`. After changing anything they are built from, run
+`bun run build-skills`; a test fails while a skill's copy is stale.
 
 ## Requirements
 
@@ -82,6 +90,8 @@ src/shape/shape-check.ts    checking a file against the shape schema
 src/shape/shape.schema.json the JSON Schema generated from it
 src/shape/shape.test.ts     tests, with the filled-in example in src/shape/fixtures
 src/shell.ts                running a command and reading its output
-skills/                     orca-worker, which workers follow, plus the unrelated commit and mvc skills
+src/build-skills.ts         building each skill's scripts/ and assets/ from src/
+skills/                     orca-worker, which workers follow, plus the unrelated commit and mvc skills,
+                            with built files in skills/mvc and skills/orca-tick
 docs/                       known Orca behaviour, plans, research
 ```
