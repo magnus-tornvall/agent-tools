@@ -1,19 +1,22 @@
 /**
  * The surprise check: one Task per item, depending on all of the item's implementation Tasks, that
- * lists what a reader holding only the shape and the answers would not expect. The spec carries a
- * snapshot of the whole shape, taken when the Task is created; rulings made after that reach the
- * check as answers and gates.
+ * measures their diff against the shape, each checked Task's spec and the answers, and lists what a
+ * reader holding only the shape and the answers would not expect. It reports every requirement in
+ * the shape by its ID, and a requirement that is not done fails it. The spec carries a snapshot of
+ * the whole shape as YAML, taken when the Task is created; rulings made after that reach the check
+ * as answers and gates.
  *
  * orca-start's script creates the Task from `surpriseCheckSpec`, passing it as `--spec=<spec>`:
  * Orca reads a separate value starting with `---` as a flag. The tick finds the Task by the `kind`
  * in the spec's frontmatter and opens a gate on it when it fails.
  */
 
+import type { Shape } from "../shape/shape.ts";
+
 export const SURPRISE_CHECK_KIND = "surprise-check";
 
 export type SurpriseCheck = {
-  /** The whole shape, verbatim, whatever produced it. */
-  readonly shape: string;
+  readonly shape: Shape;
   readonly run: string;
   /** The item's implementation Tasks. */
   readonly checks: readonly string[];
@@ -44,6 +47,9 @@ goes in the needs-a-decision bin. Never read a worker's transcript or terminal o
 Gather these yourself, with the commands your preamble gives:
 
 - The shape: at the end of this spec. It and the answers are authoritative.
+- The Task specs: \`orca orchestration task-list --run ${check.run} --json\`, the spec of each
+  Task above. Each is that Task's slice of the shape; where a spec and the shape differ, the shape
+  wins.
 - The questions and answers: \`orca orchestration inbox --full --limit 10000 --json\`, the rows
   with run_id ${check.run}. A question is a row of type question whose payload names one of the
   Tasks above; its answer is the latest other message in its thread.
@@ -61,9 +67,11 @@ Gather these yourself, with the commands your preamble gives:
 Put each surprise in one bin:
 
 - **Logged assumption**: a decision a worker logged as an assumption; fine, listed in the report.
-- **Correctable**: contradicts the shape or an answer where they settle what is right.
-- **Needs a decision**: a one-way-door decision no worker logged or asked about, or a
-  contradiction the shape and answers do not settle.
+- **Correctable**: contradicts the shape or an answer where they settle what is right. When the
+  Task's spec did not carry the part of the shape it contradicts, say so.
+- **Needs a decision**: a requirement with no evidence in the diff that no answer waives, a
+  one-way-door decision no worker logged or asked about, or a contradiction the shape and answers
+  do not settle.
 
 ## Report
 
@@ -71,15 +79,15 @@ Report \`failed\` when any surprise needs a decision, otherwise \`succeeded\`. T
 \`worker_done\` body, in this order:
 
 1. Needs a decision, then correctable: each surprise, with the file and line it is in and the part
-   of the shape or the answer it is measured against.
+   of the shape it is measured against by its ID (\`R…\`, \`N…\`, \`D…\`), or the answer.
 2. Assumptions: each logged assumption (\`S…/A…\`), and whether the diff matches it.
 3. Questions and answers (\`S…/Q…\`), each with its answer.
-4. Requirements: each requirement in the shape, done or not, with the evidence.
+4. Requirements: one line per requirement in the shape, by its ID: \`R1 - done, <evidence>\` or
+   \`R1 - not done, <why>\`.
 
 ## Shape
 
-Everything below this line is the item's shape, verbatim.
+Everything below this line is the item's shape, in YAML.
 
-${check.shape}
-`;
+${Bun.YAML.stringify(check.shape, null, 2)}`;
 }

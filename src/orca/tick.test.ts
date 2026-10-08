@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
+import type { Shape } from "../shape/shape.ts";
 import { surpriseCheckSpec } from "./surprise-check.ts";
 import { tick, type Git, type Orca } from "./tick.ts";
 
@@ -314,8 +315,16 @@ describe("status on a surprise check", () => {
     expect(writes).toEqual([]);
   });
 
-  test("recognises a spec built around a shape that has frontmatter of its own", async () => {
-    const shape = "---\nkind: shape\noutcome: \"a gate opens\"\n---\n\n## Decision log\n";
+  test("recognises a spec built from a shape", async () => {
+    const shape: Shape = {
+      outcome: "a gate opens",
+      requirements: { R1: { text: "a gate opens", reason: "nothing to observe in a fixture" } },
+      non_goals: {},
+      approach: [],
+      constraints: [],
+      touchpoints: [],
+      decisions: {},
+    };
     const spec = surpriseCheckSpec({ shape, run: CHECK_RUN, checks: ["task_018b55e34b8b"] });
     const { orca, writes } = fakeOrca(patchTask(checkRun(), CHECKER, { spec }));
 

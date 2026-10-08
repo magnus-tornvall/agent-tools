@@ -24,7 +24,11 @@ attempts at the same Task asked, with their answers. It is sent even when there 
 
 An item's surprise check is a Task like any other, created by orca-start's script from
 `surpriseCheckSpec` and recognised by `kind: surprise-check` in its spec's frontmatter.
-It fails when it finds a surprise that needs a decision; the owner reads its report
+`surpriseCheckSpec` takes the item's shape as a typed `Shape` and carries it in the spec
+as YAML. The check measures the diff against the shape, each checked Task's spec and the
+answers, and reports every requirement in the shape by its ID, done or not.
+It fails when it finds a surprise that needs a decision, a requirement that is not done
+among them; the owner reads its report
 under failed attempts and rules by resolving the gate, which sets the check `ready` for
 `advance` to run again.
 
