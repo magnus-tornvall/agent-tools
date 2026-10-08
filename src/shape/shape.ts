@@ -7,7 +7,7 @@
  */
 import { z } from "zod";
 
-function idKey(prefix: string) {
+export function idKey(prefix: string) {
   return z.string().regex(new RegExp(`^${prefix}[1-9][0-9]*$`), `must be ${prefix} followed by a number from 1`);
 }
 
