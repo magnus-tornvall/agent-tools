@@ -7,7 +7,7 @@ research: ../research/agentic-systems/report.md
 # reply for worker questions, gates only for coordinator-owned DAG decisions, --retry-of and Orca's
 # cancel. Never work around it; when this plan needs Orca to behave otherwise, the plan changes.
 # Issue IDs are durable: never renumbered, never reused. Done issues are removed; the highest ID
-# used so far is OO-24, and new issues take the next number after it.
+# used so far is OO-26, and new issues take the next number after it.
 # status: todo | done | dropped (kept so the ID stays taken).
 # kind: unknown = a question a smoke test or a ruling must answer before the dependent build;
 #       known  = settled work, only effort stands between it and done.
@@ -15,12 +15,16 @@ tasks:
   - id: OO-9
     kind: known
     step: Write the to-orca skill
-    # Built in the owner's mvc session with OO-19, not dispatched from this plan.
+    # Written by the owner, not dispatched from this plan. Whatever built the conversation's
+    # context is immaterial: the skill reads no shape file and assumes no mvc fields.
+    # Ruled: a Task spec is self-contained, with no pointer to a shape and no verbatim copy of one.
+    # The owner's DAG approval is the only check that nothing was lost on the way into the specs.
     done_when: >-
-      reads one shape, proposes one or more Tasks with dependencies and creates the Run and
-      those Tasks only after the owner approves the DAG, each spec as ruled in OO-19; takes
-      R IDs from the shape and assigns S IDs per Task
-    depends_on: [OO-19]
+      from what the conversation holds, proposes one or more Tasks with dependencies, each with a
+      title and the content of its spec, including the item-wide outcome, non-goals and rejected
+      alternatives that bear on it, and assigns S IDs per Task; once the owner approves the DAG, it
+      hands that DAG unchanged to OO-25's script
+    depends_on: [OO-25]
     status: todo
   - id: OO-12
     kind: known
@@ -30,17 +34,6 @@ tasks:
       on an item branch the tick runs the gate commands and flags changed test files and
       files outside the touchpoints, with no model involved; a failing command is a finding
     status: dropped
-  - id: OO-13
-    kind: known
-    # The automatic rework round is deferred; the owner decides any rework from the report. A gate on
-    # an item's Task that has already completed is untested.
-    step: Add the surprise check gate to the tick script
-    done_when: >-
-      the script holds the gate's Task spec: inputs (shape, the item's questions and answers read
-      from the Run, diff, worker reports, mechanical gate results), objective and the three bins;
-      gate starts it once the mechanical gate passes, it writes the item report in surprise-first
-      order, and the script opens a gate on the item's Task for each needs-a-decision surprise
-    status: todo
   - id: OO-14
     kind: known
     # Folded into the tick script (status, reply) and OO-21 (showing questions, taking answers).
@@ -65,16 +58,8 @@ tasks:
   - id: OO-17
     kind: known
     step: Run the scaffold item end to end
-    depends_on: [OO-13, OO-16, OO-21]
+    depends_on: [OO-16, OO-21, OO-26]
     done_when: merge-ready local branch, report read
-    status: todo
-  - id: OO-19
-    kind: unknown
-    step: Rule what to-orca adds to a Task spec beyond pointing at the shape
-    # Ruled in the owner's mvc session with OO-9; reported back here.
-    done_when: >-
-      with a real export in hand, ruled whether a Task spec is the shape path and the part's
-      name, or also carries fields transcribed from the shape-to-Task table
     status: todo
   - id: OO-20
     kind: unknown
@@ -93,4 +78,23 @@ tasks:
       each question, needs-a-decision surprise, failure and item report, hands free-text answers to
       reply, asks retry or cancel after a failure, and calls advance and gate; it runs no Orca
       command the script covers, and stays short
+    status: todo
+  - id: OO-25
+    kind: known
+    step: Write to-orca's script and the implementation Task spec template
+    done_when: >-
+      given an approved DAG as typed input, with dependencies by local key, the script validates
+      it, creates the Run, creates the Tasks in dependency order with each spec from a taskSpec
+      template of named sections (outcome, requirements, non-goals, rejected alternatives,
+      constraints, touchpoints) passed as --spec=, and creates the surprise check depending on
+      every implementation Task; a mutation with an unknown result is retried with Orca's
+      --retry-request
+    status: todo
+  - id: OO-26
+    kind: known
+    step: Measure the surprise check against the specs of the Tasks it checks
+    done_when: >-
+      surpriseCheckSpec takes no shape: the check reads each checked Task's spec and result from
+      task-list, measures the diff against those specs and the answers, and reports each
+      requirement in them; the doc comment in surprise-check.ts and the README say so
     status: todo
