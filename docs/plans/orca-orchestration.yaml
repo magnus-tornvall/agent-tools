@@ -115,17 +115,17 @@ tasks:
     # mechanics. Scheduling it is deferred until ticking by hand is the bottleneck.
     step: Write the tick script and its tests
     done_when: >-
-      a stateless script, tested against recorded Orca JSON, run as the Run's coordinator, with four
-      commands. status lists questions with no reply, read from the Run's inbox without consuming it
-      (check --peek or inbox --full, never plain check), and pending gates, each with the item's
-      one-way-door count, failed or crashed attempts with their attempt count, and items ready for
-      gating. reply sends the owner's answer to a question (reply --id); nothing else records
-      it. advance starts ready Tasks under the cap (agent, model, cap and base branch as flags with
-      defaults), holding a Task with deps until each parent's branch is merged into main, retries
-      with --retry-of, sends each new attempt, the first included, a starting message with the
-      Task's questions and answers or saying there are none (send --to dispatch:<id>), or cancels a Task when the owner says so, and releases settled workers. gate
-      runs the check commands from the repo's committed file on the item branch and flags changed
-      test files and files outside the touchpoints. Never pushes, never edits code, holds no state
+      a stateless script, tested against recorded Orca JSON, run as the Run's coordinator, with three
+      commands. status lists open questions (asked on an active Dispatch, with no reply in their
+      thread), read with inbox --full and never plain check, each with the item's question count;
+      questions closed because their attempt ended; failed or crashed attempts with their attempt
+      count; and completed Tasks awaiting merge into main. reply sends the owner's answer to an open
+      question (reply --id); nothing else records it. advance starts ready Tasks under the cap
+      (agent, model, cap and base branch as flags with defaults), holding a Task with deps until
+      each parent's branch is merged into main, retries with --retry-of, sends each new attempt, the
+      first included, a starting message with the Task's questions and answers or saying there are
+      none (send --to dispatch:<id>), or cancels a Task when the owner decides so, and releases
+      settled workers. Never pushes, never edits code, holds no state
     depends_on: [OO-1, OO-2, OO-3, OO-4, OO-5, OO-7, OO-23, OO-24]
     status: todo
   - id: OO-12
