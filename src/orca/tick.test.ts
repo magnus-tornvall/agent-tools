@@ -496,7 +496,7 @@ describe("advance", () => {
     expect(writes).toEqual([
       [
         "worker-start", "--run", STATES_RUN, "--task", "task_0e09a0b5482c", "--worktree", "new-top-level",
-        "--agent", "claude", "--model", "sonnet", "--base-branch", "main",
+        "--name", "task_0e09a0b5482c-2", "--agent", "claude", "--model", "sonnet", "--base-branch", "main",
       ],
       [
         "send", "--run", STATES_RUN, "--to", "dispatch:ctx_new1",
@@ -576,7 +576,8 @@ describe("advance", () => {
     expect(writes).toEqual([
       [
         "worker-start", "--run", QUESTION_RUN, "--task", "task_7479c953ab51", "--worktree", "new-top-level",
-        "--agent", "claude", "--model", "sonnet", "--base-branch", "main", "--retry-of", "ctx_feb1a69dcedd",
+        "--name", "task_7479c953ab51-2", "--agent", "claude", "--model", "sonnet", "--base-branch", "main",
+        "--retry-of", "ctx_feb1a69dcedd",
       ],
       [
         "send", "--run", QUESTION_RUN, "--to", "dispatch:ctx_new1",

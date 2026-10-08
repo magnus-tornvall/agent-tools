@@ -640,12 +640,19 @@ async function startWorker(
     "--run", run.id,
     "--task", attempt.task.id,
     "--worktree", "new-top-level",
+    "--name", worktreeName(run, attempt.task.id),
     "--agent", options.agent,
     "--model", options.model,
     "--base-branch", options.baseBranch,
     ...retry,
   ]);
   return text(fields(result, "worker-start result"), "dispatchId");
+}
+
+/** Orca requires a name for a new worktree. Each attempt gets its own worktree, so the name
+ *  carries the attempt number. */
+function worktreeName(run: Run, taskId: string): string {
+  return `${taskId}-${attemptCount(run, taskId) + 1}`;
 }
 
 /** Every attempt waits for this before any work, so it is sent even when there is nothing to
