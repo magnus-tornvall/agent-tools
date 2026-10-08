@@ -1,8 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import type { Shape } from "../shape/shape.ts";
+import type { Orca } from "./orca.ts";
 import { surpriseCheckSpec } from "./surprise-check.ts";
-import { tick, type Git, type Orca } from "./tick.ts";
+import { tick, type Git } from "./tick.ts";
 
 /**
  * Orca's JSON here is recorded from real Runs (src/orca/fixtures/tick). No recorded Run had a worker

@@ -11,11 +11,9 @@
  */
 import { existsSync } from "node:fs";
 import { parseArgs } from "node:util";
-import { sh, succeeds } from "../shell.ts";
+import { succeeds } from "../shell.ts";
+import { orcaCli, type Orca } from "./orca.ts";
 import { SURPRISE_CHECK_KIND } from "./surprise-check.ts";
-
-/** Runs one `orca orchestration` command with `--json` and returns its `result`. */
-export type Orca = (args: readonly string[]) => Promise<unknown>;
 
 export type Git = {
   readonly worktreeExists: (worktree: string) => boolean;
@@ -767,37 +765,7 @@ function bySequence(a: { sequence: number }, b: { sequence: number }): number {
   return a.sequence - b.sequence;
 }
 
-// ── The real Orca and git ────────────────────────────────────────────────────
-
-export function orcaCli(cwd: string): Orca {
-  return async (args) => {
-    const output = await sh("orca", ["orchestration", ...args, "--json"], cwd).catch(
-      (error: unknown) => {
-        throw orcaRefusal(args, error);
-      },
-    );
-    return orcaResult(args, output);
-  };
-}
-
-function orcaResult(args: readonly string[], output: string): unknown {
-  const envelope = fields(JSON.parse(output), `orca ${args[0]} reply`);
-  if (envelope.ok !== true) throw orcaError(args, envelope.error);
-  return envelope.result;
-}
-
-/** Orca exits 1 on a refusal and puts the reason in the JSON it still prints to stdout. */
-function orcaRefusal(args: readonly string[], error: unknown): unknown {
-  if (!isRecord(error) || typeof error.stdout !== "string" || !error.stdout.startsWith("{")) {
-    return error;
-  }
-  return orcaError(args, fields(JSON.parse(error.stdout), `orca ${args[0]} reply`).error);
-}
-
-function orcaError(args: readonly string[], error: unknown): Error {
-  const detail = isRecord(error) ? `${String(error.code)}: ${String(error.message)}` : "no error given";
-  return new Error(`orca orchestration ${args[0]} refused: ${detail}`);
-}
+// ── The real git ─────────────────────────────────────────────────────────────
 
 export function gitCli(): Git {
   return {
