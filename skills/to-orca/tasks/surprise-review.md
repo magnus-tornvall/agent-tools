@@ -15,6 +15,9 @@ pattern, a changed test assertion. Then for what surprises without being a door:
 outcome, a different mechanism than the decisions chose, code that does not read like the code
 around it.
 
+A finding listed as dropped under Coordinator's dispositions is not a ruling: raise it again
+only with evidence its reason does not cover.
+
 Add to the report:
 
 ```

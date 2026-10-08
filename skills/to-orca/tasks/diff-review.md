@@ -6,16 +6,23 @@ model: sonnet
 effort: high
 ---
 
-Review the branch's diff against its base for defects a maintainer would reject. Edit nothing.
+Review the branch's diff from the commit it is based on (`git diff <commit>...HEAD`) for defects
+a maintainer would reject. Edit nothing.
 
-Run the deterministic checks before reading any code. Run the repo's own lint, typecheck, test
-and build commands on the branch - find them in its manifests and `AGENTS.md`/`CLAUDE.md`, never
-invent them. List the files the diff changes, and flag every changed existing test file (it may
-change what a test asserts) and every file outside the touchpoints.
+Run the deterministic checks before reading any code. Run `git status --porcelain`, then the
+repo's own lint, typecheck, test and build commands on the branch - find them in its manifests and
+`AGENTS.md`/`CLAUDE.md`, never invent them - then `git status --porcelain` again. A tree dirty at
+the first status is a finding, and so is anything that changed between the two; name the files,
+and the command only when you can show it. Restore, delete and commit nothing. List the files the
+diff changes, and flag every changed existing test file (it may change what a test asserts) and
+every file outside the touchpoints.
 
 Then read the diff: bugs, missing failure and boundary paths, broken constraints, dead or
 leftover code, and anything else that would stop a merge. A finding names the place and the input
 or state that shows it.
+
+A finding listed as dropped under Coordinator's dispositions is not a ruling: raise it again
+only with evidence its reason does not cover.
 
 Add to the report:
 

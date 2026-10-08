@@ -15,7 +15,7 @@ report.
 
 Before reporting `succeeded`, run the repo's own lint, typecheck, test and build commands - find
 them in its manifests and `AGENTS.md`/`CLAUDE.md`, never invent them. A failing check is not
-success. Commit on this branch; never push or merge.
+success. Commit on this branch, leaving nothing uncommitted; never push or merge.
 
 Add to the report:
 
@@ -23,4 +23,5 @@ Add to the report:
 Requirements: R1 - done, <test that shows it> | not done, <why>
 Checks: <command> - pass | fail
 Outside touchpoints: <file> - <why> | none
+Status: clean | <what `git status --porcelain` still lists, and why>
 ```

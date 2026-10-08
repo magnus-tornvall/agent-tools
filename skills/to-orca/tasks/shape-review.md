@@ -14,6 +14,13 @@ you make yourself by running it. A requirement reported done with no evidence is
 is evidence that asserts something weaker than the requirement. Then check that no non-goal is
 built, and that the outcome, approach, constraints and decisions are what the branch does.
 
+Run `git status --porcelain` before you run anything and again before you report. A tree dirty at
+the first status is a finding, and so is anything that changed between the two; name the files,
+and the command only when you can show it. Restore, delete and commit nothing.
+
+A finding listed as dropped under Coordinator's dispositions is not a ruling: raise it again
+only with evidence its reason does not cover.
+
 Add to the report:
 
 ```
