@@ -3,8 +3,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "tick": "bun src/orca/tick.ts",
-    "shape-check": "bun src/shape/shape-check.ts",
     "shape-schema": "bun src/shape/shape.ts",
     "build-skills": "bun src/build-skills.ts",
     "test": "bun test",

@@ -11,8 +11,6 @@ $ bun src/orca/tick.ts advance --run <run_id> [--agent claude] [--model sonnet] 
                                [--base-branch main] [--retry <task_id>]... [--cancel <task_id>]...
 ```
 
-From this repository's root, `bun run tick <command> …` does the same thing.
-
 ## The three commands
 
 | Command | What it does |
