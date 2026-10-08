@@ -177,6 +177,13 @@ that allows `Read`, `Edit`, `Write`, `Bash(orca orchestration:*)` and
   --ack <delivery_id>` acked that batch and returned the next message, sent two seconds later, as
   a new delivery; the ack after that returned none. A worker reads and acks until a check returns
   no `deliveryId`.
+- `task-create --spec <text>` reads a spec that starts with `---` as a flag and refuses it
+  (`invalid_argument`, "Unknown flag"). `--spec=<text>` is accepted, and `task-list` returns the
+  spec unchanged, YAML frontmatter and line breaks included.
+- `gate-create --question` returns the new gate under `result.gate`, with its `id`, `task_id`,
+  `question` and `status` `pending`. `gate-list --status pending` returns `result.gates` with the
+  same fields, `options` as a JSON string and `resolution` null. `gate-resolve` takes the gate as
+  `--id`.
 
 ## Read, not smoke-tested, on Orca 1.4.221 and 1.4.222
 
