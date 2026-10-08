@@ -133,3 +133,16 @@ tasks:
       the owner's terminal; each skill that runs a script declares compatibility: Requires Bun
     depends_on: [OO-9, OO-21, OO-25, OO-28]
     status: todo
+  - id: OO-29
+    kind: known
+    step: Move the surprise check's procedure into a surprise-check skill
+    # The procedure stops being frozen into the spec at creation: a check created before a skill
+    # edit runs under the edited rules. The tick still gates on failed; the skill states when to
+    # report it.
+    done_when: >-
+      a surprise-check skill beside orca-worker holds the check's objective, rules, inputs, bins and
+      report, reading the Run and Tasks from the spec's frontmatter; surpriseCheckSpec renders only
+      the frontmatter, a line naming the skill and the shape as YAML; the doc comment in
+      surprise-check.ts and the README say so
+    depends_on: [OO-26]
+    status: todo
