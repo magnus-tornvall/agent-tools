@@ -485,7 +485,7 @@ async function startAttempts(
   const started: string[] = [];
   for (const attempt of attempts) {
     const dispatchId = await startWorker(run, attempt, options, orca);
-    await handOffEarlierQuestions(run, attempt.task, dispatchId, orca);
+    await sendStartingMessage(run, attempt.task, dispatchId, orca);
     started.push(`${taskLabel(run, attempt.task.id)} as ${dispatchId}`);
   }
   return started;
@@ -511,15 +511,15 @@ async function startWorker(
   return text(fields(result, "worker-start result"), "dispatchId");
 }
 
-/** A new attempt cannot read its predecessors' asks, so it is sent them, with any reply. */
-async function handOffEarlierQuestions(
+/** Every attempt waits for this before any work, so it is sent even when there is nothing to
+ *  hand over: a new attempt cannot read its predecessors' asks itself. */
+async function sendStartingMessage(
   run: Run,
   task: Task,
   dispatchId: string,
   orca: Orca,
 ): Promise<void> {
   const earlier = distinctQuestions(run.questions.filter((q) => q.taskId === task.id));
-  if (earlier.length === 0) return;
   await orca([
     "send",
     "--run", run.id,
@@ -529,7 +529,7 @@ async function handOffEarlierQuestions(
   ]);
 }
 
-/** When an ask was repeated, the copy that got a reply wins. */
+/** When an ask was repeated, the copy that got an answer wins. */
 function distinctQuestions(questions: readonly Question[]): Question[] {
   const byText = new Map<string, Question>();
   for (const question of questions) {
@@ -542,17 +542,15 @@ function distinctQuestions(questions: readonly Question[]): Question[] {
 }
 
 function earlierQuestionsMessage(questions: readonly Question[]): string {
+  if (questions.length === 0) return "This Task has no earlier questions.";
   const entries = questions.map((question) =>
     [
       `Question ${question.id}:`,
       question.text,
-      question.reply === undefined ? "No reply. Ask it again if it still applies." : `Reply:\n${question.reply}`,
+      question.reply === undefined ? "No answer. Ask it again if it still applies." : `Answer:\n${question.reply}`,
     ].join("\n"),
   );
-  return [
-    "Earlier attempts of this Task asked these questions. A reply is the owner's answer.",
-    ...entries,
-  ].join("\n\n");
+  return ["Earlier attempts of this Task asked these questions.", ...entries].join("\n\n");
 }
 
 // ── Describing ───────────────────────────────────────────────────────────────

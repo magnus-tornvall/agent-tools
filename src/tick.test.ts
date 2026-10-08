@@ -288,7 +288,7 @@ describe("reply", () => {
 });
 
 describe("advance", () => {
-  test("starts a ready Task with the default agent, model and base branch", async () => {
+  test("starts a ready Task with the default agent, model and base branch, and tells it there are no earlier questions", async () => {
     const { orca, writes } = fakeOrca(recordedRun(STATES_RUN));
 
     await tick(["advance", "--run", STATES_RUN], orca, fakeGit());
@@ -297,6 +297,11 @@ describe("advance", () => {
       [
         "worker-start", "--run", STATES_RUN, "--task", "task_0e09a0b5482c", "--worktree", "new-top-level",
         "--agent", "claude", "--model", "sonnet", "--base-branch", "main",
+      ],
+      [
+        "send", "--run", STATES_RUN, "--to", "dispatch:ctx_new1",
+        "--subject", "Earlier questions: inflight",
+        "--body", "This Task has no earlier questions.",
       ],
     ]);
   });
@@ -377,10 +382,10 @@ describe("advance", () => {
         "send", "--run", QUESTION_RUN, "--to", "dispatch:ctx_new1",
         "--subject", "Earlier questions: OO-23 ask/reply smoke",
         "--body",
-        "Earlier attempts of this Task asked these questions. A reply is the owner's answer.\n\n" +
-          `Question ${ANSWERED_Q1}:\nOO-23 Q1: should step 3 write alpha or beta? see smoke/oo23-report.md\nReply:\nalpha\n\n` +
+        "Earlier attempts of this Task asked these questions.\n\n" +
+          `Question ${ANSWERED_Q1}:\nOO-23 Q1: should step 3 write alpha or beta? see smoke/oo23-report.md\nAnswer:\nalpha\n\n` +
           `Question ${OPEN_Q2}:\nOO-23 Q2: unanswered on purpose, see smoke/oo23-report.md\n` +
-          "No reply. Ask it again if it still applies.",
+          "No answer. Ask it again if it still applies.",
       ],
     ]);
   });
@@ -395,13 +400,14 @@ describe("advance", () => {
     expect(body.match(/OO-24 Q1/g)).toHaveLength(1);
   });
 
-  test("retries a blocked Task with no earlier questions and sends nothing more", async () => {
+  test("retries a blocked Task with no earlier questions and tells it there are none", async () => {
     const { orca, writes } = fakeOrca(recordedRun(BLOCKED_RUN));
 
     await tick(["advance", "--run", BLOCKED_RUN, "--retry", "task_3f7cc52640da"], orca, fakeGit());
 
-    expect(writes.map((args) => [args[0], flag(args, "--task"), flag(args, "--retry-of")])).toEqual([
-      ["worker-start", "task_3f7cc52640da", "ctx_dd69b245269b"],
+    expect(writes.map((args) => [args[0], flag(args, "--retry-of") ?? flag(args, "--body")])).toEqual([
+      ["worker-start", "ctx_dd69b245269b"],
+      ["send", "This Task has no earlier questions."],
     ]);
   });
 
