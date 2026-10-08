@@ -2,16 +2,10 @@
   "name": "agent-tools",
   "private": true,
   "type": "module",
-  "bin": {
-    "agentflow": "./bin/agentflow"
-  },
   "scripts": {
-    "build": "bun build --compile src/main.ts --outfile bin/agentflow",
+    "tick": "bun src/orca/tick.ts",
     "test": "bun test",
     "typecheck": "tsc --noEmit"
-  },
-  "dependencies": {
-    "@ai-hero/sandcastle": "^0.12.0"
   },
   "devDependencies": {
     "@types/bun": "^1.4.2",
