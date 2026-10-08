@@ -1,18 +1,12 @@
 /**
  * The tick: the Run's coordinator, run by hand from the terminal bound to the Run.
- *
- *   bun src/orca/tick.ts use     --run <run_id>
- *   bun src/orca/tick.ts status  --run <run_id>
- *   bun src/orca/tick.ts reply   --run <run_id> --id <message_id> --answer <text>
- *   bun src/orca/tick.ts gate    --run <run_id> --id <gate_id> --resolution <text>
- *   bun src/orca/tick.ts advance --run <run_id> [--agent claude] [--model sonnet] [--cap 1]
- *                                [--base-branch main] [--retry <task_id>]... [--cancel <task_id>]...
+ * `bun src/orca/tick.ts help` prints each command with its flags.
  *
  * Orca is the only state: every call reads the Run afresh and nothing is kept between calls.
  * It never pushes and never touches code.
  */
 import { existsSync } from "node:fs";
-import { parseArgs } from "node:util";
+import { parseArgs, type ParseArgsOptionDescriptor, type ParseArgsOptionsConfig } from "node:util";
 import { succeeds } from "../shell.ts";
 import { orcaCli, type Orca } from "./orca.ts";
 import { SURPRISE_CHECK_KIND } from "./surprise-check.ts";
@@ -23,18 +17,57 @@ export type Git = {
   readonly headIsOnMain: (worktree: string) => Promise<boolean>;
 };
 
-const USAGE = [
-  "usage: bun src/orca/tick.ts use     --run <run_id>",
-  "       bun src/orca/tick.ts status  --run <run_id>",
-  "       bun src/orca/tick.ts reply   --run <run_id> --id <message_id> --answer <text>",
-  "       bun src/orca/tick.ts gate    --run <run_id> --id <gate_id> --resolution <text>",
-  "       bun src/orca/tick.ts advance --run <run_id> [--agent claude] [--model sonnet] [--cap 1]",
-  "                                    [--base-branch main] [--retry <task_id>]... [--cancel <task_id>]...",
-].join("\n");
-
 const MAIN = "main";
 
-const ADVANCE_DEFAULTS = { agent: "claude", model: "sonnet", cap: "1", baseBranch: MAIN };
+/** Each command's flags, as parsed; help is built from these, so it cannot drift from the parser. */
+const OPTIONS = {
+  use: { run: { type: "string" } },
+  status: { run: { type: "string" } },
+  reply: { run: { type: "string" }, id: { type: "string" }, answer: { type: "string" } },
+  gate: { run: { type: "string" }, id: { type: "string" }, resolution: { type: "string" } },
+  advance: {
+    run: { type: "string" },
+    agent: { type: "string", default: "claude" },
+    model: { type: "string", default: "sonnet" },
+    cap: { type: "string", default: "1" },
+    "base-branch": { type: "string", default: MAIN },
+    retry: { type: "string", multiple: true, default: [] },
+    cancel: { type: "string", multiple: true, default: [] },
+  },
+} satisfies Record<string, ParseArgsOptionsConfig>;
+
+type Command = keyof typeof OPTIONS;
+
+/** A flag with a text default shows its default in help, so it names no value here. */
+type Values<O> = { readonly [K in keyof O as O[K] extends { default: string } ? never : K]: string };
+
+const HELP: { readonly [C in Command]: { readonly summary: string; readonly values: Values<(typeof OPTIONS)[C]> } } = {
+  use: {
+    summary: "Binds this terminal to the Run, fencing whichever terminal held it before.",
+    values: { run: "<run_id>" },
+  },
+  status: {
+    summary:
+      "Opens a gate on each failed surprise check that has none, then lists the Run's open questions, " +
+      "closed questions, open gates, failed attempts, completed Tasks not merged into main, and the item " +
+      "report: a succeeded surprise check's report.",
+    values: { run: "<run_id>" },
+  },
+  reply: {
+    summary: "Answers one open question. Refuses one that already has a reply or whose attempt has ended.",
+    values: { run: "<run_id>", id: "<message_id>", answer: "<text>" },
+  },
+  gate: {
+    summary: "Resolves one open gate with the owner's ruling. Refuses a gate that is resolved or not in the Run.",
+    values: { run: "<run_id>", id: "<gate_id>", resolution: "<text>" },
+  },
+  advance: {
+    summary:
+      "Cancels each --cancel Task, releases settled workers, then starts attempts up to --cap in flight: " +
+      "--retry Tasks first, only failed or blocked ones, then ready Tasks whose parents have merged into main.",
+    values: { run: "<run_id>", retry: "<task_id>", cancel: "<task_id>" },
+  },
+};
 
 /** A Dispatch in any other status still has a worker attached. */
 const SETTLED_DISPATCH = new Set(["completed", "failed", "circuit_broken"]);
@@ -52,6 +85,8 @@ const SURPRISE_CHECK_QUESTION =
 export async function tick(argv: readonly string[], orca: Orca, git: Git): Promise<string> {
   const [command, ...args] = argv;
   switch (command) {
+    case "help":
+      return help();
     case "use":
       return use(runOptions(args), orca);
     case "status":
@@ -63,7 +98,7 @@ export async function tick(argv: readonly string[], orca: Orca, git: Git): Promi
     case "advance":
       return advance(advanceOptions(args), orca, git);
     default:
-      throw new Error(USAGE);
+      throw new Error(help());
   }
 }
 
@@ -717,16 +752,42 @@ function describeAwaitingMerge(landing: Landing): string {
 
 // ── Options ──────────────────────────────────────────────────────────────────
 
+function help(): string {
+  const commands = Object.keys(OPTIONS)
+    .filter(isCommand)
+    .map((command) => [`  ${commandUsage(command)}`, `    ${HELP[command].summary}`].join("\n"));
+  return [
+    "usage: bun <this script> <command> [flags]",
+    "",
+    "Commands:",
+    ...commands,
+    ["  help", "    Prints this."].join("\n"),
+  ].join("\n");
+}
+
+function isCommand(name: string): name is Command {
+  return Object.hasOwn(OPTIONS, name);
+}
+
+function commandUsage(command: Command): string {
+  const descriptors: Record<string, ParseArgsOptionDescriptor> = OPTIONS[command];
+  const values: Record<string, string> = HELP[command].values;
+  const flags = Object.entries(descriptors).map(([name, descriptor]) => {
+    if (typeof descriptor.default === "string") return `[--${name} ${descriptor.default}]`;
+    const value = values[name];
+    if (value === undefined) throw new Error(`help names no value for ${command} --${name}`);
+    return descriptor.multiple === true ? `[--${name} ${value}]...` : `--${name} ${value}`;
+  });
+  return [command, ...flags].join(" ");
+}
+
 function runOptions(args: readonly string[]): { run: string } {
-  const { values } = parseArgs({ args: [...args], options: { run: { type: "string" } } });
+  const { values } = parseArgs({ args: [...args], options: OPTIONS.status });
   return { run: required(values.run, "--run") };
 }
 
 function replyOptions(args: readonly string[]): { run: string; id: string; answer: string } {
-  const { values } = parseArgs({
-    args: [...args],
-    options: { run: { type: "string" }, id: { type: "string" }, answer: { type: "string" } },
-  });
+  const { values } = parseArgs({ args: [...args], options: OPTIONS.reply });
   return {
     run: required(values.run, "--run"),
     id: required(values.id, "--id"),
@@ -735,10 +796,7 @@ function replyOptions(args: readonly string[]): { run: string; id: string; answe
 }
 
 function gateOptions(args: readonly string[]): { run: string; id: string; resolution: string } {
-  const { values } = parseArgs({
-    args: [...args],
-    options: { run: { type: "string" }, id: { type: "string" }, resolution: { type: "string" } },
-  });
+  const { values } = parseArgs({ args: [...args], options: OPTIONS.gate });
   return {
     run: required(values.run, "--run"),
     id: required(values.id, "--id"),
@@ -747,18 +805,7 @@ function gateOptions(args: readonly string[]): { run: string; id: string; resolu
 }
 
 function advanceOptions(args: readonly string[]): AdvanceOptions {
-  const { values } = parseArgs({
-    args: [...args],
-    options: {
-      run: { type: "string" },
-      agent: { type: "string", default: ADVANCE_DEFAULTS.agent },
-      model: { type: "string", default: ADVANCE_DEFAULTS.model },
-      cap: { type: "string", default: ADVANCE_DEFAULTS.cap },
-      "base-branch": { type: "string", default: ADVANCE_DEFAULTS.baseBranch },
-      retry: { type: "string", multiple: true, default: [] },
-      cancel: { type: "string", multiple: true, default: [] },
-    },
-  });
+  const { values } = parseArgs({ args: [...args], options: OPTIONS.advance });
   const cap = Number(values.cap);
   if (!Number.isInteger(cap) || cap < 0) throw new Error(`--cap must be a whole number, got ${values.cap}`);
   const both = values.retry.filter((taskId) => values.cancel.includes(taskId));
@@ -775,7 +822,7 @@ function advanceOptions(args: readonly string[]): AdvanceOptions {
 }
 
 function required(value: string | undefined, flag: string): string {
-  if (value === undefined || value === "") throw new Error(`${flag} is required\n${USAGE}`);
+  if (value === undefined || value === "") throw new Error(`${flag} is required\n${help()}`);
   return value;
 }
 

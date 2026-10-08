@@ -5,13 +5,11 @@ hand from the terminal bound to the Run, plus the skills its workers follow. Als
 shape schema: the contract for what any producer hands to orca-start.
 
 ```
-$ bun src/orca/tick.ts use     --run <run_id>
-$ bun src/orca/tick.ts status  --run <run_id>
-$ bun src/orca/tick.ts reply   --run <run_id> --id <message_id> --answer <text>
-$ bun src/orca/tick.ts gate    --run <run_id> --id <gate_id> --resolution <text>
-$ bun src/orca/tick.ts advance --run <run_id> [--agent claude] [--model sonnet] [--cap 1]
-                               [--base-branch main] [--retry <task_id>]... [--cancel <task_id>]...
+$ bun src/orca/tick.ts help
 ```
+
+`help` prints each command with its flags, built from the same definitions the
+commands parse, so it is the one place the syntax lives.
 
 ## The commands
 
@@ -95,7 +93,7 @@ a test fails while the committed file is stale.
 
 ## The orca-tick skill
 
-`skills/orca-tick` is the tick for the owner: one pass that runs `use` and `status`,
+`skills/orca-tick` is the tick for the owner: one pass that reads `help`, runs `use` and `status`,
 shows what waits on the owner, sends their answers with `reply` and rulings with `gate`,
 asks retry, cancel or leave for each failed attempt, then runs `advance`. It runs no
 Orca command itself and never loops.

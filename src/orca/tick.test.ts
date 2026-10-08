@@ -410,6 +410,38 @@ describe("reply", () => {
   });
 });
 
+describe("help", () => {
+  test("prints every command with its flags and what it does, and writes nothing", async () => {
+    const { orca, writes } = fakeOrca(recordedRun(QUESTION_RUN));
+
+    const output = await tick(["help"], orca, fakeGit());
+
+    expect(output).toContain("use --run <run_id>\n    Binds this terminal to the Run");
+    expect(output).toContain("status --run <run_id>\n    Opens a gate on each failed surprise check");
+    expect(output).toContain("reply --run <run_id> --id <message_id> --answer <text>\n    Answers one open question");
+    expect(output).toContain("gate --run <run_id> --id <gate_id> --resolution <text>\n    Resolves one open gate");
+    expect(output).toContain(
+      "advance --run <run_id> [--agent claude] [--model sonnet] [--cap 1] [--base-branch main] " +
+        "[--retry <task_id>]... [--cancel <task_id>]...\n    Cancels each --cancel Task",
+    );
+    expect(writes).toEqual([]);
+  });
+
+  test("is what an unknown command refuses with", async () => {
+    const { orca } = fakeOrca(recordedRun(QUESTION_RUN));
+    const help = await tick(["help"], orca, fakeGit());
+
+    await expect(tick(["merge"], orca, fakeGit())).rejects.toThrow(help);
+  });
+
+  test("follows a missing flag's refusal", async () => {
+    const { orca } = fakeOrca(recordedRun(QUESTION_RUN));
+    const help = await tick(["help"], orca, fakeGit());
+
+    await expect(tick(["reply", "--run", QUESTION_RUN], orca, fakeGit())).rejects.toThrow(`--id is required\n${help}`);
+  });
+});
+
 describe("use", () => {
   test("binds the terminal to the Run and writes nothing else", async () => {
     const { orca, writes } = fakeOrca(recordedRun(QUESTION_RUN));

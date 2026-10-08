@@ -13,31 +13,29 @@ Never run `orca` yourself.
 
 The argument is the Run ID. Without one, ask for it.
 
+First run `bun scripts/tick.js help`: it names each command's flags.
+
 ## The pass
 
-1. `bun scripts/tick.js use --run <run>`. This binds the terminal to the Run and takes it away
-   from any other terminal.
-2. `bun scripts/tick.js status --run <run>`. Show the owner each section that is not `none`,
-   as printed.
-3. **Open questions.** For each, show the question and take the owner's answer. Send their
-   words unchanged:
-
-   ```bash
-   bun scripts/tick.js reply --run <run> --id <message_id> --answer "$(cat <<'EOF'
-   <answer>
-   EOF
-   )"
-   ```
-
-   A question the owner skips stays open for the next pass.
-4. **Open gates.** Show the gate with its Task's report from Failed attempts, and take the
-   owner's ruling. Send it the same way with
-   `bun scripts/tick.js gate --run <run> --id <gate_id> --resolution <ruling>`. A resolved surprise
-   check is set ready, and step 6 runs it again with the ruling.
+1. `use` binds the terminal to the Run, taking it from any other terminal.
+2. `status`. Show the owner each section that is not `none`, as printed.
+3. **Open questions.** For each, show the question, take the owner's answer and send their
+   words unchanged with `reply`. A question the owner skips stays open for the next pass.
+4. **Open gates.** Show the gate with its Task's report from Failed attempts, take the owner's
+   ruling and send it with `gate`. A resolved surprise check is set ready, and step 6 runs it
+   again with the ruling.
 5. **Failed attempts** without an open gate. Ask the owner, per Task: retry, cancel or leave. A
    Task shown `ready` crashed; step 6 restarts it on its own, so ask only cancel or leave.
-6. `bun scripts/tick.js advance --run <run>`, adding `--retry <task_id>` and
-   `--cancel <task_id>` for each choice from step 5 and no other flag. Show its output.
+6. `advance`, carrying the retries and cancels from step 5 and no other flag. Show its output.
+
+Pass the owner's text through a quoted heredoc, so the shell changes none of it:
+
+```bash
+bun scripts/tick.js reply --run <run> --id <message_id> --answer "$(cat <<'EOF'
+<answer>
+EOF
+)"
+```
 
 Closed questions, Awaiting merge and Item report are shown, never acted on. Merging is the
 owner's.
