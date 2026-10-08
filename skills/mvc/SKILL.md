@@ -373,28 +373,8 @@ reopen.
 
 ## Persisting the shape
 
-Only on request, and only once the frontier is closed. Asked earlier: name the open questions and
-write nothing.
-
-Path, first match on the argument (read off the argument, not the filesystem):
-
-- ends in `.md`, with a separator - that filepath
-- ends in `.md`, no separator - that filename in `<dir>`
-- anything else - a directory: `mvc-<slug>.md` in it
-- nothing - `mvc-<slug>.md` in `<dir>`
-
-`<dir>` is `.scratch` in the repo root when it exists, else the system temp directory. `<slug>` is
-two to four kebab-case words from the outcome.
-
-Then fail closed, in order. Each check that fails says so and stops - never falls through to
-another case. Stopping is free: the shape is still in context and re-invocation asks nothing.
-
-1. The resolved directory must exist. No `mkdir`: a missing path is a typo.
-2. Never clobber. An existing file is replaced only on the user's word. Otherwise name it and
-   stop.
-
-Report the absolute path written.
-
-The file is the report, verbatim - no approval, round count, frontier, or anything the report
-lacks. When the user passed in a prior shape, they decide whether the new one replaces it, merges
-into it, or goes to a new file.
+Only on request, and only once the frontier is closed - asked earlier, name the open questions and
+write nothing. The file is the report verbatim: nothing the report lacks. With no location given,
+`mvc-<slug>.md` in `.scratch` at the repo root, else the system temp directory. Never replace an
+existing file without the user's word; when they passed in a prior shape, they choose replace,
+merge, or a new file.
