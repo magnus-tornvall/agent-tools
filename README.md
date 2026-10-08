@@ -5,18 +5,22 @@ hand from the terminal bound to the Run, plus the skills its workers follow. Als
 shape schema: the contract for what any producer hands to orca-start.
 
 ```
+$ bun src/orca/tick.ts use     --run <run_id>
 $ bun src/orca/tick.ts status  --run <run_id>
 $ bun src/orca/tick.ts reply   --run <run_id> --id <message_id> --answer <text>
+$ bun src/orca/tick.ts gate    --run <run_id> --id <gate_id> --resolution <text>
 $ bun src/orca/tick.ts advance --run <run_id> [--agent claude] [--model sonnet] [--cap 1]
                                [--base-branch main] [--retry <task_id>]... [--cancel <task_id>]...
 ```
 
-## The three commands
+## The commands
 
 | Command | What it does |
 |---|---|
-| `status` | Opens a gate on each failed surprise check that has none, then lists the Run's open questions, closed questions, open gates, failed attempts, and completed Tasks whose work has not merged into `main` yet |
+| `use` | Binds the calling terminal to the Run, fencing whichever terminal held it before |
+| `status` | Opens a gate on each failed surprise check that has none, then lists the Run's open questions, closed questions, open gates, failed attempts, completed Tasks whose work has not merged into `main` yet, and the item report: a succeeded surprise check's report |
 | `reply` | Answers one open question. Refuses if the question already has a reply or the attempt that asked it has ended |
+| `gate` | Resolves one open gate with the owner's ruling. Refuses a gate that is resolved or not in the Run |
 | `advance` | Cancels any `--cancel` Tasks, releases settled workers, then starts attempts up to `--cap` in flight: `--retry` Tasks first, then ready Tasks whose parents have merged into `main` |
 
 Every attempt `advance` starts first gets a message carrying the questions earlier
@@ -29,7 +33,7 @@ as YAML. The check measures the diff against the shape, each checked Task's spec
 answers, and reports every requirement in the shape by its ID, done or not.
 It fails when it finds a surprise that needs a decision, a requirement that is not done
 among them; the owner reads its report
-under failed attempts and rules by resolving the gate, which sets the check `ready` for
+under failed attempts and rules by resolving the gate with `gate`, which sets the check `ready` for
 `advance` to run again.
 
 ## What it will not do
@@ -89,6 +93,13 @@ violation and exits 1. Keys the schema does not define are violations.
 anything not written in TypeScript. After changing the schema, run `bun run shape-schema`;
 a test fails while the committed file is stale.
 
+## The orca-tick skill
+
+`skills/orca-tick` is the tick for the owner: one pass that runs `use` and `status`,
+shows what waits on the owner, sends their answers with `reply` and rulings with `gate`,
+asks retry, cancel or leave for each failed attempt, then runs `advance`. It runs no
+Orca command itself and never loops.
+
 ## Skills that run scripts
 
 A skill shared through Orca must work without this repository, so each skill carries the
@@ -100,8 +111,8 @@ scripts and assets it runs in its own `scripts/` and `assets/`, built from `src/
 ## Requirements
 
 `bun`, plus `orca` and `git` on `PATH`. Every Orca call passes `--run`, except
-`gate-create`, which Orca allows only from the terminal bound to the Run, so run `status`
-there.
+`run-use`, `gate-resolve` and `gate-create`. Orca allows `gate-create` only from the
+terminal bound to the Run, so run `status` there, after `use`.
 
 ```sh
 npm install
@@ -124,7 +135,8 @@ src/shape/shape.schema.json the JSON Schema generated from it
 src/shape/shape.test.ts     tests, with the filled-in example in src/shape/fixtures
 src/shell.ts                running a command and reading its output
 src/build-skills.ts         building each skill's scripts/ and assets/ from src/
-skills/                     orca-worker, which workers follow, plus the unrelated commit and mvc skills,
-                            with built files in skills/mvc, skills/orca-start and skills/orca-tick
+skills/                     orca-worker, which workers follow, orca-tick, which the owner runs, plus the
+                            unrelated commit and mvc skills, with built files in skills/mvc, skills/orca-start
+                            and skills/orca-tick
 docs/                       known Orca behaviour, plans, research
 ```

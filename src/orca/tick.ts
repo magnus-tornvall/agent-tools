@@ -1,8 +1,10 @@
 /**
  * The tick: the Run's coordinator, run by hand from the terminal bound to the Run.
  *
+ *   bun src/orca/tick.ts use     --run <run_id>
  *   bun src/orca/tick.ts status  --run <run_id>
  *   bun src/orca/tick.ts reply   --run <run_id> --id <message_id> --answer <text>
+ *   bun src/orca/tick.ts gate    --run <run_id> --id <gate_id> --resolution <text>
  *   bun src/orca/tick.ts advance --run <run_id> [--agent claude] [--model sonnet] [--cap 1]
  *                                [--base-branch main] [--retry <task_id>]... [--cancel <task_id>]...
  *
@@ -22,8 +24,10 @@ export type Git = {
 };
 
 const USAGE = [
-  "usage: bun src/orca/tick.ts status  --run <run_id>",
+  "usage: bun src/orca/tick.ts use     --run <run_id>",
+  "       bun src/orca/tick.ts status  --run <run_id>",
   "       bun src/orca/tick.ts reply   --run <run_id> --id <message_id> --answer <text>",
+  "       bun src/orca/tick.ts gate    --run <run_id> --id <gate_id> --resolution <text>",
   "       bun src/orca/tick.ts advance --run <run_id> [--agent claude] [--model sonnet] [--cap 1]",
   "                                    [--base-branch main] [--retry <task_id>]... [--cancel <task_id>]...",
 ].join("\n");
@@ -48,10 +52,14 @@ const SURPRISE_CHECK_QUESTION =
 export async function tick(argv: readonly string[], orca: Orca, git: Git): Promise<string> {
   const [command, ...args] = argv;
   switch (command) {
+    case "use":
+      return use(runOptions(args), orca);
     case "status":
-      return status(statusOptions(args), orca, git);
+      return status(runOptions(args), orca, git);
     case "reply":
       return reply(replyOptions(args), orca);
+    case "gate":
+      return resolveGate(gateOptions(args), orca);
     case "advance":
       return advance(advanceOptions(args), orca, git);
     default:
@@ -60,6 +68,12 @@ export async function tick(argv: readonly string[], orca: Orca, git: Git): Promi
 }
 
 // ── Commands ─────────────────────────────────────────────────────────────────
+
+/** Binds the calling terminal to the Run, which fences whichever terminal held it before. */
+async function use(options: { run: string }, orca: Orca): Promise<string> {
+  await orca(["run-use", "--id", options.run]);
+  return `This terminal is bound to Run ${options.run}.`;
+}
 
 async function status(options: { run: string }, orca: Orca, git: Git): Promise<string> {
   const run = await readRun(orca, options.run);
@@ -73,6 +87,7 @@ async function status(options: { run: string }, orca: Orca, git: Git): Promise<s
     section("Open gates", [...run.openGates, ...opened].map((g) => describeGate(run, g))),
     section("Failed attempts", failedTasks(run).map((t) => describeFailure(run, t))),
     section("Awaiting merge", unmerged.map(describeAwaitingMerge)),
+    section("Item report", succeededSurpriseChecks(run).map((t) => describeItemReport(run, t))),
   ].join("\n\n");
 }
 
@@ -104,6 +119,22 @@ async function reply(
 
   await orca(["reply", "--run", run.id, "--id", question.id, "--body", options.answer]);
   return `Replied to ${question.id} for ${taskLabel(run, question.taskId)}.`;
+}
+
+async function resolveGate(
+  options: { run: string; id: string; resolution: string },
+  orca: Orca,
+): Promise<string> {
+  const run = await readRun(orca, options.run);
+  const gate = run.openGates.find((g) => g.id === options.id);
+  if (gate === undefined) {
+    throw new Error(
+      `Run ${run.id} has no open gate ${options.id}: it is resolved or not in this Run. Nothing was sent.`,
+    );
+  }
+
+  await orca(["gate-resolve", "--id", gate.id, "--resolution", options.resolution]);
+  return `Resolved ${gate.id} on ${taskLabel(run, gate.taskId)}.`;
 }
 
 async function advance(options: AdvanceOptions, orca: Orca, git: Git): Promise<string> {
@@ -376,6 +407,11 @@ function failedTasks(run: Run): Task[] {
     if (task.status === "failed" || task.status === "blocked") return true;
     return task.status === "ready" && latestDispatch(run, task.id)?.status === "failed";
   });
+}
+
+/** The check reads every Task against the whole shape, so its report is the item's report. */
+function succeededSurpriseChecks(run: Run): Task[] {
+  return run.tasks.filter((task) => task.kind === SURPRISE_CHECK_KIND && task.status === "completed");
 }
 
 function attemptCount(run: Run, taskId: string): number {
@@ -661,6 +697,12 @@ function describeFailure(run: Run, task: Task): string {
   return heading;
 }
 
+function describeItemReport(run: Run, task: Task): string {
+  const heading = `  ${taskLabel(run, task.id)}`;
+  if (task.result.kind !== "report") return [heading, indented("completed without a report")].join("\n");
+  return [heading, indented(task.result.subject), indented(task.result.body)].join("\n");
+}
+
 function describeGate(run: Run, gate: Gate): string {
   return [`  ${gate.id} on ${taskLabel(run, gate.taskId)}`, indented(gate.question)].join("\n");
 }
@@ -675,7 +717,7 @@ function describeAwaitingMerge(landing: Landing): string {
 
 // ── Options ──────────────────────────────────────────────────────────────────
 
-function statusOptions(args: readonly string[]): { run: string } {
+function runOptions(args: readonly string[]): { run: string } {
   const { values } = parseArgs({ args: [...args], options: { run: { type: "string" } } });
   return { run: required(values.run, "--run") };
 }
@@ -689,6 +731,18 @@ function replyOptions(args: readonly string[]): { run: string; id: string; answe
     run: required(values.run, "--run"),
     id: required(values.id, "--id"),
     answer: required(values.answer, "--answer"),
+  };
+}
+
+function gateOptions(args: readonly string[]): { run: string; id: string; resolution: string } {
+  const { values } = parseArgs({
+    args: [...args],
+    options: { run: { type: "string" }, id: { type: "string" }, resolution: { type: "string" } },
+  });
+  return {
+    run: required(values.run, "--run"),
+    id: required(values.id, "--id"),
+    resolution: required(values.resolution, "--resolution"),
   };
 }
 

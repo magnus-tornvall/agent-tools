@@ -334,6 +334,24 @@ describe("status on a surprise check", () => {
     expect(gateCreates(writes)).toEqual([CHECKER]);
   });
 
+  test("shows a succeeded surprise check's report as the item report", async () => {
+    const report = JSON.stringify({ outcome: "succeeded", subject: "Every requirement done", body: "R1 done" });
+    const fixture = patchTask(checkRun(), CHECKER, { status: "completed", result: report });
+    const { orca } = fakeOrca(fixture);
+
+    const output = await tick(["status", "--run", CHECK_RUN], orca, fakeGit());
+
+    expect(output).toContain(`Item report:\n  ${CHECKER} (surprise check)\n    Every requirement done\n    R1 done`);
+  });
+
+  test("shows no item report while the surprise check has not succeeded", async () => {
+    const { orca } = fakeOrca(checkRun());
+
+    const output = await tick(["status", "--run", CHECK_RUN], orca, fakeGit());
+
+    expect(output).toContain("Item report: none");
+  });
+
   test("reports a spec whose frontmatter does not parse, naming its Task, and writes nothing", async () => {
     const { orca, writes } = fakeOrca(recordedRun(CHECK_RUN));
 
@@ -388,6 +406,51 @@ describe("reply", () => {
     const replying = tick(["reply", "--run", QUESTION_RUN, "--id", "msg_82fdcd723712", "--answer", "x"], orca, fakeGit());
 
     await expect(replying).rejects.toThrow(/has no question msg_82fdcd723712/);
+    expect(writes).toEqual([]);
+  });
+});
+
+describe("use", () => {
+  test("binds the terminal to the Run and writes nothing else", async () => {
+    const { orca, writes } = fakeOrca(recordedRun(QUESTION_RUN));
+
+    await tick(["use", "--run", QUESTION_RUN], orca, fakeGit());
+
+    expect(writes).toEqual([["run-use", "--id", QUESTION_RUN]]);
+  });
+});
+
+describe("gate", () => {
+  const OPEN_GATE = "gate_9dc75bd5b9b2";
+
+  test("resolves an open gate with the owner's ruling and writes nothing else", async () => {
+    const { orca, writes } = fakeOrca({ ...checkRun(), gates: recorded(`gates-gated-${CHECK_RUN}`) });
+
+    const output = await tick(
+      ["gate", "--run", CHECK_RUN, "--id", OPEN_GATE, "--resolution", "Keep the extra flag"],
+      orca,
+      fakeGit(),
+    );
+
+    expect(writes).toEqual([["gate-resolve", "--id", OPEN_GATE, "--resolution", "Keep the extra flag"]]);
+    expect(output).toBe(`Resolved ${OPEN_GATE} on ${CHECKER} (surprise check).`);
+  });
+
+  test("refuses a gate that is not open, and sends nothing", async () => {
+    const { orca, writes } = fakeOrca(checkRun());
+
+    const resolving = tick(["gate", "--run", CHECK_RUN, "--id", OPEN_GATE, "--resolution", "x"], orca, fakeGit());
+
+    await expect(resolving).rejects.toThrow(`Run ${CHECK_RUN} has no open gate ${OPEN_GATE}`);
+    expect(writes).toEqual([]);
+  });
+
+  test("requires a resolution", async () => {
+    const { orca, writes } = fakeOrca(checkRun());
+
+    const resolving = tick(["gate", "--run", CHECK_RUN, "--id", OPEN_GATE], orca, fakeGit());
+
+    await expect(resolving).rejects.toThrow(/--resolution is required/);
     expect(writes).toEqual([]);
   });
 });
