@@ -51,6 +51,8 @@ owner's terminal: `run-create` binds that terminal to the Run as its coordinator
 $ bun src/orca/start.ts <shape.yaml> <dag.yaml>
 ```
 
+`bun src/orca/start.ts help` prints the usage and the DAG's format.
+
 The DAG maps each Task's S ID to its title, the requirement IDs it owns, and the non-goal and
 decision IDs that bear on it, plus the S IDs it depends on:
 
@@ -103,7 +105,7 @@ Orca command itself and never loops.
 A skill shared through Orca must work without this repository, so each skill carries the
 scripts and assets it runs in its own `scripts/` and `assets/`, built from `src/`:
 `skills/mvc` gets `shape-check.js` and the filled-in example, `skills/orca-start` gets
-`start.js`, `skills/orca-tick` gets `tick.js`. They run with `bun`. After changing anything they are built from, run
+`start.js` and `shape-check.js`, `skills/orca-tick` gets `tick.js`. They run with `bun`. After changing anything they are built from, run
 `bun run build-skills`; a test fails while a skill's copy is stale.
 
 ## Requirements

@@ -16,7 +16,7 @@ const ROOT = fileURLToPath(new URL("..", import.meta.url));
 /** Per skill, the entry points bundled into its scripts/ and the files copied into its assets/. */
 const SKILLS: Record<string, { readonly scripts: readonly string[]; readonly assets: readonly string[] }> = {
   mvc: { scripts: ["src/shape/shape-check.ts"], assets: ["src/shape/fixtures/example.yaml"] },
-  "orca-start": { scripts: ["src/orca/start.ts"], assets: [] },
+  "orca-start": { scripts: ["src/orca/start.ts", "src/shape/shape-check.ts"], assets: [] },
   "orca-tick": { scripts: ["src/orca/tick.ts"], assets: [] },
 };
 
