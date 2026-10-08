@@ -58,7 +58,7 @@ tasks:
     # The scaffold item's shape is ~/dev/me/ai/vscode/.scratch/mvc-trial-extension-scaffold.md, in
     # mvc's old markdown format; it is re-reported through mvc as YAML before orca-start reads it.
     done_when: the item's Run and Tasks exist after the owner approved the DAG
-    depends_on: [OO-9, OO-28]
+    depends_on: [OO-9]
     status: todo
   - id: OO-17
     kind: known
@@ -98,16 +98,6 @@ tasks:
       surprise check from the whole shape depending on every implementation Task; a mutation with
       an unknown result is retried with Orca's --retry-request
     status: todo
-  - id: OO-28
-    kind: known
-    step: Make mvc report and persist the shape as the schema's YAML
-    done_when: >-
-      mvc's report and persisted file are one YAML document conforming to the shape schema, with the
-      decision log inside it and no markdown body, persisted as .yaml; the skill carries the
-      filled-in example and instructs running shape-check on the file and fixing it until it exits
-      0, naming both by paths relative to its own root (assets/example.yaml and
-      scripts/shape-check.js, from bun run build-skills), and declares compatibility: Requires Bun
-    status: todo
   - id: OO-29
     kind: known
     step: Share mvc and the Orca skills as one Orca bundle
@@ -121,7 +111,7 @@ tasks:
       named magnus-tornvall-agent-tools; installed globally on a machine with Bun and no checkout
       of this repository, mvc's shape-check passes its example and orca-tick's script runs from
       the owner's terminal; each skill that runs a script declares compatibility: Requires Bun
-    depends_on: [OO-9, OO-21, OO-25, OO-28]
+    depends_on: [OO-9, OO-21, OO-25]
     status: todo
   - id: OO-30
     kind: known
