@@ -12,24 +12,15 @@ research: ../research/agentic-systems/report.md
 # kind: unknown = a question a smoke test or a ruling must answer before the dependent build;
 #       known  = settled work, only effort stands between it and done.
 tasks:
-  - id: OO-8
-    kind: unknown
-    step: Check mvc's shape export against what to-orca reads
-    # Owned by the owner's mvc session, outside this plan's Run, with OO-9 and OO-19; the owner
-    # reports back here.
-    done_when: >-
-      a real export is written to a durable path and carries every field the shape-to-Task
-      table reads, plus the split; or the mvc changes needed are listed (mvc lives
-      outside this repo; ask first)
-    status: todo
   - id: OO-9
     kind: known
     step: Write the to-orca skill
-    # Built in the owner's mvc session with OO-8 and OO-19, not dispatched from this plan.
+    # Built in the owner's mvc session with OO-19, not dispatched from this plan.
     done_when: >-
-      reads a shape, creates the Run and one Task per part with dependencies, each spec as
-      ruled in OO-19; assigns R and S IDs from the shape; makes no splitting decision of its own
-    depends_on: [OO-8, OO-19]
+      reads one shape, proposes one or more Tasks with dependencies and creates the Run and
+      those Tasks only after the owner approves the DAG, each spec as ruled in OO-19; takes
+      R IDs from the shape and assigns S IDs per Task
+    depends_on: [OO-19]
     status: todo
   - id: OO-12
     kind: known
@@ -66,9 +57,10 @@ tasks:
     status: dropped
   - id: OO-16
     kind: known
-    step: Owner runs mvc and to-orca for the scaffold item
-    done_when: shape at a durable path; the item's Run and Tasks exist and the owner has seen the DAG
-    depends_on: [OO-8, OO-9]
+    step: Owner runs to-orca for the scaffold item
+    # The scaffold item's shape is ~/dev/me/ai/vscode/.scratch/mvc-trial-extension-scaffold.md.
+    done_when: the item's Run and Tasks exist after the owner approved the DAG
+    depends_on: [OO-9]
     status: todo
   - id: OO-17
     kind: known
@@ -79,11 +71,10 @@ tasks:
   - id: OO-19
     kind: unknown
     step: Rule what to-orca adds to a Task spec beyond pointing at the shape
-    # Ruled in the owner's mvc session with OO-8 and OO-9; reported back here.
+    # Ruled in the owner's mvc session with OO-9; reported back here.
     done_when: >-
       with a real export in hand, ruled whether a Task spec is the shape path and the part's
       name, or also carries fields transcribed from the shape-to-Task table
-    depends_on: [OO-8]
     status: todo
   - id: OO-20
     kind: unknown
