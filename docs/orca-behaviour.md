@@ -62,7 +62,7 @@ that allows `Read`, `Edit`, `Write`, `Bash(orca orchestration:*)` and
   or Dispatch state. The tick reads Task state only; the inbox belongs to the owner.
 - `run-create` binds the Run to the terminal it runs under, even from a child process with every
   `ORCA_*` variable removed: Orca identifies the caller by process, not environment. So the
-  owner's terminal that runs `to-orca` is the Run's inbox reader. It ran `check` and `--ack`
+  owner's terminal that runs `orca-start` is the Run's inbox reader. It ran `check` and `--ack`
   while `task-list`, `worker-list` and `worker-release` ran beside it, and was not fenced. Here
   those tick calls ran as children of the owner's terminal; the launchd test above ran them
   with no terminal at all.

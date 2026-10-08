@@ -4,9 +4,9 @@
  * snapshot of the whole shape, taken when the Task is created; rulings made after that reach the
  * check as answers and gates.
  *
- * to-orca's script creates the Task from `surpriseCheckSpec`, passing it as `--spec=<spec>`: Orca
- * reads a separate value starting with `---` as a flag. The tick finds the Task by the `kind` in
- * the spec's frontmatter and opens a gate on it when it fails.
+ * orca-start's script creates the Task from `surpriseCheckSpec`, passing it as `--spec=<spec>`:
+ * Orca reads a separate value starting with `---` as a flag. The tick finds the Task by the `kind`
+ * in the spec's frontmatter and opens a gate on it when it fails.
  */
 
 export const SURPRISE_CHECK_KIND = "surprise-check";

@@ -7,7 +7,7 @@ research: ../research/agentic-systems/report.md
 # reply for worker questions, gates only for coordinator-owned DAG decisions, --retry-of and Orca's
 # cancel. Never work around it; when this plan needs Orca to behave otherwise, the plan changes.
 # Issue IDs are durable: never renumbered, never reused. Done issues are removed; the highest ID
-# used so far is OO-28, and new issues take the next number after it.
+# used so far is OO-29, and new issues take the next number after it.
 # The shape schema (src/shape/shape.ts) is the contract between whatever produces a shape and
 # Orca: a user opts in by producing a conforming shape. mvc is one producer, not the contract.
 # Workers never see the whole shape; each Task spec is that Task's slice of it.
@@ -17,7 +17,7 @@ research: ../research/agentic-systems/report.md
 tasks:
   - id: OO-9
     kind: known
-    step: Write the to-orca skill
+    step: Write the orca-start skill
     # Written by the owner, not dispatched from this plan. The skill takes a shape conforming to
     # the shape schema, from any producer; it assumes nothing about mvc beyond that schema.
     # Ruled: a Task spec is self-contained, with no pointer to a shape and no verbatim copy of one.
@@ -54,9 +54,9 @@ tasks:
     status: dropped
   - id: OO-16
     kind: known
-    step: Owner runs to-orca for the scaffold item
+    step: Owner runs orca-start for the scaffold item
     # The scaffold item's shape is ~/dev/me/ai/vscode/.scratch/mvc-trial-extension-scaffold.md, in
-    # mvc's old markdown format; it is re-reported through mvc as YAML before to-orca reads it.
+    # mvc's old markdown format; it is re-reported through mvc as YAML before orca-start reads it.
     done_when: the item's Run and Tasks exist after the owner approved the DAG
     depends_on: [OO-9, OO-28]
     status: todo
@@ -86,7 +86,7 @@ tasks:
     status: todo
   - id: OO-25
     kind: known
-    step: Write to-orca's script and the implementation Task spec template
+    step: Write orca-start's script and the implementation Task spec template
     done_when: >-
       given a shape conforming to the shape schema and an approved DAG as typed input, with
       dependencies by local key, the script validates both and refuses before any mutation when a
@@ -115,5 +115,21 @@ tasks:
       mvc's report and persisted file are one YAML document conforming to the shape schema, with the
       decision log inside it and no markdown body, persisted as .yaml; the skill carries the
       filled-in example and instructs running shape-check on the file and fixing it until it exits
-      0
+      0, naming both by paths relative to its own root (assets/example.yaml and
+      scripts/shape-check.js, from bun run build-skills), and declares compatibility: Requires Bun
+    status: todo
+  - id: OO-29
+    kind: known
+    step: Share mvc and the Orca skills as one Orca bundle
+    # Each skill carries the built scripts and assets it runs, from bun run build-skills, and names
+    # them by paths relative to its own root: no skill depends on another's install path. Installs
+    # are global only, so every worker worktree sees them; a receiver needs Bun. The JSON Schema
+    # does not ship: shape-check --schema is the fix once a producer that doesn't use Zod needs it.
+    # orca-start's script joins build-skills once OO-25 writes it.
+    done_when: >-
+      mvc, orca-start, orca-tick and orca-worker are shared with orca skills share as one bundle
+      named magnus-tornvall-agent-tools; installed globally on a machine with Bun and no checkout
+      of this repository, mvc's shape-check passes its example and orca-tick's script runs from
+      the owner's terminal; each skill that runs a script declares compatibility: Requires Bun
+    depends_on: [OO-9, OO-21, OO-25, OO-28]
     status: todo
