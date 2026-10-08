@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
+import { surpriseCheckSpec } from "./surprise-check.ts";
 import { tick, type Git, type Orca } from "./tick.ts";
 
 /**
@@ -12,6 +13,11 @@ const QUESTION_RUN = "run_cb7933432d5b"; // one Task; Q1 answered "alpha", Q2 ne
 const RETRIED_RUN = "run_b2242de9baef"; // one Task asked the same question in two failed attempts
 const STATES_RUN = "run_d8de2b7afb55"; // parent, child of parent, two failures, one crash
 const BLOCKED_RUN = "run_e50de7df8312"; // a Task left blocked by worker-stop
+const CHECK_RUN = "run_c2dd1ed388a4"; // a failed surprise check, a failed plain Task, a broken spec
+
+const CHECKER = "task_32e42474b2aa";
+const PLAIN_FAILURE = "task_924675def058";
+const BROKEN_SPEC = "task_da4463be28a0";
 
 const OPEN_Q2 = "msg_4e6aeca7e929";
 const ANSWERED_Q1 = "msg_c5cb2c2019c4";
@@ -50,10 +56,20 @@ function patchRows(result: Fields, key: string, idKey: string, id: string, patch
   return { ...result, [key]: patched };
 }
 
-type RunFixture = { tasks: Fields; workers: Fields; inbox: Fields };
+type RunFixture = { tasks: Fields; workers: Fields; inbox: Fields; gates: Fields };
 
 function recordedRun(run: string): RunFixture {
-  return { tasks: recorded(`tasks-${run}`), workers: recorded(`workers-${run}`), inbox: recorded("inbox") };
+  return {
+    tasks: recorded(`tasks-${run}`),
+    workers: recorded(`workers-${run}`),
+    inbox: recorded("inbox"),
+    gates: recorded(`gates-${run}`),
+  };
+}
+
+/** The recorded broken spec fails every read of its Run, so all but its own test fix it. */
+function checkRun(): RunFixture {
+  return patchTask(recordedRun(CHECK_RUN), BROKEN_SPEC, { spec: "A Task whose spec has no frontmatter." });
 }
 
 function patchTask(fixture: RunFixture, taskId: string, patch: Fields): RunFixture {
@@ -79,6 +95,7 @@ function fakeOrca(fixture: RunFixture, pageSize = 100) {
     const command = args[0] ?? "";
     if (command === "task-list") return fixture.tasks;
     if (command === "inbox") return fixture.inbox;
+    if (command === "gate-list") return fixture.gates;
     if (command === "worker-list") {
       const all = rows(fixture.workers, "workers");
       const from = Number(flag(args, "--cursor") ?? "0");
@@ -86,6 +103,7 @@ function fakeOrca(fixture: RunFixture, pageSize = 100) {
       return { ...fixture.workers, workers: all.slice(from, from + pageSize), page: { nextCursor: next } };
     }
     writes.push([...args]);
+    if (command === "gate-create") return recorded(`gate-create-${CHECK_RUN}`);
     if (command === "worker-start") {
       started += 1;
       return { dispatchId: `ctx_new${started}`, state: "ready", taskId: flag(args, "--task") };
@@ -238,13 +256,90 @@ describe("status", () => {
     expect(output).toContain("Open questions: none\n\nClosed questions: none");
   });
 
-  test("writes nothing", async () => {
+  test("writes nothing when no surprise check has failed", async () => {
     const fixture = patchWorker(recordedRun(QUESTION_RUN), "ctx_feb1a69dcedd", IN_FLIGHT);
     const { orca, writes } = fakeOrca(fixture);
 
     await tick(["status", "--run", QUESTION_RUN], orca, fakeGit());
 
     expect(writes).toEqual([]);
+  });
+});
+
+describe("status on a surprise check", () => {
+  const OPENED_GATE = "gate_9dc75bd5b9b2";
+
+  function gateCreates(writes: readonly string[][]): (string | undefined)[] {
+    return writes.filter((args) => args[0] === "gate-create").map((args) => flag(args, "--task"));
+  }
+
+  test("opens one gate on a failed surprise check with no open gate, and lists it", async () => {
+    const { orca, writes } = fakeOrca(checkRun());
+
+    const output = await tick(["status", "--run", CHECK_RUN], orca, fakeGit());
+
+    expect(gateCreates(writes)).toEqual([CHECKER]);
+    expect(output).toContain(
+      `Open gates:\n  ${OPENED_GATE} on ${CHECKER} (surprise check)\n` +
+        "    The surprise check failed. Rule on each surprise its report says needs a decision; " +
+        "after a crash, resolve to run it again.",
+    );
+  });
+
+  test("opens no second gate on a surprise check that already has an open gate", async () => {
+    const { orca, writes } = fakeOrca({ ...checkRun(), gates: recorded(`gates-gated-${CHECK_RUN}`) });
+
+    const output = await tick(["status", "--run", CHECK_RUN], orca, fakeGit());
+
+    expect(writes).toEqual([]);
+    expect(output).toContain(`Open gates:\n  ${OPENED_GATE} on ${CHECKER} (surprise check)`);
+  });
+
+  test("opens no gate on a failed Task whose spec has no surprise-check frontmatter", async () => {
+    const fixture = patchTask(checkRun(), CHECKER, { status: "completed" });
+    const { orca, writes } = fakeOrca(fixture);
+
+    const output = await tick(["status", "--run", CHECK_RUN], orca, fakeGit());
+
+    expect(writes).toEqual([]);
+    expect(output).toContain(`Failed attempts:\n  ${PLAIN_FAILURE} (plain failure): failed, 0 attempts`);
+  });
+
+  test("opens no gate on a cancelled surprise check", async () => {
+    const fixture = patchTask(checkRun(), CHECKER, { result: "cancelled" });
+    const { orca, writes } = fakeOrca(fixture);
+
+    await tick(["status", "--run", CHECK_RUN], orca, fakeGit());
+
+    expect(writes).toEqual([]);
+  });
+
+  test("recognises a spec built around a shape that has frontmatter of its own", async () => {
+    const shape = "---\nkind: shape\noutcome: \"a gate opens\"\n---\n\n## Decision log\n";
+    const spec = surpriseCheckSpec({ shape, run: CHECK_RUN, checks: ["task_018b55e34b8b"] });
+    const { orca, writes } = fakeOrca(patchTask(checkRun(), CHECKER, { spec }));
+
+    await tick(["status", "--run", CHECK_RUN], orca, fakeGit());
+
+    expect(gateCreates(writes)).toEqual([CHECKER]);
+  });
+
+  test("reports a spec whose frontmatter does not parse, naming its Task, and writes nothing", async () => {
+    const { orca, writes } = fakeOrca(recordedRun(CHECK_RUN));
+
+    const reading = tick(["status", "--run", CHECK_RUN], orca, fakeGit());
+
+    await expect(reading).rejects.toThrow(`Task ${BROKEN_SPEC} has a spec whose frontmatter does not parse`);
+    expect(writes).toEqual([]);
+  });
+
+  test("reports a spec whose frontmatter is never closed, naming its Task", async () => {
+    const fixture = patchTask(checkRun(), PLAIN_FAILURE, { spec: "---\nkind: surprise-check\n" });
+    const { orca } = fakeOrca(fixture);
+
+    const reading = tick(["status", "--run", CHECK_RUN], orca, fakeGit());
+
+    await expect(reading).rejects.toThrow(`Task ${PLAIN_FAILURE} has a spec whose frontmatter is never closed`);
   });
 });
 

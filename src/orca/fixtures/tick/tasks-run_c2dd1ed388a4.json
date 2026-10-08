@@ -1,0 +1,82 @@
+{
+  "id": "aa5902e7-ba67-4218-b6d9-fa50808b7777",
+  "ok": true,
+  "result": {
+    "runId": "run_c2dd1ed388a4",
+    "legacyReadOnly": false,
+    "tasks": [
+      {
+        "id": "task_018b55e34b8b",
+        "run_id": "run_c2dd1ed388a4",
+        "parent_id": null,
+        "created_by_terminal_handle": "term_edcf9b29-53a2-474f-b9f7-9c4871d8ad25",
+        "created_by_pane_key": "c428b7ff-ac75-4125-981f-9d113d308874:6cf7db15-41d5-4c88-ba90-d56f5ef08abc",
+        "created_by_process_incarnation": "cd0beb82-7687-437e-b12f-7c8959a056a7::/Users/magnustornvall/orca/workspaces/agent-tools/feat-issue-13@@d15987d7:45114a75-e3fb-46b2-a0c6-8b976f593dc7",
+        "created_by_run_generation": 1,
+        "task_title": "implementation",
+        "display_name": "implementation",
+        "spec": "Implementation Task of the smoke item.",
+        "status": "completed",
+        "deps": "[]",
+        "result": null,
+        "created_at": "2026-10-08 07:49:28",
+        "completed_at": "2026-10-08T07:49:29.518Z"
+      },
+      {
+        "id": "task_32e42474b2aa",
+        "run_id": "run_c2dd1ed388a4",
+        "parent_id": null,
+        "created_by_terminal_handle": "term_edcf9b29-53a2-474f-b9f7-9c4871d8ad25",
+        "created_by_pane_key": "c428b7ff-ac75-4125-981f-9d113d308874:6cf7db15-41d5-4c88-ba90-d56f5ef08abc",
+        "created_by_process_incarnation": "cd0beb82-7687-437e-b12f-7c8959a056a7::/Users/magnustornvall/orca/workspaces/agent-tools/feat-issue-13@@d15987d7:45114a75-e3fb-46b2-a0c6-8b976f593dc7",
+        "created_by_run_generation": 1,
+        "task_title": "surprise check",
+        "display_name": "surprise check",
+        "spec": "---\nkind: surprise-check\nrun: run_c2dd1ed388a4\nchecks: \n  - task_018b55e34b8b\n---\n\n# Surprise check\n\nObjective: list what a reader holding only the shape and the answers would not expect from the\nchange made by Tasks task_018b55e34b8b of Run run_c2dd1ed388a4.\n\nFollow the orca-worker skill for the starting message and for sending the report, with these\ndifferences: never edit code, never commit, and never ask a question. Anything you cannot settle\ngoes in the needs-a-decision bin. Never read a worker's transcript or terminal output.\n\n## Inputs\n\nGather these yourself, with the commands your preamble gives:\n\n- The shape: at the end of this spec. It and the answers are authoritative.\n- The questions and answers: `orca orchestration inbox --full --limit 10000 --json`, the rows\n  with run_id run_c2dd1ed388a4. A question is a row of type question whose payload names one of the\n  Tasks above; its answer is the latest other message in its thread.\n- The worker reports: `orca orchestration task-list --run run_c2dd1ed388a4 --json`, the result of\n  each Task above.\n- The diff: `orca orchestration worker-list --run run_c2dd1ed388a4 --json` names, for each Task above,\n  its completed Dispatch; the worktree is the path after `::` in its worktreeId. In that\n  worktree, `git diff main...HEAD`.\n- The rulings on this check: `orca orchestration gate-list --run run_c2dd1ed388a4 --task <your task ID>\n  --json`, the resolution of each resolved gate. A ruling settles the surprise it answers: never\n  flag that surprise again.\n\n## Bins\n\nPut each surprise in one bin:\n\n- **Logged assumption**: a decision a worker logged as an assumption; fine, listed in the report.\n- **Correctable**: contradicts the shape or an answer where they settle what is right.\n- **Needs a decision**: a one-way-door decision no worker logged or asked about, or a\n  contradiction the shape and answers do not settle.\n\n## Report\n\nReport `failed` when any surprise needs a decision, otherwise `succeeded`. The report is the\n`worker_done` body, in this order:\n\n1. Needs a decision, then correctable: each surprise, with the file and line it is in and the part\n   of the shape or the answer it is measured against.\n2. Assumptions: each logged assumption (`S…/A…`), and whether the diff matches it.\n3. Questions and answers (`S…/Q…`), each with its answer.\n4. Requirements: each requirement in the shape, done or not, with the evidence.\n\n## Shape\n\nEverything below this line is the item's shape, verbatim.\n\n---\noutcome: \"A failed surprise check gets one gate.\"\nrequirements:\n  R1: a failed check is gated\n---\n\n## Decision log\n\n- **D1**: gate whatever the cause.\n\n",
+        "status": "failed",
+        "deps": "[\"task_018b55e34b8b\"]",
+        "result": null,
+        "created_at": "2026-10-08 07:49:29",
+        "completed_at": "2026-10-08T07:49:29.658Z"
+      },
+      {
+        "id": "task_924675def058",
+        "run_id": "run_c2dd1ed388a4",
+        "parent_id": null,
+        "created_by_terminal_handle": "term_edcf9b29-53a2-474f-b9f7-9c4871d8ad25",
+        "created_by_pane_key": "c428b7ff-ac75-4125-981f-9d113d308874:6cf7db15-41d5-4c88-ba90-d56f5ef08abc",
+        "created_by_process_incarnation": "cd0beb82-7687-437e-b12f-7c8959a056a7::/Users/magnustornvall/orca/workspaces/agent-tools/feat-issue-13@@d15987d7:45114a75-e3fb-46b2-a0c6-8b976f593dc7",
+        "created_by_run_generation": 1,
+        "task_title": "plain failure",
+        "display_name": "plain failure",
+        "spec": "A Task with no frontmatter that fails.",
+        "status": "failed",
+        "deps": "[]",
+        "result": null,
+        "created_at": "2026-10-08 07:49:29",
+        "completed_at": "2026-10-08T07:49:29.793Z"
+      },
+      {
+        "id": "task_da4463be28a0",
+        "run_id": "run_c2dd1ed388a4",
+        "parent_id": null,
+        "created_by_terminal_handle": "term_edcf9b29-53a2-474f-b9f7-9c4871d8ad25",
+        "created_by_pane_key": "c428b7ff-ac75-4125-981f-9d113d308874:6cf7db15-41d5-4c88-ba90-d56f5ef08abc",
+        "created_by_process_incarnation": "cd0beb82-7687-437e-b12f-7c8959a056a7::/Users/magnustornvall/orca/workspaces/agent-tools/feat-issue-13@@d15987d7:45114a75-e3fb-46b2-a0c6-8b976f593dc7",
+        "created_by_run_generation": 1,
+        "task_title": "broken frontmatter",
+        "display_name": "broken frontmatter",
+        "spec": "---\nkind: [surprise-check\n---\n\nFrontmatter that does not parse.",
+        "status": "ready",
+        "deps": "[]",
+        "result": null,
+        "created_at": "2026-10-08 07:49:29",
+        "completed_at": null
+      }
+    ],
+    "count": 4
+  },
+  "_meta": {
+    "runtimeId": "bdcc8947-0619-448d-9910-7d7a24ae1a0e"
+  }
+}

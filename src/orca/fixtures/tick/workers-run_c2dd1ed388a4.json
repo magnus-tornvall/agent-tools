@@ -1,0 +1,21 @@
+{
+  "id": "f0775a9e-40d0-4aa4-9b86-e925e010832c",
+  "ok": true,
+  "result": {
+    "workers": [],
+    "counts": {},
+    "page": {
+      "limit": 100,
+      "total": 0,
+      "hasMore": false,
+      "nextCursor": null
+    },
+    "scope": {
+      "run": "run_c2dd1ed388a4",
+      "source": "flag"
+    }
+  },
+  "_meta": {
+    "runtimeId": "bdcc8947-0619-448d-9910-7d7a24ae1a0e"
+  }
+}

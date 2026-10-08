@@ -16,12 +16,18 @@ From this repository's root, `bun run tick <command> …` does the same thing.
 
 | Command | What it does |
 |---|---|
-| `status` | Lists the Run's open questions, closed questions, failed attempts, and completed Tasks whose work has not merged into `main` yet |
+| `status` | Opens a gate on each failed surprise check that has none, then lists the Run's open questions, closed questions, open gates, failed attempts, and completed Tasks whose work has not merged into `main` yet |
 | `reply` | Answers one open question. Refuses if the question already has a reply or the attempt that asked it has ended |
 | `advance` | Cancels any `--cancel` Tasks, releases settled workers, then starts attempts up to `--cap` in flight: `--retry` Tasks first, then ready Tasks whose parents have merged into `main` |
 
 Every attempt `advance` starts first gets a message carrying the questions earlier
 attempts at the same Task asked, with their answers. It is sent even when there are none.
+
+An item's surprise check is a Task like any other, created by to-orca's script from
+`surpriseCheckSpec` and recognised by `kind: surprise-check` in its spec's frontmatter.
+It fails when it finds a surprise that needs a decision; the owner reads its report
+under failed attempts and rules by resolving the gate, which sets the check `ready` for
+`advance` to run again.
 
 ## What it will not do
 
@@ -33,8 +39,9 @@ attempts at the same Task asked, with their answers. It is sent even when there 
 
 ## Requirements
 
-`bun`, plus `orca` and `git` on `PATH`. Every Orca call passes `--run`, so the tick
-needs no Orca terminal of its own.
+`bun`, plus `orca` and `git` on `PATH`. Every Orca call passes `--run`, except
+`gate-create`, which Orca allows only from the terminal bound to the Run, so run `status`
+there.
 
 ```sh
 npm install
@@ -45,9 +52,10 @@ npm run typecheck
 ## Layout
 
 ```
-src/orca/tick.ts       the tick
-src/orca/tick.test.ts  tests against Orca JSON recorded from real Runs (src/orca/fixtures/tick)
-src/shell.ts           running a command and reading its output
-skills/                orca-worker, which workers follow, plus the unrelated commit and mvc skills
-docs/                  known Orca behaviour, plans, research
+src/orca/tick.ts            the tick
+src/orca/surprise-check.ts  the surprise check's Task spec
+src/orca/tick.test.ts       tests against Orca JSON recorded from real Runs (src/orca/fixtures/tick)
+src/shell.ts                running a command and reading its output
+skills/                     orca-worker, which workers follow, plus the unrelated commit and mvc skills
+docs/                       known Orca behaviour, plans, research
 ```

@@ -12,6 +12,7 @@
 import { existsSync } from "node:fs";
 import { parseArgs } from "node:util";
 import { sh, succeeds } from "../shell.ts";
+import { SURPRISE_CHECK_KIND } from "./surprise-check.ts";
 
 /** Runs one `orca orchestration` command with `--json` and returns its `result`. */
 export type Orca = (args: readonly string[]) => Promise<unknown>;
@@ -42,6 +43,10 @@ const INBOX_LIMIT = "10000";
 /** worker-list's own maximum page size. */
 const WORKER_PAGE_SIZE = "100";
 
+const SURPRISE_CHECK_QUESTION =
+  "The surprise check failed. Rule on each surprise its report says needs a decision; " +
+  "after a crash, resolve to run it again.";
+
 export async function tick(argv: readonly string[], orca: Orca, git: Git): Promise<string> {
   const [command, ...args] = argv;
   switch (command) {
@@ -60,15 +65,35 @@ export async function tick(argv: readonly string[], orca: Orca, git: Git): Promi
 
 async function status(options: { run: string }, orca: Orca, git: Git): Promise<string> {
   const run = await readRun(orca, options.run);
+  const opened = await gateFailedSurpriseChecks(run, orca);
   const unmerged = await completedTasksAwaitingMerge(run, git);
 
   return [
     `Run ${run.id}`,
     section("Open questions", openQuestions(run).map((q) => describeOpenQuestion(run, q))),
     section("Closed questions", closedQuestions(run).map((q) => describeClosedQuestion(run, q))),
+    section("Open gates", [...run.openGates, ...opened].map((g) => describeGate(run, g))),
     section("Failed attempts", failedTasks(run).map((t) => describeFailure(run, t))),
     section("Awaiting merge", unmerged.map(describeAwaitingMerge)),
   ].join("\n\n");
+}
+
+/** Opens a gate whatever made the check fail: telling a crash from a decision is the owner's call.
+ *  Orca opens a gate only from the terminal bound to the Run. */
+async function gateFailedSurpriseChecks(run: Run, orca: Orca): Promise<Gate[]> {
+  const ungated = run.tasks.filter(
+    (task) =>
+      task.kind === SURPRISE_CHECK_KIND &&
+      task.status === "failed" &&
+      !isCancelled(task) &&
+      !run.openGates.some((gate) => gate.taskId === task.id),
+  );
+  const opened: Gate[] = [];
+  for (const task of ungated) {
+    const result = await orca(["gate-create", "--task", task.id, "--question", SURPRISE_CHECK_QUESTION]);
+    opened.push(parseGate(fields(result, "gate-create result").gate));
+  }
+  return opened;
 }
 
 async function reply(
@@ -106,6 +131,8 @@ type Task = {
   readonly status: string;
   readonly deps: readonly string[];
   readonly result: TaskResult;
+  /** From the spec's frontmatter. */
+  readonly kind: string | undefined;
 };
 
 type TaskResult =
@@ -132,21 +159,29 @@ type Question = {
   readonly attemptEnded: boolean;
 };
 
+type Gate = {
+  readonly id: string;
+  readonly taskId: string;
+  readonly question: string;
+};
+
 type Run = {
   readonly id: string;
   readonly tasks: readonly Task[];
   /** Newest first, as worker-list returns them. */
   readonly dispatches: readonly Dispatch[];
   readonly questions: readonly Question[];
+  readonly openGates: readonly Gate[];
 };
 
 async function readRun(orca: Orca, id: string): Promise<Run> {
-  const [tasks, dispatches, messages] = await Promise.all([
+  const [tasks, dispatches, messages, openGates] = await Promise.all([
     listTasks(orca, id),
     listDispatches(orca, id),
     listMessages(orca, id),
+    listOpenGates(orca, id),
   ]);
-  return { id, tasks, dispatches, questions: questionsIn(messages, dispatches) };
+  return { id, tasks, dispatches, questions: questionsIn(messages, dispatches), openGates };
 }
 
 async function listTasks(orca: Orca, run: string): Promise<Task[]> {
@@ -185,15 +220,43 @@ async function listMessages(orca: Orca, run: string): Promise<Message[]> {
     .map(parseMessage);
 }
 
+async function listOpenGates(orca: Orca, run: string): Promise<Gate[]> {
+  const result = fields(await orca(["gate-list", "--run", run, "--status", "pending"]), "gate-list result");
+  return list(result, "gates").map(parseGate);
+}
+
 function parseTask(row: unknown): Task {
   const task = fields(row, "task");
+  const id = text(task, "id");
   return {
-    id: text(task, "id"),
+    id,
     title: text(task, "task_title"),
     status: text(task, "status"),
     deps: parseDeps(text(task, "deps")),
     result: parseTaskResult(optionalText(task, "result")),
+    kind: specKind(id, text(task, "spec")),
   };
+}
+
+/** A spec may open with YAML frontmatter between `---` lines. */
+function specKind(taskId: string, spec: string): string | undefined {
+  const lines = spec.split("\n");
+  if (lines[0] !== "---") return undefined;
+  const end = lines.indexOf("---", 1);
+  if (end === -1) throw new Error(`Task ${taskId} has a spec whose frontmatter is never closed by ---`);
+  let frontmatter: unknown;
+  try {
+    frontmatter = Bun.YAML.parse(lines.slice(1, end).join("\n"));
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    throw new Error(`Task ${taskId} has a spec whose frontmatter does not parse: ${reason}`, { cause: error });
+  }
+  if (!isRecord(frontmatter)) throw new Error(`Task ${taskId} has a spec whose frontmatter is not a mapping`);
+  const kind = frontmatter.kind;
+  if (kind !== undefined && typeof kind !== "string") {
+    throw new Error(`Task ${taskId} has a spec whose frontmatter kind is not text`);
+  }
+  return kind;
 }
 
 function parseDeps(raw: string): string[] {
@@ -229,6 +292,11 @@ function parseDispatch(row: unknown): Dispatch {
     worktree: worktreePath(worker.resource),
     releasable: list(nextAction, "argv").includes("worker-release"),
   };
+}
+
+function parseGate(row: unknown): Gate {
+  const gate = fields(row, "gate");
+  return { id: text(gate, "id"), taskId: text(gate, "task_id"), question: text(gate, "question") };
 }
 
 /** A worktree ID reads `<repo id>::<absolute path>`. */
@@ -593,6 +661,10 @@ function describeFailure(run: Run, task: Task): string {
   }
   if (task.status === "ready") return [heading, indented("ended without a report")].join("\n");
   return heading;
+}
+
+function describeGate(run: Run, gate: Gate): string {
+  return [`  ${gate.id} on ${taskLabel(run, gate.taskId)}`, indented(gate.question)].join("\n");
 }
 
 function describeAwaitingMerge(landing: Landing): string {
