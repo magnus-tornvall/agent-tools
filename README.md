@@ -15,6 +15,7 @@ not the contract.
 ## Layout
 
 ```
-skills/   orca-worker, which workers follow, plus the commit and mvc skills
+skills/   to-orca, which runs a shape as an Orca Run, orca-worker, which its workers follow,
+          plus the commit and mvc skills
 docs/     known Orca behaviour, research
 ```

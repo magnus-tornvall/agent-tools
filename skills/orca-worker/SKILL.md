@@ -1,41 +1,27 @@
 ---
 name: orca-worker
-description: Use when working an Orca Task as a dispatched worker - a Task spec that names this skill, or a coordinator preamble with a task ID. Covers what is authoritative, when to decide and when to ask a question, assumption IDs, tests, checks, and the report.
+description: Use when working an Orca Task as a dispatched worker - a Task spec that names this skill. Covers what is authoritative, when to decide and when to ask a question, assumption IDs, and the report.
 ---
 
 # orca-worker
 
-How to work an Orca Task. How to sequence the work is yours.
+How to work an Orca Task. What the work is, and how to check it, is the Task spec's; how to
+sequence it is yours.
 
 ## Authority
 
-The Task spec is authoritative, and so are the answers to this Task's questions: the replies to
-your own asks, and any the coordinator sends you from an earlier attempt. Read the spec and those
-answers before anything else. Where the spec and an answer disagree, that is a question.
+The Task spec is authoritative, and so are the replies to your own questions. Everything this
+attempt needs is in the spec; nothing else arrives before you start. Where the spec and a reply
+disagree, that is a question.
 
-The coordinator sends every attempt a starting message: this Task's earlier questions and
-answers, or that there are none. It never appears in your prompt and may arrive after you start,
-so your first command waits for it:
-
-```bash
-orca orchestration check --terminal <handle> --wait --timeout-ms 100000 --json
-```
-
-Read every message in the batch, then ack it. The ack checks again, so read and ack each batch it
-returns until one has no `deliveryId`:
-
-```bash
-orca orchestration check --terminal <handle> --ack <delivery_id> --json
-```
-
-If the wait times out with nothing, send `worker_done --outcome failed` saying no starting message
-arrived. Never start without it.
+The spec's first line names the Task's key, `T<n>`. It prefixes every question, assumption and
+finding ID you write.
 
 ## The door rule
 
-For each decision the spec and answers don't settle:
+For each decision the spec and replies don't settle:
 
-- **Settled** in the spec or an answer → follow it.
+- **Settled** in the spec or a reply → follow it.
 - **Two-way door** → decide, log it as an assumption, carry on.
 - **One-way door** → ask a question.
 
@@ -53,16 +39,16 @@ A one-way door is costly to undo once shipped because someone outside this chang
 - **External effects** - sends, deletes, payments; anything that cannot be recalled.
 - **Test contracts** - changing what an existing test asserts.
 
-Contradicting the spec or an answer is always a question. Unsure → treat it as a one-way door and
+Contradicting the spec or a reply is always a question. Unsure → treat it as a one-way door and
 say so in the question. Over-escalating is a defect like missing one: a two-way door is yours.
 
 ## Questions
 
-One decision per question, readable without opening anything else. Number questions per Task
-like assumptions: `S1/Q1`, `S1/Q2`, ...
+One decision per question, readable without opening anything else. Number questions per Task:
+`T1/Q1`, `T1/Q2`, ...
 
 ```
-**S1/Q1.** <neutral question: answerable either way without the stance; concrete>
+**T1/Q1.** <neutral question: answerable either way without the stance; concrete>
 
 Stance: <a strong opinion, weakly held, reasoning inline>
 Wrong if: <the condition that refutes the stance>
@@ -75,7 +61,7 @@ Ask with the whole block:
 
 ```bash
 orca orchestration ask --timeout-ms 60000 --json --question "$(cat <<'EOF'
-<the S1/Q1 block>
+<the T1/Q1 block>
 EOF
 )"
 ```
@@ -91,34 +77,22 @@ No option lists in the stance. Never ask through a local prompt; no one is at th
 
 ## Assumptions
 
-Log every two-way-door decision as an assumption, numbered per Task with the Task's prefix:
-`S1/A1`, `S1/A2`, ... Each says what you decided and what it rules out, in one or two lines. IDs
-are never reused.
-
-## Tests
-
-Write the tests from the spec's acceptance cases first. A requirement with no
-observable form gets a test you pick; log the choice as an assumption.
-
-## Checks
-
-Before reporting success, run the repo's own lint, typecheck, test and build commands - find them
-in its manifests and `AGENTS.md`/`CLAUDE.md`, never invent them. A failing check is not success.
-Never push.
+Log every two-way-door decision as an assumption, numbered per Task: `T1/A1`, `T1/A2`, ... Each
+says what you decided and what it rules out, in one or two lines. IDs are never reused.
 
 ## Report
 
 The report is the `worker_done` body; Orca keeps it on the Task.
 
 ```
-# <task ID>: <one line>
+# T1: <one line>
 
 Outcome: succeeded | failed
-Requirements: R1 - done, <test that shows it> | not done, <why>
-Assumptions: S1/A1 - <decision>; rules out <...>
-Checks: <command> - pass | fail
-Follow-ups: <proposed work outside this Task>
-Questions: S1/Q1 - <message ID> - <answer, or pending>
+<the lines the spec asks the report to add>
+Assumptions: T1/A1 - <decision>; rules out <...>
+Questions: T1/Q1 - <message ID> - <answer, or pending>
+Follow-ups: <proposed work outside this Task> | none
+Toolbox: <what this Task lacked - a skill, a tool, a permission, an instruction - and what would have supplied it> | none
 ```
 
 Propose follow-ups in the report; never create Tasks. Finish with:
@@ -131,5 +105,4 @@ EOF
 )"
 ```
 
-Take the task ID, dispatch ID and handle (`--from`, `--terminal`) from your preamble; without
-them Orca settles nothing.
+Take the task ID, dispatch ID and handle from your preamble; without them Orca settles nothing.
