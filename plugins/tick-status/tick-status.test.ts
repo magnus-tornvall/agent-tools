@@ -63,12 +63,10 @@ function plugin(run: string) {
         return { delivered: true };
       },
     },
-    log: () => {},
   };
   const activate = createPlugin({
     status: (id) => tick(["status", "--run", id], orca, git),
     storedRun: async () => `${run}\n`,
-    port: 0,
   });
   return { activate: () => activate(ctx), handlers, notifications, hostCalls, calls };
 }

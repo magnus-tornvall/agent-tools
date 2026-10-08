@@ -1,8 +1,6 @@
 import { tick, gitCli } from "../../src/orca/tick.ts";
 import { orcaCli } from "../../src/orca/orca.ts";
 
-export const STATUS_PORT = 47821;
-
 const RUN_ID = /^run_[0-9a-f]{12}$/;
 
 export function isRunId(value: unknown): value is string {

@@ -1,6 +1,5 @@
 // plugins/tick-status/worker.ts
 import { readFile } from "node:fs/promises";
-import { createServer } from "node:http";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
@@ -719,7 +718,6 @@ function gitCli() {
 if (false) {}
 
 // plugins/tick-status/status.ts
-var STATUS_PORT = 47821;
 var RUN_ID = /^run_[0-9a-f]{12}$/;
 function isRunId(value) {
   return typeof value === "string" && RUN_ID.test(value);
@@ -764,24 +762,11 @@ function createPlugin(deps) {
       await ctx.host.call("notifications.show", { title, body });
       return { title, body };
     });
-    const server = createServer((req, res) => {
-      const url = new URL(req.url ?? "/", "http://127.0.0.1");
-      const run = url.searchParams.get("run");
-      res.setHeader("Access-Control-Allow-Origin", "*");
-      if (url.pathname !== "/status" || !isRunId(run)) {
-        res.writeHead(400, { "Content-Type": "text/plain" }).end("expected /status?run=<run_id>");
-        return;
-      }
-      deps.status(run).then((text2) => res.writeHead(200, { "Content-Type": "text/plain" }).end(text2), (error) => res.writeHead(500, { "Content-Type": "text/plain" }).end(error instanceof Error ? error.message : String(error)));
-    });
-    server.on("error", (error) => ctx.log(`status server: ${error.message}`));
-    server.listen(deps.port, "127.0.0.1");
   };
 }
 var worker_default = createPlugin({
   status: liveStatus(homedir()),
-  storedRun: () => readFile(RUN_FILE, "utf8"),
-  port: STATUS_PORT
+  storedRun: () => readFile(RUN_FILE, "utf8")
 });
 export {
   worker_default as default,

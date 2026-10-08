@@ -1,7 +1,6 @@
 <main>
   <label>Run ID <input id="run" placeholder="run_0123456789ab" size="22"></label>
   <button id="terminal">Status in terminal</button>
-  <button id="fetch">Fetch status</button>
   <pre id="out"></pre>
 </main>
 <style>
@@ -10,7 +9,6 @@
   button { margin: 4px 4px 4px 0; }
 </style>
 <script>
-  var PORT = 47821;
   var RUN_ID = /^run_[0-9a-f]{12}$/;
   var out = document.getElementById("out");
   var pending = {};
@@ -52,13 +50,5 @@
       function (result) { show("sent, accepted: " + result.accepted); },
       function (error) { show("terminal route failed: " + error.message); }
     );
-  };
-
-  document.getElementById("fetch").onclick = function () {
-    var id = run();
-    if (!id) return;
-    fetch("http://127.0.0.1:" + PORT + "/status?run=" + id).then(function (response) {
-      return response.text();
-    }).then(show, function (error) { show("fetch route failed: " + error.name + ": " + error.message); });
   };
 </script>
