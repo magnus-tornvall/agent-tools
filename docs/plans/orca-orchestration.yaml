@@ -54,7 +54,7 @@ tasks:
   - id: OO-16
     kind: known
     step: Owner runs orca-start for the scaffold item
-    # The scaffold item's shape is ~/dev/me/ai/vscode/.scratch/mvc-trial-extension-scaffold.md, in
+    # The scaffold item's shape is /Users/magnustornvall/dev/me/ai/agent-tools/.scratch/mvc-tick-status-panel.md, in
     # mvc's old markdown format; it is re-reported through mvc as YAML before orca-start reads it.
     done_when: the item's Run and Tasks exist after the owner approved the DAG
     depends_on: [OO-9]
