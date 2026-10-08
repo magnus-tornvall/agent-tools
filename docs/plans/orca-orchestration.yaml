@@ -8,9 +8,9 @@ research: ../research/agentic-systems/report.md
 # cancel. Never work around it; when this plan needs Orca to behave otherwise, the plan changes.
 # Issue IDs are durable: never renumbered, never reused. Done issues are removed; the highest ID
 # used so far is OO-28, and new issues take the next number after it.
-# The shape schema (OO-27) is the contract between whatever produces a shape and Orca: a user opts
-# in by producing a conforming shape. mvc is one producer, not the contract. Workers never see the
-# whole shape; each Task spec is that Task's slice of it.
+# The shape schema (src/shape/shape.ts) is the contract between whatever produces a shape and
+# Orca: a user opts in by producing a conforming shape. mvc is one producer, not the contract.
+# Workers never see the whole shape; each Task spec is that Task's slice of it.
 # status: todo | done | dropped (kept so the ID stays taken).
 # kind: unknown = a question a smoke test or a ruling must answer before the dependent build;
 #       known  = settled work, only effort stands between it and done.
@@ -19,7 +19,7 @@ tasks:
     kind: known
     step: Write the to-orca skill
     # Written by the owner, not dispatched from this plan. The skill takes a shape conforming to
-    # OO-27's schema, from any producer; it assumes nothing about mvc beyond that schema.
+    # the shape schema, from any producer; it assumes nothing about mvc beyond that schema.
     # Ruled: a Task spec is self-contained, with no pointer to a shape and no verbatim copy of one.
     # The script's coverage check replaces DAG approval as the only check that no requirement was
     # dropped; approval still judges the split.
@@ -28,7 +28,7 @@ tasks:
       the requirement IDs it owns, and the non-goal and decision IDs that bear on it, and assigns
       S IDs per Task; once the owner approves the DAG, it hands the shape and that DAG unchanged to
       OO-25's script
-    depends_on: [OO-25, OO-27]
+    depends_on: [OO-25]
     status: todo
   - id: OO-12
     kind: known
@@ -88,7 +88,7 @@ tasks:
     kind: known
     step: Write to-orca's script and the implementation Task spec template
     done_when: >-
-      given a shape conforming to OO-27's schema and an approved DAG as typed input, with
+      given a shape conforming to the shape schema and an approved DAG as typed input, with
       dependencies by local key, the script validates both and refuses before any mutation when a
       requirement is owned by no Task or the DAG names an unknown requirement, non-goal or decision
       ID; it creates the Run with the shape's outcome as objective, creates the Tasks in dependency
@@ -97,41 +97,23 @@ tasks:
       alternatives that bear on it, constraints, touchpoints) passed as --spec=, and creates the
       surprise check from the whole shape depending on every implementation Task; a mutation with
       an unknown result is retried with Orca's --retry-request
-    depends_on: [OO-26, OO-27]
+    depends_on: [OO-26]
     status: todo
   - id: OO-26
     kind: known
     step: Measure the surprise check against the typed shape
     done_when: >-
-      surpriseCheckSpec takes a shape typed by OO-27's schema instead of a string: the check
+      surpriseCheckSpec takes a shape typed by the shape schema instead of a string: the check
       measures the diff against the shape, each checked Task's spec and the answers, and reports
       every requirement in the shape by its ID; the doc comment in surprise-check.ts and the
       README say so
-    depends_on: [OO-27]
-    status: todo
-  - id: OO-27
-    kind: known
-    step: Define the shape schema
-    # Zod is the one source of truth; the JSON Schema exists for editors and anything not written
-    # in TypeScript. A module in src/, not a separate package. No version field: shapes are
-    # snapshotted at Task creation, so no old shape is validated again.
-    done_when: >-
-      a shape is one YAML document, defined once by a Zod schema in a module in src/: outcome,
-      requirements keyed by R ID, non-goals typed boundary or deferral with a reason, approach,
-      constraints, touchpoints, and decisions keyed by D ID, each with the decision, its rejected
-      alternatives, its provenance, whether the user decided it or silence accepted it, and
-      whether it is a one-way door; a JSON Schema generated from it is committed and a test fails
-      when it drifts; shape-check <file> exits nonzero naming each violation by its path; a
-      filled-in example passes shape-check in the test suite; the README says any producer whose
-      shape passes shape-check can feed to-orca
     status: todo
   - id: OO-28
     kind: known
     step: Make mvc report and persist the shape as the schema's YAML
     done_when: >-
-      mvc's report and persisted file are one YAML document conforming to OO-27's schema, with the
+      mvc's report and persisted file are one YAML document conforming to the shape schema, with the
       decision log inside it and no markdown body, persisted as .yaml; the skill carries the
       filled-in example and instructs running shape-check on the file and fixing it until it exits
       0
-    depends_on: [OO-27]
     status: todo
