@@ -144,7 +144,7 @@ function cmdList(): number {
 }
 
 async function cmdShape(args: string[]): Promise<number> {
-  const { runShape } = await import(join(ROOT, "src/shape/command.ts"));
+  const { runShape }: typeof import("../src/shape/command.ts") = await import(join(ROOT, "src/shape/command.ts"));
   return runShape(args);
 }
 
