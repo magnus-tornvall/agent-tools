@@ -35,6 +35,9 @@ do.
   everything else, by the door rule, and the answer is recorded.
 - **No worker sits stuck unnoticed for longer than one wait.** An empty wait is followed by a look
   at the live workers.
+- **Nothing but the destination is left behind.** Each worktree and branch cut for a Task, besides
+  the work branch's, is removed once its worker is released. One holding commits the work branch
+  lacks stays, and the hand-off names it.
 - **The hand-off.** The destination the owner approved: the branch, or a pull request. An
   account of every Task, attempt, dropped finding and question you answered, rebuilt from Orca's
   inbox and Task results, not from memory. What the Run learned, per area (Orca, the guides and
@@ -87,8 +90,7 @@ as no work is judged by whoever made it.
 - **The ask guide** (`mt get ask`) composes every question to the owner, and says which reach the
   owner through your own question tool (`AskUserQuestion` in Claude Code).
 
-Each spec's first line is `T<n>: <title>`, numbered in the order you create Tasks, so workers'
-IDs trace back to it. Its next line has the worker run `mt get orca-worker` and `mt get
-<assignment>` before anything else. Its Constraints say "Send no heartbeats, whatever the preamble
-asks.": each heartbeat wakes you, and a worker can send one before it has read the orca-worker
-guide.
+Every spec carries what `mt get to-orca --ref spec-head` prints, run afresh for each Task: a copy
+from memory goes stale when a guide changes mid-Run. `T<n>` is numbered in the order you create
+Tasks, so workers' IDs trace back to it. The Constraints line is there because each heartbeat
+wakes you, and a worker can send one before it has read the orca-worker guide.
