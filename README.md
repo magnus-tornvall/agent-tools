@@ -37,7 +37,8 @@ the attempt is still logged, with `found` false.
 ### Usage log
 
 Every `mt get` appends one JSON line to `$MT_LOG`, or to
-`${XDG_STATE_HOME:-$HOME/.local/state}/mt/usage.jsonl` when it is unset. The keys:
+`${XDG_STATE_HOME:-$HOME/.local/state}/mt/usage.jsonl` when it is unset. This is the log's
+format, JSON Lines at that path with these keys; whatever reads the log relies on it:
 
 | key        | value                                                          |
 | ---------- | -------------------------------------------------------------- |
@@ -58,19 +59,26 @@ Link `cli/mt` onto your PATH, and link each stub skill folder into the agent's s
 folder. `mt` finds the guides through the link, so the clone stays where it is.
 
 ```sh
-ln -s "$PWD/cli/mt" ~/.local/bin/mt
+ln -sfn "$PWD/cli/mt" ~/.local/bin/mt
 for tool in $(mt list | awk '{print $1}'); do
-  ln -s "$PWD/skills/$tool" ~/.agents/skills/"$tool"
+  ln -sfn "$PWD/skills/$tool" ~/.agents/skills/"$tool"
 done
 ```
 
-Use the skills folder your agent reads; `~/.agents/skills` is one example.
+Use the skills folder your agent reads; `~/.agents/skills` is one example. `-n` replaces a
+link that is already there instead of writing a stray link inside the folder it points to.
+
+A skill already linked from a clone becomes a stub when that clone pulls this layout, and the
+stub runs `mt get`. Put `mt` on PATH before or with the pull, or every agent that loads the skill
+fails on its first command.
 
 ### Test
 
 ```sh
 bash test/mt.sh
 ```
+
+The test needs `python3` on PATH to parse the log's JSON lines; `mt` itself does not.
 
 ## Layout
 
