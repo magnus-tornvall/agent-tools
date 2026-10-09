@@ -26,3 +26,29 @@ themselves say how they are meant to work.
   at 4348866.
 - The second round of judges found three two-way findings, two introduced by the first fix round;
   no one-way door was decided without a question. Seen at 4348866.
+
+## Seen coordinating the mvc Run
+
+Guides as installed from the main clone at 67fa9cc; the branch under change was this repo's own.
+
+- to-orca's stub has `disable-model-invocation`, so an agent asked to "use orca to drive this
+  shape" has its skill call refused; the owner has to type `/to-orca <shape>`.
+- A change worker testing `mt` inside agent-tools wrote 12 lines into the owner's real usage log:
+  it exported `MT_LOG` once, and shell state does not persist between commands. Two workers'
+  Toolbox lines asked for an `MT_LOG` note in the change guide. Later specs carried one and no
+  stray lines followed.
+- The coordinator sliced the shape per judge by hand again: the Run's shape was written before the
+  schema it builds, and `mt shape slice` then refused a shape failing the check. The Run's own
+  fix round made slice need only a YAML map.
+- surprise-review found the most again, six then four two-way findings, none a one-way door
+  decided without a question; maintainer-review found two, three, then one on the last fixes;
+  shape-coverage two, then none.
+- A fix round introduced a bug, zero-indented list items read as repeated keys, that only the
+  next maintainer-review caught.
+- A finding whose fix needed dependencies the shape's constraints forbade (type-checking) went to
+  the owner, as the door rule says a contradiction with the spec does.
+- A surprise-review judge reported that orca-worker tells it to send no heartbeats; the guide says
+  nothing about heartbeats.
+- surprise-review, which runs nothing, judged runtime claims (Bun installing a missing package at
+  run time, AskUserQuestion returning before the owner's next message) from documentation, and
+  said so in its assumptions.
