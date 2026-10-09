@@ -7,6 +7,10 @@ report; this guide says what the report holds. `mt list` shows every guide there
 Send no heartbeats, whatever the preamble asks. Each one wakes the coordinator for nothing; it
 reads whether you are alive from your terminal.
 
+Never stop a process, even one you started. Start anything that must outlive one command with your
+Bash tool's background option, never `&`, `nohup` or `disown`: releasing you stops what the
+harness started, and nothing else.
+
 ## Authority
 
 The spec is authoritative, and so are the replies to your own questions. A contradiction between
