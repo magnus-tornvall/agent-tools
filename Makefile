@@ -31,12 +31,14 @@ mt:
 	fi
 	@ln -sfn "$(REPO)/cli/mt" "$(BIN_DIR)/mt"
 
-# Links every tool mt list shows, and removes links into this clone whose stub is gone. A real
+# Links every stub that has a guide, and removes links into this clone whose stub is gone. A real
 # folder in the way is left alone: ln -sfn would write a stray link inside it.
-skills: bun
+skills:
 	@mkdir -p "$(SKILLS_DIR)"
 	@status=0; \
-	for tool in $$("$(REPO)/cli/mt" list | awk '{print $$1}'); do \
+	for dir in "$(REPO)"/skills/*/; do \
+	  tool=$$(basename "$$dir"); \
+	  [ -f "$(REPO)/guides/$$tool.md" ] || continue; \
 	  link="$(SKILLS_DIR)/$$tool"; \
 	  if [ -d "$$link" ] && [ ! -L "$$link" ]; then \
 	    echo "$$link is a real folder, not a link; move it out of $(SKILLS_DIR) and run make again" >&2; \

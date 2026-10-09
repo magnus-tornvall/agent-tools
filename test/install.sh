@@ -76,7 +76,10 @@ allow_list() { # settings file -> one rule per line
   python3 -I -c 'import json, sys; print("\n".join(json.load(open(sys.argv[1]))["permissions"]["allow"]))' "$1"
 }
 
-tools=$("$ROOT/cli/mt" list | awk '{print $1}')
+tools=$(for dir in "$ROOT"/skills/*/; do
+  tool=$(basename "$dir")
+  [ -f "$ROOT/guides/$tool.md" ] && echo "$tool"
+done)
 
 # a fresh machine
 H=$TMP/fresh
@@ -87,9 +90,13 @@ assert_eq "mt is linked to the clone" "$ROOT/cli/mt" "$(readlink "$H/.local/bin/
 for tool in $tools; do
   [ "$(readlink "$H/.agents/skills/$tool")" = "$ROOT/skills/$tool" ] || fail "$tool is not linked to the clone"
 done
-check "every tool mt list shows is linked"
+check "every stub that has a guide is linked"
 [ -e "$H/.agents/skills/commit" ] && fail "commit is linked, but mt does not serve it"
 check "skills mt does not serve are not linked"
+[ -L "$H/.agents/skills/orca-worker" ] && fail "orca-worker is linked, but it has no stub"
+check "guides without a stub are not linked"
+case $(cat "$TMP/out") in *"removed stale"*) fail "a fresh install removed links it made" ;; esac
+check "a fresh install removes nothing"
 assert_eq "settings allow the mt rules" "$(printf 'Bash(mt get:*)\nBash(mt list)\nBash(mt shape:*)')" \
   "$(allow_list "$H/.claude/settings.json")"
 
