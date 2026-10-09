@@ -14,5 +14,7 @@ when the Run's repo is agent-tools it is also committed to `docs/orca-behaviour.
 - `worker-list --terminal-state reclaimable` misses a settled worker whose state is `retained`,
   which happens after `worker-stop`. (1.4.221)
 - A `worker_done` without a dispatch ID settles nothing; only the inbox reader sees why. (1.4.221)
+- `run-create` moves the terminal off a Run it already coordinates without a word, even one with
+  unsettled work. Check `run-current` and that Run's workers first. (1.4.222)
 - `ask` waits at most 30 minutes per call. A reply to a worker that has ended is refused with
   `dispatch_inactive`. (1.4.220)
