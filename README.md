@@ -14,22 +14,24 @@ not the contract.
 
 ## mt
 
-`mt` is a loader. A tool's know-how lives in a guide under `guides/`. The tool also has a
-stub skill under `skills/<name>/`: its description says when to use the tool, and its body
-only tells the agent to run `mt get <name>` and follow what it prints. The agent's skill
-list stays short, the guide enters context only when the tool is used, and each load is
-logged.
+`mt` is a loader. A tool's know-how lives in a guide under `guides/`. A tool an agent or the
+owner picks also has a stub skill under `skills/<name>/`: its description says when to use the
+tool, and its body only tells the agent to run `mt get <name>` and follow what it prints. The
+agent's skill list stays short, the guide enters context only when the tool is used, and each
+load is logged.
 
-Every stub has a guide, and every guide a stub but orca-worker. No agent chooses orca-worker:
-every Orca Task spec loads it, so a skill-list entry would only cost the sessions that never
-use it. `mt get orca-worker` serves it like any other guide. `mt list` shows only tools that
-have both,
-among them mvc, which settles a shape with the owner, and ask, which composes a question for
-whoever owns a decision. Skills that are not stubs, such as commit,
-stay whole in `skills/` and `mt` does not serve them.
+Every stub has a guide. A guide that only a spec or another guide loads has no stub:
+orca-worker and the assignments change, maintainer-review, shape-coverage and surprise-review.
+No agent chooses them, so a skill-list entry would only cost the sessions that never use them;
+`mt get` serves them like any other guide. Stubs remain for what an agent or the owner picks:
+mvc, which settles a shape with the owner, to-orca, which runs one, ask, which composes a
+question for whoever owns a decision, and door-rule, which says whether a decision is asked at
+all. `mt list` shows every guide. Skills that are not stubs, such as commit, stay whole in
+`skills/` and `mt` does not serve them.
 
 ```
-mt list                       every tool, once, with its when-to-use description
+mt list                       every guide, once, with its stub's description, or the
+                              guide's first paragraph when it has no stub
 mt get <name>                 print the tool's guide, and log the load
 mt get <name> [--ref <ref>]   print one of the tool's references instead, and log the ref
 mt shape check <file>         check that a file is a shape
@@ -95,8 +97,9 @@ folder. `mt` finds the guides through the link, so the clone stays where it is.
 
 ```sh
 ln -sfn "$PWD/cli/mt" ~/.local/bin/mt
-for tool in $(mt list | awk '{print $1}'); do
-  ln -sfn "$PWD/skills/$tool" ~/.agents/skills/"$tool"
+for dir in skills/*/; do
+  tool=$(basename "$dir")
+  [ -f "guides/$tool.md" ] && ln -sfn "$PWD/skills/$tool" ~/.agents/skills/"$tool"
 done
 ```
 
@@ -140,8 +143,8 @@ extension.
 cli/      mt
 src/      shape/, the shape schema and mt shape, with their tests
 guides/   one guide per tool, <name>.md, with its references in <name>/<ref>.md
-skills/   a stub skill per guide but orca-worker, <name>/SKILL.md, mvc and ask among them,
-          plus the commit skill, which is whole
+skills/   a stub skill per guide an agent or the owner picks, <name>/SKILL.md, mvc and ask
+          among them, plus the commit skill, which is whole
 test/     mt.sh, which checks mt get and mt list
 docs/     known Orca and guide behaviour, research
 ```

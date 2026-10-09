@@ -50,7 +50,7 @@ chmod +x "$REPO/cli/mt"
 printf '# Door rule\nbody line\n' >"$REPO/guides/door-rule.md"
 printf '# To orca\n' >"$REPO/guides/to-orca.md"
 printf '# Overlay\noverlay body\n' >"$REPO/guides/to-orca/overlay.md"
-printf '# Solo, no stub\n' >"$REPO/guides/no-stub.md"
+printf '# Solo, no stub\n\nA guide only a spec loads,\n  over two lines.\n\n## Later\nnot read\n' >"$REPO/guides/no-stub.md"
 printf '# Solo\n' >"$REPO/guides/solo.md"
 
 cat >"$REPO/skills/door-rule/SKILL.md" <<'SK'
@@ -176,14 +176,17 @@ assert_eq "usage errors are not logged" "$before" "$(log_lines)"
 # R3: list
 out=$("$MT" list); rc=$?
 assert_eq "R3 list exits 0" 0 "$rc"
-assert_eq "R3 list has one line per tool" 3 "$(printf '%s\n' "$out" | wc -l | tr -d ' ')"
+assert_eq "R3 list has one line per guide" 4 "$(printf '%s\n' "$out" | wc -l | tr -d ' ')"
 assert_contains "R3 single-line description" "$out" "Use when deciding whether to ask or to carry on."
 assert_contains "R3 folded description joined" "$out" "Use when a shape should run as one driven Orca Run, with review rounds."
 assert_contains "R3 quoted description unquoted" "$out" "Quoted description, single line"
 case $out in *"allowed-tools"*|*"must not be read"*) fail "R3 list read past the description" ;; esac
 check "R3 list stops at the description"
-case $out in *no-stub*|*orphan-stub*) fail "R3 list shows something that is not guide + stub" ;; esac
-check "R3 list shows only guides that have a stub"
+assert_contains "R3 guide without a stub shows its first paragraph" "$out" "A guide only a spec loads, over two lines."
+case $out in *"not read"*) fail "R3 list read past a guide's first paragraph" ;; esac
+check "R3 list stops at a guide's first paragraph"
+case $out in *orphan-stub*) fail "R3 list shows a stub that has no guide" ;; esac
+check "R3 list shows only guides"
 before=$(log_lines)
 "$MT" list >/dev/null
 assert_eq "list is not logged" "$before" "$(log_lines)"
