@@ -20,7 +20,10 @@ only tells the agent to run `mt get <name>` and follow what it prints. The agent
 list stays short, the guide enters context only when the tool is used, and each load is
 logged.
 
-Every guide has a stub and every stub a guide. `mt list` shows only tools that have both,
+Every stub has a guide, and every guide a stub but orca-worker. No agent chooses orca-worker:
+every Orca Task spec loads it, so a skill-list entry would only cost the sessions that never
+use it. `mt get orca-worker` serves it like any other guide. `mt list` shows only tools that
+have both,
 among them mvc, which settles a shape with the owner, and ask, which composes a question for
 whoever owns a decision. Skills that are not stubs, such as commit,
 stay whole in `skills/` and `mt` does not serve them.
@@ -137,8 +140,8 @@ extension.
 cli/      mt
 src/      shape/, the shape schema and mt shape, with their tests
 guides/   one guide per tool, <name>.md, with its references in <name>/<ref>.md
-skills/   a stub skill per guide, <name>/SKILL.md, mvc and ask among them, plus the
-          commit skill, which is whole
+skills/   a stub skill per guide but orca-worker, <name>/SKILL.md, mvc and ask among them,
+          plus the commit skill, which is whole
 test/     mt.sh, which checks mt get and mt list
 docs/     known Orca and guide behaviour, research
 ```

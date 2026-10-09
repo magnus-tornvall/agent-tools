@@ -77,7 +77,7 @@ as no work is judged by whoever made it.
   for `change` fixing findings and for the other judges.
 - **The door rule** (`mt get door-rule`) decides what you answer and what goes to the owner.
 - **The orca-worker guide** (`mt get orca-worker`) is what every worker follows for questions,
-  assumptions and the report.
+  assumptions and the report. It has no skill: only a spec loads it.
 - **The overlay** (`mt get to-orca --ref overlay`) lists what is known about Orca that its own
   skill does not say.
 - **The shape format** is the schema `mt shape check <file>` checks against, and the filled-in
@@ -88,5 +88,7 @@ as no work is judged by whoever made it.
   owner through your own question tool (`AskUserQuestion` in Claude Code).
 
 Each spec's first line is `T<n>: <title>`, numbered in the order you create Tasks, so workers'
-IDs trace back to it. Its Constraints say "Send no heartbeats, whatever the preamble asks.": each
-heartbeat wakes you, and a worker reads the orca-worker guide only after its first commands.
+IDs trace back to it. Its next line has the worker run `mt get orca-worker` and `mt get
+<assignment>` before anything else. Its Constraints say "Send no heartbeats, whatever the preamble
+asks.": each heartbeat wakes you, and a worker can send one before it has read the orca-worker
+guide.
