@@ -1,0 +1,180 @@
+#!/bin/bash
+# mt: load the know-how of the owner's tools on demand, and record every load.
+
+set -u
+
+usage() {
+  cat <<'USAGE'
+usage: mt get <tool> [--ref <ref>]   print the guide for a tool, or one of its references
+       mt list                       list every tool with when to use it
+       mt --help                     show this usage
+
+Every `get` is appended to $MT_LOG, or ${XDG_STATE_HOME:-$HOME/.local/state}/mt/usage.jsonl.
+USAGE
+}
+
+resolve_script() {
+  local p=$1 dir target
+  while [ -L "$p" ]; do
+    dir=$(cd "$(dirname "$p")" && pwd -P)
+    target=$(readlink "$p")
+    case $target in
+      /*) p=$target ;;
+      *) p=$dir/$target ;;
+    esac
+  done
+  dir=$(cd "$(dirname "$p")" && pwd -P)
+  printf '%s/%s\n' "$dir" "$(basename "$p")"
+}
+
+ROOT=$(cd "$(dirname "$(resolve_script "${BASH_SOURCE[0]}")")/.." && pwd -P)
+
+json_string() {
+  local s=$1 out= c i
+  s=${s//\\/\\\\}
+  s=${s//\"/\\\"}
+  case $s in
+    *[[:cntrl:]]*)
+      local LC_ALL=C
+      for ((i = 0; i < ${#s}; i++)); do
+        c=${s:i:1}
+        case $c in
+          $'\n') out+='\n' ;;
+          $'\t') out+='\t' ;;
+          $'\r') out+='\r' ;;
+          [[:cntrl:]]) out+=$(printf '\\u%04x' "'$c") ;;
+          *) out+=$c ;;
+        esac
+      done
+      s=$out
+      ;;
+  esac
+  printf '"%s"' "$s"
+}
+
+json_value() {
+  if [ -n "${1+x}" ] && [ -n "$1" ]; then json_string "$1"; else printf 'null'; fi
+}
+
+log_get() {
+  local tool=$1 ref=$2 found=$3 log commit
+  log=${MT_LOG:-${XDG_STATE_HOME:-$HOME/.local/state}/mt/usage.jsonl}
+  commit=$(git -C "$ROOT" rev-parse HEAD 2>/dev/null) || commit=
+  {
+    mkdir -p "$(dirname "$log")" &&
+      printf '{"time":%s,"tool":%s,"ref":%s,"found":%s,"commit":%s,"session":%s,"terminal":%s,"worktree":%s}\n' \
+        "$(json_string "$(date -u +%Y-%m-%dT%H:%M:%SZ)")" \
+        "$(json_string "$tool")" \
+        "$(json_value "$ref")" \
+        "$found" \
+        "$(json_value "$commit")" \
+        "$(json_value "${CLAUDE_CODE_SESSION_ID:-}")" \
+        "$(json_value "${ORCA_TERMINAL_HANDLE:-}")" \
+        "$(json_value "${ORCA_WORKTREE_ID:-}")" >>"$log"
+  } 2>/dev/null || echo "mt: could not write usage log $log" >&2
+}
+
+valid_name() {
+  case $1 in
+    '' | .* | */* | *[!A-Za-z0-9._-]*) return 1 ;;
+  esac
+}
+
+cmd_get() {
+  local tool= ref= have_ref=0 file
+  while [ $# -gt 0 ]; do
+    case $1 in
+      --ref)
+        [ $# -ge 2 ] || { echo "mt: --ref needs a value" >&2; usage >&2; exit 2; }
+        ref=$2
+        have_ref=1
+        shift 2
+        ;;
+      -*) echo "mt: unknown option '$1'" >&2; usage >&2; exit 2 ;;
+      *)
+        [ -z "$tool" ] || { echo "mt: unexpected argument '$1'" >&2; usage >&2; exit 2; }
+        tool=$1
+        shift
+        ;;
+    esac
+  done
+  [ -n "$tool" ] || { echo "mt: get needs a tool" >&2; usage >&2; exit 2; }
+
+  file=
+  if valid_name "$tool"; then
+    if [ "$have_ref" = 0 ]; then
+      file=$ROOT/guides/$tool.md
+    elif valid_name "$ref"; then
+      file=$ROOT/guides/$tool/$ref.md
+    fi
+  fi
+
+  if [ -n "$file" ] && [ -f "$file" ]; then
+    log_get "$tool" "$ref" true
+    cat "$file"
+    return
+  fi
+
+  log_get "$tool" "$ref" false
+  if [ "$have_ref" = 1 ]; then
+    echo "mt: no reference '$ref' for tool '$tool'. Run 'mt list' to see the tools." >&2
+  else
+    echo "mt: no guide for tool '$tool'. Run 'mt list' to see the tools." >&2
+  fi
+  exit 1
+}
+
+stub_description() {
+  local line in_front=0 in_desc=0 desc= part
+  while IFS= read -r line || [ -n "$line" ]; do
+    line=${line%$'\r'}
+    if [ "$in_front" = 0 ]; then
+      [ "$line" = '---' ] || return 0
+      in_front=1
+      continue
+    fi
+    [ "$line" = '---' ] && break
+    if [ "$in_desc" = 1 ]; then
+      case $line in
+        [' 	']*)
+          part=${line#"${line%%[![:space:]]*}"}
+          desc=${desc:+$desc }$part
+          continue
+          ;;
+        '') continue ;;
+        *) break ;;
+      esac
+    fi
+    case $line in
+      description:*)
+        part=${line#description:}
+        part=${part#"${part%%[![:space:]]*}"}
+        part=${part%"${part##*[![:space:]]}"}
+        case $part in
+          '>'* | '|'*) in_desc=1 ;;
+          \"*\") desc=${part#\"}; desc=${desc%\"}; break ;;
+          \'*\') desc=${part#\'}; desc=${desc%\'}; break ;;
+          *) desc=$part; break ;;
+        esac
+        ;;
+    esac
+  done <"$1"
+  printf '%s' "$desc"
+}
+
+cmd_list() {
+  local guide tool
+  for guide in "$ROOT"/guides/*.md; do
+    [ -f "$guide" ] || continue
+    tool=$(basename "$guide" .md)
+    [ -f "$ROOT/skills/$tool/SKILL.md" ] || continue
+    printf '%-20s %s\n' "$tool" "$(stub_description "$ROOT/skills/$tool/SKILL.md")"
+  done
+}
+
+case ${1:-} in
+  get) shift; cmd_get "$@" ;;
+  list) cmd_list ;;
+  '' | -h | --help | help) usage ;;
+  *) echo "mt: unknown command '$1'" >&2; usage >&2; exit 2 ;;
+esac

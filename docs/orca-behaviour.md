@@ -185,6 +185,36 @@ that allows `Read`, `Edit`, `Write`, `Bash(orca orchestration:*)` and
   same fields, `options` as a JSON string and `resolution` null. `gate-resolve` takes the gate as
   `--id`.
 
+## Seen on Orca 1.4.222, by a to-orca coordinator dogfooding it
+
+- `run-create` moves the terminal off a Run it already coordinated without a word, even if that
+  Run had unsettled work. Check `run-current` and that Run's workers first.
+- A `claude` worker's permissions come from Orca's per-agent default arguments (in Orca's profile
+  data; empty for claude on this machine, and no CLI shows them), the worktree's committed
+  `.claude/settings.json`, and the owner's own permission mode. With the owner's mode `auto`, none
+  of the Run's seven workers stopped at a prompt.
+- Orca types a nudge ("You have 1 orchestration message") into the coordinator's terminal for
+  every message, heartbeats included, whatever the wait's `--types`. With three workers that was
+  three wake-ups in about a minute, none actionable.
+- Heartbeats carry `payload.phase` (`investigating`, `reviewing`): a coarse sign a worker is
+  moving.
+- `check --wait --json` prints a keepalive JSON line every 15 seconds, then the result as
+  multi-line JSON, so the output is not one JSON document. `task-list`'s `result.body` is the
+  easier place to read a report.
+- `task-list` rows name the title `task_title`; `task-create`'s receipt carries none.
+- A Task with dependencies is `pending` until they complete, then `ready`. Orca starts nothing and
+  sends nothing when it becomes ready.
+- `worker-start --worktree new-top-level --base-branch <work branch>` cuts the new worktree at that
+  branch's head, on a new branch named `<git user handle>/<name>`. It gives a judge that runs code
+  its own worktree, at the cost of a branch and worktree to clean up.
+- The preamble asks for a three-sentence `worker_done` body, yet Orca stored multi-section reports
+  in full in `result.body`. `--report-path` stores only the path; the file stays wherever the
+  worker wrote it.
+- A worker's heredoc inside `"$(...)"` for the report failed on macOS bash 3.2 when the body held
+  an apostrophe. Writing the body to a file and passing `"$(cat file)"` works.
+- `worker-release` archives the transcript (`archive.status: captured`) before closing the
+  terminal.
+
 ## Plugin routes for tick status, Orca 1.4.222
 
 The prototype is `plugins/tick-status/`. Plugins are `experimental`, and Orca publishes no docs for them;
