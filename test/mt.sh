@@ -203,8 +203,7 @@ assert_contains "R5 relative symlink resolves" "$out" "door-rule"
 
 # usage
 for args in "" "--help"; do
-  # shellcheck disable=SC2086
-  out=$("$MT" $args); rc=$?
+  out=$("$MT" ${args:+"$args"}); rc=$?
   assert_eq "usage ($args) exits 0" 0 "$rc"
   assert_contains "usage ($args) shows get" "$out" "mt get"
 done
