@@ -114,8 +114,9 @@ settings, for Claude Code the `permissions.allow` list in `~/.claude/settings.js
 ```
 
 A skill already linked from a clone becomes a stub when that clone pulls this layout, and the
-stub runs `mt get`. Put `mt` on PATH before or with the pull, or every agent that loads the skill
-fails on its first command.
+stub runs `mt get`. Put `mt` on PATH before or with the pull, and Bun on the PATH that agents and
+workers launch with, or every agent that loads the skill fails on its first command. Run
+`bun install` in that linked clone too, or `mt shape` does not work.
 
 ### Test
 

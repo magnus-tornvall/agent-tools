@@ -31,7 +31,9 @@ Re-invoked on a settled shape, mvc asks nothing and goes straight to the report,
   the most goes first, and a Risk or One-way door line can win a place pruning alone would not. A
   question that rules nothing out is never asked. Each round is one batch of up to four
   orthogonal questions, asked together: no answer could change whether another in the batch is
-  worth asking, and in doubt it waits. With no one-way door and no open intent, nothing is asked.
+  worth asking, and in doubt it waits. In a round that mixes forms, the stances go in the text
+  before the question-tool call, and the round is answered once the picker's answers and the
+  owner's next message are both in. With no one-way door and no open intent, nothing is asked.
 - **Three rounds at most.** The owner may lower the budget, never raise it, and unspent rounds are
   not owed. A round is spent when asked, however many answers come back. Corrections the owner
   volunteers, and clarifying a question, cost nothing.
