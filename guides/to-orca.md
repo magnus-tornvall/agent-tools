@@ -37,7 +37,8 @@ do.
   at the live workers.
 - **Nothing but the destination is left behind.** Each worktree and branch cut for a Task, besides
   the work branch's, is removed once its worker is released. One holding commits the work branch
-  lacks stays, and the hand-off names it.
+  lacks stays, and the hand-off names it. No process a Task started still runs after its release;
+  one that does is named in the hand-off, and the owner decides whether it is stopped.
 - **The hand-off.** The destination the owner approved: the branch, or a pull request. An
   account of every Task, attempt, dropped finding and question you answered, rebuilt from Orca's
   inbox and Task results, not from memory. What the Run learned, per area (Orca, the guides and
