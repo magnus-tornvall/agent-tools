@@ -1,8 +1,8 @@
 # orca-worker
 
 How to work an Orca Task. What the work is, and how to check it, is the spec's and its assignment
-guide's; how to sequence it is yours. Orca's injected preamble says how questions are asked and
-how the report is sent.
+guide's; how to sequence it is yours. Orca's injected preamble names the commands that ask and
+report; this guide says what the report holds.
 
 ## Authority
 
