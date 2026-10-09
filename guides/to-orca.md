@@ -16,10 +16,12 @@ do.
 - **The shape is sound before work starts.** Every part the shape format expects is there and
   reads as the example does, or the owner has ruled on it. A ruling leaves the shape as written
   and reaches every Task it bears on.
-- **The owner approves a plan they can trust to run unattended.** It names the first Tasks, the
-  assignments expected next, the base branch, and anything that would stop a worker at a
-  permission prompt: each repo check and `git commit` a worker's launch permissions would not
-  allow. A changed plan is approved again.
+- **The owner approves a plan they can trust to run unattended.** It names the first Tasks and
+  the assignments expected next, each Task's agent, model and effort, the base branch, and the
+  destination: the branch, or a pull request. It names anything that would stop a worker at its
+  first command or at a permission prompt: `mt` missing from the PATH a worker launches with, and
+  each `mt get`, repo check and `git commit` a worker's launch permissions would not allow. A
+  changed plan is approved again.
 - **The change exists on its own branch, made by workers.** The base branch is untouched.
 - **The repo's own checks pass on the branch.**
 - **Every requirement has evidence at least as strong as the requirement.**
@@ -33,7 +35,7 @@ do.
   everything else, by the door rule, and the answer is recorded.
 - **No worker sits stuck unnoticed for longer than one wait.** An empty wait is followed by a look
   at the live workers.
-- **The hand-off.** The branch, or a pull request when the owner chose that destination. An
+- **The hand-off.** The destination the owner approved: the branch, or a pull request. An
   account of every Task, attempt, dropped finding and question you answered, rebuilt from Orca's
   inbox and Task results, not from memory. Proposed edits to the guides, drawn from the workers'
   Toolbox lines, which the owner picks from; apply only the picked ones.
@@ -46,7 +48,8 @@ as no work is judged by whoever made it.
 - An owner decision is always asked as two to four options, your recommendation first, each
   saying what choosing it does. Never open-ended. An answer outside the options is still the
   owner's answer.
-- Never touch the base branch, never merge. Push only when the owner chose a pull request.
+- Never touch the base branch, never merge. Push only when the approved destination is a pull
+  request.
 - Never retry, stop or abandon a worker without the owner's choice or Orca's positive proof that
   it is gone. Absence is not proof.
 - Two Tasks that run the repo's code never run in one worktree at once. A judge that runs code can
@@ -65,12 +68,19 @@ as no work is judged by whoever made it.
   its branch.
 - **Assignments**, each a guide a worker loads with `mt get <name>`: `change` makes the shape's
   change or fixes findings; `maintainer-review`, `shape-coverage` and `surprise-review` judge the
-  branch. Their skill descriptions say when each fits and what its worker is and is not given.
+  branch. Their skill descriptions say when each fits, what its worker is given and, where it
+  matters, what it is not. Unless the owner picks otherwise, every Task runs on `claude` at high
+  effort, with opus for `change` making the shape's change and for `surprise-review`, and sonnet
+  for `change` fixing findings and for the other judges.
 - **The door rule** (`mt get door-rule`) decides what you answer and what goes to the owner.
 - **The orca-worker guide** (`mt get orca-worker`) is what every worker follows for questions,
   assumptions and the report.
 - **The overlay** (`mt get to-orca --ref overlay`) lists what is known about Orca that its own
-  skill does not say. Add what you learn.
+  skill does not say.
+- **What a Run learns** is recorded, with the version or commit it was seen on, in a tracked file
+  per area in the agent-tools repo: `docs/orca-behaviour.md` for Orca, `docs/guides-behaviour.md`
+  for the guides, `mt` and to-orca, and a new file for any other area. The owner folds it into the
+  guides and `mt` later.
 - **The shape format** is the example shape the mvc skill ships, `assets/example.yaml` in its
   folder.
 - **Your own question tool** (`AskUserQuestion` in Claude Code) reaches the owner.

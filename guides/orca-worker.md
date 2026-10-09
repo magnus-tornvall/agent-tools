@@ -28,8 +28,10 @@ whether it decides the question or hands it back to you. Never end the Task to e
 
 ## Report
 
-Every decision you took alone is visible in the report and traceable to the Task. The report
-gives:
+Every decision you took alone is visible in the report and traceable to the Task. The whole
+report is the `worker_done` body, its summary first, however short a body the preamble asks for:
+Orca keeps the body on the Task, while a report file stays outside the Run's record. Each
+assumption, question and finding sits on its own line. The report gives:
 
 - the outcome, succeeded or failed;
 - the evidence the spec and the assignment guide ask for;
