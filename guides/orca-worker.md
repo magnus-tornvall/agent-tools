@@ -18,10 +18,9 @@ Sort every decision the spec and replies leave open by the door rule (`mt get do
 a two-way door and record it as an assumption: what you decided and what it rules out, in a line
 or two. Ask a one-way door.
 
-A question holds one decision and is answerable without opening anything else. It shows your
-stance with its reasoning, what would prove the stance wrong, what agreeing rules out, why it is a
-one-way door, and what stays parked until the answer and what is already done. The question
-itself reads neutral; the stance carries the opinion. No option lists in the stance.
+Compose each question as the ask guide (`mt get ask`) says. Besides what it asks of every
+question, yours gives the reasoning behind your position, and says what stays parked until the
+answer and what is already done.
 
 No work waits on a question unless the question parks it. A reply is the answer: follow it,
 whether it decides the question or hands it back to you. Never end the Task to escape a question.
