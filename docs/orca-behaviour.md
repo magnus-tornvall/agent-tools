@@ -4,8 +4,7 @@ What Orca actually does, found by running it or by reading its guide, `--help` a
 Each list names the Orca version it was checked on. Facts only: how this repo uses Orca lives in
 the code and skills.
 
-Terms: *the tick* is `src/orca/tick.ts`, the script that coordinates a Run on the owner's behalf. *The
-trial repo* is `~/dev/me/ai/vscode`. *The scoped settings* are a committed `.claude/settings.json`
+Terms: *The trial repo* is `~/dev/me/ai/vscode`. *The scoped settings* are a committed `.claude/settings.json`
 that allows `Read`, `Edit`, `Write`, `Bash(orca orchestration:*)` and
 `Bash(git status|diff|add|commit:*)`, and denies `Bash(git push:*)`.
 
@@ -24,12 +23,12 @@ that allows `Read`, `Edit`, `Write`, `Bash(orca orchestration:*)` and
 
 ## Smoke-tested on Orca 1.4.221
 
-- The tick needs no Orca terminal. A launchd job with no `ORCA_*` environment and no `caller` in
-  `orca status` ran `task-list --run`, `worker-start --run --task --worktree --agent`,
+- Driving a Run needs no Orca terminal. A launchd job with no `ORCA_*` environment and no `caller`
+  in `orca status` ran `task-list --run`, `worker-start --run --task --worktree --agent`,
   `worker-list --run` and `worker-release --dispatch`, all exiting 0. Passing `--run` on every
-  call is enough; the tick never runs `run-use`, so it never fences the owner's terminal.
-- `worker-start` moves the Task to `dispatched`, so the next tick's `task-list` no longer shows
-  it as `ready`. That status, not a request ID, is what stops a second tick from starting it twice.
+  call is enough; a caller that never runs `run-use` never fences the owner's terminal.
+- `worker-start` moves the Task to `dispatched`, so a later `task-list` no longer shows it as
+  `ready`. That status, not a request ID, is what stops a second caller from starting it twice.
 - `--retry-request` only accepts the UUID Orca issued for an earlier request; a caller-chosen key
   is refused with `invalid_argument`.
 - Release what `worker-list` names: a settled worker's `projection.nextAction.argv` is
@@ -59,18 +58,16 @@ that allows `Read`, `Edit`, `Write`, `Bash(orca orchestration:*)` and
 - A valid `worker_done` settles the Task with no inbox reader. Nobody ran `check`; `task-list`
   showed the Task `completed` within ten seconds of the send, while the message sat in the Run
   mailbox unread, never delivered or acknowledged. Reading and acking it later changed no Task
-  or Dispatch state. The tick reads Task state only; the inbox belongs to the owner.
+  or Dispatch state.
 - `run-create` binds the Run to the terminal it runs under, even from a child process with every
   `ORCA_*` variable removed: Orca identifies the caller by process, not environment. So the
-  owner's terminal that runs `orca-start` is the Run's inbox reader. It ran `check` and `--ack`
-  while `task-list`, `worker-list` and `worker-release` ran beside it, and was not fenced. Here
-  those tick calls ran as children of the owner's terminal; the launchd test above ran them
-  with no terminal at all.
+  terminal that runs `run-create` is the Run's inbox reader. It ran `check` and `--ack` while
+  `task-list`, `worker-list` and `worker-release` ran beside it, as its children, and was not
+  fenced.
 - `worker-start --task … --retry-of <dispatch_id>` starts a fresh attempt on a Task left `blocked`
   by `worker-stop`.
 - A worker that settled `succeeded` in `--worktree current` reads `resource.state: user_owned` with
-  `nextAction` `none`, and its terminal stays live. `worker-list` names no release, so the tick
-  leaves it.
+  `nextAction` `none`, and its terminal stays live. `worker-list` names no release for it.
 - `worker_done --outcome failed` moves the Task straight to `failed` and leaves the Dispatch's
   `failure_count` at 0. Four such attempts in a row, chained with `--retry-of`, and a
   `worker-stop` among them, all left it at 0; each retry was accepted. A question costs nothing
@@ -167,8 +164,8 @@ that allows `Read`, `Edit`, `Write`, `Bash(orca orchestration:*)` and
   --terminal <handle>` as a `status` message (`to_handle` `dispatch:<id>`, `thread_id` null),
   then acked the delivery. A worker that never runs `check` never sees it.
 - It arrives when sent before the worker's first turn. `worker-start` returns only once the
-  agent's turn has started (`stage` `input_accepted`, `turnStart` `observed`), so the tick's send
-  after it lands during the first turn. The Dispatch ID is in `worker-list --run` earlier, while
+  agent's turn has started (`stage` `input_accepted`, `turnStart` `observed`), so a send after it
+  lands during the first turn. The Dispatch ID is in `worker-list --run` earlier, while
   the Dispatch is `pending` and its terminal still being created; a send then was accepted
   three seconds before `worker-start` returned and was in the worker's first `check`.
 - A single `check` can miss a send that lands after it; `check --wait` doesn't. A worker whose
@@ -231,40 +228,6 @@ that allows `Read`, `Edit`, `Write`, `Bash(orca orchestration:*)` and
 - After every settlement, `worker-release` returned `released`, and `worker-list
   --terminal-state reclaimable` returned no rows.
 
-## Plugin routes for tick status, Orca 1.4.222
-
-The prototype is `plugins/tick-status/`. Plugins are `experimental`, and Orca publishes no docs for them;
-what follows was read from the installed app's own manifest schema and host API, then exercised as
-far as it can be without the Orca window. Nothing below was observed in the window: the owner
-installs the plugin from its folder and fills in "Window result" for each route.
-
-- Manifest: `orca-plugin.json` with `manifestVersion` 1, `id`, `publisher`, `name`, `version`,
-  `engines.orca` as `>=x.y.z`, `pluginApi` 1, `main` (the worker, required for a command with no
-  built-in `action`), `contributes.commands[]` (`id`, `title`, `context`), `contributes.panels[]`
-  (`id`, `title`, `icon`, `entry`), and `capabilities[]` of `{ "kind": ... }`. Orca's own
-  `parsePluginManifest` accepts the plugin's manifest. The worker is loaded with `import()`, so it
-  is an ES module with a default-exported `activate` function that registers command handlers;
-  the bundle is `.mjs` for that reason.
-- A command invoked from the command palette reaches the worker with `pluginKey` and `commandId`
-  only, so it carries no Run ID. The prototype's command takes `args.runId` when given and else
-  reads the Run ID from `~/.orca/tick-status-run`.
-- A panel is a `sandbox="allow-scripts"` iframe; it can call only `workspace.readContext`,
-  `terminal.sendText` and `notifications.show` (through `postMessage` of
-  `{ type: "orca-panel-action", requestId, action, params }`, answered by
-  `orca-panel-action-result`). `storage`, `secrets`, `settings` and events are worker-only.
-  Calls are capped at 30 per 10 seconds and 64 KiB each. `terminal.sendText` needs an explicit
-  `terminalId`, which `workspace.readContext` supplies from the focused worktree.
-- `tick status` opens a gate on a failed surprise check that has none, so a route that runs it
-  can change a Run in that one case; it is the same effect as running `tick status` by hand.
-
-| Route | Works on 1.4.222 | Evidence |
-| --- | --- | --- |
-| P1 command and notification | Worker half works: not yet seen in the window | Orca's own `plugin-host-entry.js` loaded the bundle, ran `tick-status.show` for a real Run against the real `orca` CLI, and made the `notifications.show` host call with the counts. Whether the palette lists the command and the notification appears is the owner's to try. |
-| P2 panel button to terminal | Not yet seen in the window | Source: the panel may call `workspace.readContext` and `terminal.sendText`, and the manifest grants `workspace:read` and `terminal:send`. The panel sends `bun run tick status --run R` with Enter to the first terminal of the focused worktree. |
-| P3 panel fetch from a localhost worker | Fails on 1.4.222; seen in the window | The panel shell sets `Content-Security-Policy: default-src 'none'; connect-src 'none'; ...`, and a panel's own CSP can only tighten it, so `fetch` to `http://127.0.0.1:47821` is blocked. The prototype's localhost worker server returned `tick status`'s text for a Run when fetched from outside the panel, and was removed once this failed. In the window the panel printed `fetch route failed: TypeError: Failed to fetch`, which is how a CSP-blocked `fetch` reports. |
-
-Window result (owner fills in): P1 ______  P2 ______  P3 fails (error text: `TypeError: Failed to fetch`)
-
 ## Read, not smoke-tested, on Orca 1.4.221 and 1.4.222
 
 - Task statuses are `pending, ready, dispatched, completed, failed, blocked`; `task-create --deps`
@@ -291,8 +254,7 @@ Window result (owner fills in): P1 ______  P2 ______  P3 fails (error text: `Typ
   (open issue stablyai/orca#13298), so a gate goes only on a Task with no live attempt.
 - After an unknown result, a mutation is retried with the `--retry-request <uuid>` Orca reported,
   and `request-show` tells whether it took effect.
-- Automations always launch an agent (`--prompt` and `--provider` are required), so a scheduled
-  tick would be a script, not an automation.
+- Automations always launch an agent (`--prompt` and `--provider` are required).
 - "Absence never authorizes stop, abandon, retry, or release": only proven exit or a finished
   transcript with no `worker_done` allows acting on a silent worker.
 - The worker preamble asks for a heartbeat every 5 minutes while working, with `--phase` one of
