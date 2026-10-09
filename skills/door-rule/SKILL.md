@@ -1,6 +1,6 @@
 ---
 name: door-rule
-description: Use only inside an Orca Run - a worker deciding whether an open decision is asked or decided alone, a judge naming a finding's door, or a to-orca coordinator deciding what goes to the owner. Not for ordinary coding work outside an Orca Task or Run.
+description: Use before deciding something the request leaves open that would be costly to undo - a public API or contract, persisted data or schema, a new dependency, infrastructure, security, or the first instance of a pattern. Says whether to decide it and record it, or ask whoever owns it.
 ---
 
 Run `mt get door-rule` and follow what it prints.
