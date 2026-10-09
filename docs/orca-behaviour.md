@@ -217,6 +217,20 @@ that allows `Read`, `Edit`, `Write`, `Bash(orca orchestration:*)` and
 - `worker-release` archives the transcript (`archive.status: captured`) before closing the
   terminal.
 
+## Seen on Orca 1.4.222, coordinating a second Run
+
+- `worker-start --model opus|sonnet --effort high` gave `launch.effective` equal to
+  `launch.requested` on all twelve Tasks.
+- `worker-start --worktree new-child --name <name> --base-branch <work branch>` cuts the worktree at
+  that branch's head on a new branch `<git user handle>/<name>`, as `new-top-level` does.
+  `worker-release` leaves the worktree and its branch behind.
+- `ask --options` takes one comma-separated string, so an option whose label holds a comma splits
+  in two. Read in the worker preamble by a judge, not tested.
+- A change worker ran `git checkout <sha>` over its own working tree to watch a test fail before
+  its fix; the owner's `auto` permission mode denied it and the tree was unchanged.
+- After every settlement, `worker-release` returned `released`, and `worker-list
+  --terminal-state reclaimable` returned no rows.
+
 ## Plugin routes for tick status, Orca 1.4.222
 
 The prototype is `plugins/tick-status/`. Plugins are `experimental`, and Orca publishes no docs for them;

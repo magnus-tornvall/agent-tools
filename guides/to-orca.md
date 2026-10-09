@@ -13,15 +13,15 @@ which. With none, or several, ask.
 The Run's objective: nothing on the branch would surprise the owner. It holds when all of these
 do.
 
-- **The shape is sound before work starts.** Every part the shape format expects is there and
-  reads as the example does, or the owner has ruled on it. A ruling leaves the shape as written
-  and reaches every Task it bears on.
+- **The shape is sound before work starts.** `mt shape check` passes on it, or the owner has
+  ruled on each violation it prints. A ruling leaves the shape as written and reaches every Task
+  it bears on.
 - **The owner approves a plan they can trust to run unattended.** It names the first Tasks and
   the assignments expected next, each Task's agent, model and effort, the base branch, and the
   destination: the branch, or a pull request. It names anything that would stop a worker at its
-  first command or at a permission prompt: `mt` missing from the PATH a worker launches with, and
-  each `mt get`, repo check and `git commit` a worker's launch permissions would not allow. A
-  changed plan is approved again.
+  first command or at a permission prompt: `mt` or Bun missing from the PATH a worker launches
+  with, and each `mt get`, `mt shape`, repo check and `git commit` a worker's launch permissions
+  would not allow. A changed plan is approved again.
 - **The change exists on its own branch, made by workers.** The base branch is untouched.
 - **The repo's own checks pass on the branch.**
 - **Every requirement has evidence at least as strong as the requirement.**
@@ -50,9 +50,7 @@ as no work is judged by whoever made it.
 
 ## Guardrails
 
-- An owner decision is always asked as two to four options, your recommendation first, each
-  saying what choosing it does. Never open-ended. An answer outside the options is still the
-  owner's answer.
+- An owner decision is always asked through the ask guide, in the form the decision calls for.
 - Never touch the base branch, never merge. Push only when the approved destination is a pull
   request.
 - Never retry, stop or abandon a worker without the owner's choice or Orca's positive proof that
@@ -82,9 +80,12 @@ as no work is judged by whoever made it.
   assumptions and the report.
 - **The overlay** (`mt get to-orca --ref overlay`) lists what is known about Orca that its own
   skill does not say.
-- **The shape format** is the example shape the mvc skill ships, `assets/example.yaml` in its
-  folder.
-- **Your own question tool** (`AskUserQuestion` in Claude Code) reaches the owner.
+- **The shape format** is the schema `mt shape check <file>` checks against, and the filled-in
+  example `mt get mvc --ref example`.
+- **`mt shape slice <file> --keys <key,...>`** gives a judge only the parts of the shape its skill
+  description says it is given.
+- **The ask guide** (`mt get ask`) composes every question to the owner, and says which reach the
+  owner through your own question tool (`AskUserQuestion` in Claude Code).
 
 Each spec's first line is `T<n>: <title>`, numbered in the order you create Tasks, so workers'
 IDs trace back to it. Its Constraints say "Send no heartbeats, whatever the preamble asks.": each

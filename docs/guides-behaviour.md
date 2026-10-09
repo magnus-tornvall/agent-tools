@@ -48,3 +48,33 @@ Five read-only workers on 67fa9cc with the line added to the orca-worker guide.
 - With the line in the spec's Constraints as well, the one worker, running 4m59s, sent none.
 - No worker ran long enough to show whether one that has read the line holds to it past the
   preamble's 5-minute interval.
+
+## Seen coordinating the mvc Run
+
+Guides as installed from the main clone: 67fa9cc until it moved to the heartbeat change mid-Run
+(b8ade75); the branch under change was this repo's own.
+
+- to-orca's stub has `disable-model-invocation`, so an agent asked to "use orca to drive this
+  shape" has its skill call refused; the owner has to type `/to-orca <shape>`.
+- A change worker testing `mt` inside agent-tools wrote 12 lines into the owner's real usage log:
+  it exported `MT_LOG` once, and shell state does not persist between commands. Two workers'
+  Toolbox lines asked for an `MT_LOG` note in the change guide. Later specs carried one and no
+  stray lines followed.
+- The coordinator sliced the shape per judge by hand again: the Run's shape was written before the
+  schema it builds, and `mt shape slice` then refused a shape failing the check. The Run's own
+  fix round made slice need only a YAML map.
+- surprise-review found the most again, six then four two-way findings, none a one-way door
+  decided without a question; maintainer-review found two, three, then one on the last fixes;
+  shape-coverage two, then none.
+- A fix round introduced a bug, zero-indented list items read as repeated keys, that only the
+  next maintainer-review caught.
+- A finding whose fix needed dependencies the shape's constraints forbade (type-checking) went to
+  the owner, as the door rule says a contradiction with the spec does.
+- The main clone took "Send no heartbeats" (312c155) mid-Run, and the workers picked it up through
+  `mt get`: T1 to T6 sent heartbeats, the five Tasks started while it was being written (T7 to
+  T11) sent none, and one judge named the line. The last Task, started after the
+  merge, still sent one while implementing; its spec lacked the Constraints line, because the
+  coordinator had loaded to-orca before the change.
+- surprise-review, which runs nothing, judged runtime claims (Bun installing a missing package at
+  run time, AskUserQuestion returning before the owner's next message) from documentation, and
+  said so in its assumptions.

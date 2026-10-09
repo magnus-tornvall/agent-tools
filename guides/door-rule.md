@@ -1,7 +1,8 @@
 # The door rule
 
 Sorts a decision by what it costs to undo. A worker uses it to decide what to ask, a judge to
-classify a finding, the coordinator to decide what goes to the owner.
+classify a finding, the coordinator to decide what goes to the owner, and mvc to decide what it
+asks the owner.
 
 ## Three kinds
 
