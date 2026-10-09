@@ -38,8 +38,8 @@ decisions:
     door: one_way
     who_pays: Finance's import, which reads the export's columns.
     decided_by: owner
-    question: Does the reason live in a column on orders, in its own cancellations table, or only in the event log?
-  D2:
+    question: Where is a cancelled order's reason stored?
+  D3:
     decision: The API returns the reason as a plain string.
     rejected:
       - A reason code from a fixed list

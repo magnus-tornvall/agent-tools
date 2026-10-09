@@ -56,14 +56,14 @@ describe("mt shape check", () => {
 
   test("R3: rejects a one_way decision decided by silence", () => {
     const shape = example();
-    const d2 = decision(shape, "D2");
-    d2.door = "one_way";
-    d2.who_pays = "Every client of the API.";
+    const d3 = decision(shape, "D3");
+    d3.door = "one_way";
+    d3.who_pays = "Every client of the API.";
 
     const result = check(shape);
 
     expect(result.code).toBe(1);
-    expect(stderrLines(result.stderr)).toEqual(["decisions.D2.decided_by: must be owner when door is one_way"]);
+    expect(stderrLines(result.stderr)).toEqual(["decisions.D3.decided_by: must be owner when door is one_way"]);
   });
 
   test("R4: rejects a one_way decision with no who_pays", () => {
@@ -121,7 +121,7 @@ describe("mt shape check", () => {
     const shape = example();
     shape.risks = [];
     shape.requirements = {};
-    decision(shape, "D2").rejected = [];
+    decision(shape, "D3").rejected = [];
     delete fields(fields(shape.non_goals, "non_goals").N1, "N1").type;
 
     const result = check(shape);
@@ -129,7 +129,7 @@ describe("mt shape check", () => {
     expect(result.code).toBe(1);
     expect(result.stdout).toBe("");
     expect(stderrLines(result.stderr).sort()).toEqual([
-      "decisions.D2.rejected: must name at least one rejected alternative",
+      "decisions.D3.rejected: must name at least one rejected alternative",
       expect.stringMatching(/^non_goals\.N1\.type: /),
       "requirements: must have at least one requirement",
       "risks: not a key the schema defines",
@@ -177,7 +177,7 @@ describe("mt shape slice", () => {
 
   test("slices a shape that breaks the schema, since an owner may rule on a violation", () => {
     const shape = example();
-    decision(shape, "D2").decided_by = "user";
+    decision(shape, "D3").decided_by = "user";
     const path = file(Bun.YAML.stringify(shape, null, 2));
     expect(mt("shape", "check", path).code).toBe(1);
 

@@ -92,25 +92,25 @@ describe("parseShape", () => {
 
   test("reports a decision's door or decided_by outside its values", () => {
     const shape = example();
-    const d2 = decision(shape, "D2");
-    d2.door = "one-way";
-    d2.decided_by = "user";
+    const d3 = decision(shape, "D3");
+    d3.door = "one-way";
+    d3.decided_by = "user";
 
-    expect(paths(shape).sort()).toEqual(["decisions.D2.decided_by", "decisions.D2.door"]);
+    expect(paths(shape).sort()).toEqual(["decisions.D3.decided_by", "decisions.D3.door"]);
   });
 
   test("reports a decision with no door", () => {
     const shape = example();
-    delete decision(shape, "D2").door;
+    delete decision(shape, "D3").door;
 
-    expect(paths(shape)).toEqual(["decisions.D2.door"]);
+    expect(paths(shape)).toEqual(["decisions.D3.door"]);
   });
 
   test("reports the old type key on a decision as unknown", () => {
     const shape = example();
-    decision(shape, "D2").type = "two_way_door";
+    decision(shape, "D3").type = "two_way_door";
 
-    expect(violationsOf(shape)).toEqual([{ path: "decisions.D2.type", message: "not a key the schema defines" }]);
+    expect(violationsOf(shape)).toEqual([{ path: "decisions.D3.type", message: "not a key the schema defines" }]);
   });
 
   test("reports a non-goal type outside boundary and deferral", () => {
