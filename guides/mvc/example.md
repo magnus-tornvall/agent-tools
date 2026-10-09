@@ -1,4 +1,3 @@
-# yaml-language-server: $schema=../shape.schema.json
 outcome: A cancelled order carries the reason it was cancelled, and the nightly export ships it to finance.
 requirements:
   R1:
@@ -28,19 +27,22 @@ constraints:
 touchpoints:
   - app/Models/Order.php:cancel
   - reports/OrderExport.php
+  - database/migrations/
 decisions:
   D1:
     decision: The reason is a nullable column on orders.
     rejected:
       - A separate cancellations table
       - Keeping the reason only in the event log
-    provenance: "Q1, decided by the owner. One-way door: finance reads the export's columns."
-    decided_by: user
-    type: one_way_door
-  D3:
+    provenance: Finance imports the nightly export by column position, and the event log is pruned after 90 days.
+    door: one_way
+    who_pays: Finance's import, which reads the export's columns.
+    decided_by: owner
+    question: Does the reason live in a column on orders, in its own cancellations table, or only in the event log?
+  D2:
     decision: The API returns the reason as a plain string.
     rejected:
       - A reason code from a fixed list
-    provenance: The operator's free-text field already exists.
+    provenance: The operator's cancel form already sends free text.
+    door: two_way
     decided_by: silence
-    type: two_way_door
