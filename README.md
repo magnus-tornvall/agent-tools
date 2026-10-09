@@ -88,5 +88,5 @@ guides/   one guide per tool, <name>.md, with its references in <name>/<ref>.md
 skills/   a stub skill per guide, <name>/SKILL.md, plus the commit and mvc skills,
           which are whole
 test/     mt.sh, which checks mt
-docs/     known Orca behaviour, research
+docs/     known Orca and guide behaviour, research
 ```
