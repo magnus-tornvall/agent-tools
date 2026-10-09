@@ -1,180 +1,177 @@
-#!/bin/bash
-# mt: load the know-how of the owner's tools on demand, and record every load.
+#!/usr/bin/env bun
+// mt: load the know-how of the owner's tools on demand, record every load, and check shapes.
+// get and list need nothing beyond this file; shape loads src/shape/ only when it is called.
 
-set -u
+import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, statSync } from "node:fs";
+import { basename, dirname, join } from "node:path";
 
-usage() {
-  cat <<'USAGE'
-usage: mt get <tool> [--ref <ref>]   print the guide for a tool, or one of its references
+const USAGE = `usage: mt get <tool> [--ref <ref>]   print the guide for a tool, or one of its references
        mt list                       list every tool with when to use it
+       mt shape check <file>         check that a file is a shape
+       mt shape slice <file> --keys <key,...>
+                                     print only those top-level keys of a shape
        mt --help                     show this usage
 
-Every `get` is appended to $MT_LOG, or ${XDG_STATE_HOME:-$HOME/.local/state}/mt/usage.jsonl.
-USAGE
+Every \`get\` is appended to $MT_LOG, or \${XDG_STATE_HOME:-$HOME/.local/state}/mt/usage.jsonl.
+`;
+
+const ROOT = dirname(dirname(realpathSync(import.meta.path)));
+
+class UsageError extends Error {}
+
+function isFile(path: string): boolean {
+  return existsSync(path) && statSync(path).isFile();
 }
 
-resolve_script() {
-  local p=$1 dir target
-  while [ -L "$p" ]; do
-    dir=$(cd "$(dirname "$p")" && pwd -P)
-    target=$(readlink "$p")
-    case $target in
-      /*) p=$target ;;
-      *) p=$dir/$target ;;
-    esac
-  done
-  dir=$(cd "$(dirname "$p")" && pwd -P)
-  printf '%s/%s\n' "$dir" "$(basename "$p")"
+function nonEmpty(value: string | undefined): string | null {
+  return value ? value : null;
 }
 
-ROOT=$(cd "$(dirname "$(resolve_script "${BASH_SOURCE[0]}")")/.." && pwd -P)
-
-json_string() {
-  local s=$1 out= c i
-  s=${s//\\/\\\\}
-  s=${s//\"/\\\"}
-  case $s in
-    *[[:cntrl:]]*)
-      local LC_ALL=C
-      for ((i = 0; i < ${#s}; i++)); do
-        c=${s:i:1}
-        case $c in
-          $'\n') out+='\n' ;;
-          $'\t') out+='\t' ;;
-          $'\r') out+='\r' ;;
-          [[:cntrl:]]) out+=$(printf '\\u%04x' "'$c") ;;
-          *) out+=$c ;;
-        esac
-      done
-      s=$out
-      ;;
-  esac
-  printf '"%s"' "$s"
+function headCommit(): string | null {
+  if (Bun.which("git") === null) return null;
+  const result = Bun.spawnSync(["git", "-C", ROOT, "rev-parse", "HEAD"], { stderr: "ignore" });
+  return result.success ? nonEmpty(result.stdout.toString().trim()) : null;
 }
 
-json_value() {
-  if [ -n "${1+x}" ] && [ -n "$1" ]; then json_string "$1"; else printf 'null'; fi
+function logGet(tool: string, ref: string, found: boolean): void {
+  const env = process.env;
+  const log = env.MT_LOG || join(env.XDG_STATE_HOME || join(env.HOME ?? "", ".local/state"), "mt/usage.jsonl");
+  const entry = {
+    time: new Date().toISOString().replace(/\.\d{3}Z$/, "Z"),
+    tool,
+    ref: nonEmpty(ref),
+    found,
+    commit: headCommit(),
+    session: nonEmpty(env.CLAUDE_CODE_SESSION_ID),
+    terminal: nonEmpty(env.ORCA_TERMINAL_HANDLE),
+    worktree: nonEmpty(env.ORCA_WORKTREE_ID),
+  };
+  try {
+    mkdirSync(dirname(log), { recursive: true });
+    appendFileSync(log, `${JSON.stringify(entry)}\n`);
+  } catch {
+    process.stderr.write(`mt: could not write usage log ${log}\n`);
+  }
 }
 
-log_get() {
-  local tool=$1 ref=$2 found=$3 log commit
-  log=${MT_LOG:-${XDG_STATE_HOME:-$HOME/.local/state}/mt/usage.jsonl}
-  commit=$(git -C "$ROOT" rev-parse HEAD 2>/dev/null) || commit=
-  {
-    mkdir -p "$(dirname "$log")" &&
-      printf '{"time":%s,"tool":%s,"ref":%s,"found":%s,"commit":%s,"session":%s,"terminal":%s,"worktree":%s}\n' \
-        "$(json_string "$(date -u +%Y-%m-%dT%H:%M:%SZ)")" \
-        "$(json_string "$tool")" \
-        "$(json_value "$ref")" \
-        "$found" \
-        "$(json_value "$commit")" \
-        "$(json_value "${CLAUDE_CODE_SESSION_ID:-}")" \
-        "$(json_value "${ORCA_TERMINAL_HANDLE:-}")" \
-        "$(json_value "${ORCA_WORKTREE_ID:-}")" >>"$log"
-  } 2>/dev/null || echo "mt: could not write usage log $log" >&2
+function validName(name: string): boolean {
+  return /^[A-Za-z0-9_-][A-Za-z0-9._-]*$/.test(name);
 }
 
-valid_name() {
-  case $1 in
-    '' | .* | */* | *[!A-Za-z0-9._-]*) return 1 ;;
-  esac
+function cmdGet(args: string[]): number {
+  let tool = "";
+  let ref = "";
+  let haveRef = false;
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i] ?? "";
+    if (arg === "--ref") {
+      if (i + 1 >= args.length) throw new UsageError("--ref needs a value");
+      ref = args[++i] ?? "";
+      haveRef = true;
+    } else if (arg.startsWith("-")) {
+      throw new UsageError(`unknown option '${arg}'`);
+    } else {
+      if (tool !== "") throw new UsageError(`unexpected argument '${arg}'`);
+      tool = arg;
+    }
+  }
+  if (tool === "") throw new UsageError("get needs a tool");
+
+  let file = "";
+  if (validName(tool)) {
+    if (!haveRef) file = join(ROOT, "guides", `${tool}.md`);
+    else if (validName(ref)) file = join(ROOT, "guides", tool, `${ref}.md`);
+  }
+
+  if (file !== "" && isFile(file)) {
+    logGet(tool, ref, true);
+    process.stdout.write(readFileSync(file));
+    return 0;
+  }
+
+  logGet(tool, ref, false);
+  if (haveRef) process.stderr.write(`mt: no reference '${ref}' for tool '${tool}'. Run 'mt list' to see the tools.\n`);
+  else process.stderr.write(`mt: no guide for tool '${tool}'. Run 'mt list' to see the tools.\n`);
+  return 1;
 }
 
-cmd_get() {
-  local tool= ref= have_ref=0 file
-  while [ $# -gt 0 ]; do
-    case $1 in
-      --ref)
-        [ $# -ge 2 ] || { echo "mt: --ref needs a value" >&2; usage >&2; exit 2; }
-        ref=$2
-        have_ref=1
-        shift 2
-        ;;
-      -*) echo "mt: unknown option '$1'" >&2; usage >&2; exit 2 ;;
-      *)
-        [ -z "$tool" ] || { echo "mt: unexpected argument '$1'" >&2; usage >&2; exit 2; }
-        tool=$1
-        shift
-        ;;
-    esac
-  done
-  [ -n "$tool" ] || { echo "mt: get needs a tool" >&2; usage >&2; exit 2; }
+const SPACE = "[ \\t\\n\\v\\f\\r]";
+const LEADING_SPACE = new RegExp(`^${SPACE}+`);
+const TRAILING_SPACE = new RegExp(`${SPACE}+$`);
 
-  file=
-  if valid_name "$tool"; then
-    if [ "$have_ref" = 0 ]; then
-      file=$ROOT/guides/$tool.md
-    elif valid_name "$ref"; then
-      file=$ROOT/guides/$tool/$ref.md
-    fi
-  fi
-
-  if [ -n "$file" ] && [ -f "$file" ]; then
-    log_get "$tool" "$ref" true
-    cat "$file"
-    return
-  fi
-
-  log_get "$tool" "$ref" false
-  if [ "$have_ref" = 1 ]; then
-    echo "mt: no reference '$ref' for tool '$tool'. Run 'mt list' to see the tools." >&2
-  else
-    echo "mt: no guide for tool '$tool'. Run 'mt list' to see the tools." >&2
-  fi
-  exit 1
+/** The `description` in a stub's front matter, a folded or literal block joined with spaces. */
+function stubDescription(file: string): string {
+  const lines = readFileSync(file, "utf8").split("\n");
+  if (lines[0]?.replace(/\r$/, "") !== "---") return "";
+  let inDescription = false;
+  let description = "";
+  for (const raw of lines.slice(1)) {
+    const line = raw.replace(/\r$/, "");
+    if (line === "---") break;
+    if (inDescription) {
+      if (line.startsWith(" ") || line.startsWith("\t")) {
+        const part = line.replace(LEADING_SPACE, "");
+        description = description === "" ? part : `${description} ${part}`;
+        continue;
+      }
+      if (line === "") continue;
+      break;
+    }
+    if (!line.startsWith("description:")) continue;
+    const part = line.slice("description:".length).replace(LEADING_SPACE, "").replace(TRAILING_SPACE, "");
+    if (part.startsWith(">") || part.startsWith("|")) {
+      inDescription = true;
+      continue;
+    }
+    const quote = part[0];
+    if (part.length >= 2 && (quote === '"' || quote === "'") && part.endsWith(quote)) return part.slice(1, -1);
+    return part;
+  }
+  return description;
 }
 
-stub_description() {
-  local line in_front=0 in_desc=0 desc= part
-  while IFS= read -r line || [ -n "$line" ]; do
-    line=${line%$'\r'}
-    if [ "$in_front" = 0 ]; then
-      [ "$line" = '---' ] || return 0
-      in_front=1
-      continue
-    fi
-    [ "$line" = '---' ] && break
-    if [ "$in_desc" = 1 ]; then
-      case $line in
-        [' 	']*)
-          part=${line#"${line%%[![:space:]]*}"}
-          desc=${desc:+$desc }$part
-          continue
-          ;;
-        '') continue ;;
-        *) break ;;
-      esac
-    fi
-    case $line in
-      description:*)
-        part=${line#description:}
-        part=${part#"${part%%[![:space:]]*}"}
-        part=${part%"${part##*[![:space:]]}"}
-        case $part in
-          '>'* | '|'*) in_desc=1 ;;
-          \"*\") desc=${part#\"}; desc=${desc%\"}; break ;;
-          \'*\') desc=${part#\'}; desc=${desc%\'}; break ;;
-          *) desc=$part; break ;;
-        esac
-        ;;
-    esac
-  done <"$1"
-  printf '%s' "$desc"
+function cmdList(): number {
+  const guides = join(ROOT, "guides");
+  const names = existsSync(guides) ? readdirSync(guides).filter((name) => name.endsWith(".md")).sort() : [];
+  for (const name of names) {
+    if (!isFile(join(guides, name))) continue;
+    const tool = basename(name, ".md");
+    const stub = join(ROOT, "skills", tool, "SKILL.md");
+    if (!isFile(stub)) continue;
+    process.stdout.write(`${tool.padEnd(20)} ${stubDescription(stub)}\n`);
+  }
+  return 0;
 }
 
-cmd_list() {
-  local guide tool
-  for guide in "$ROOT"/guides/*.md; do
-    [ -f "$guide" ] || continue
-    tool=$(basename "$guide" .md)
-    [ -f "$ROOT/skills/$tool/SKILL.md" ] || continue
-    printf '%-20s %s\n' "$tool" "$(stub_description "$ROOT/skills/$tool/SKILL.md")"
-  done
+async function cmdShape(args: string[]): Promise<number> {
+  const { runShape } = await import(join(ROOT, "src/shape/command.ts"));
+  return runShape(args);
 }
 
-case ${1:-} in
-  get) shift; cmd_get "$@" ;;
-  list) cmd_list ;;
-  '' | -h | --help | help) usage ;;
-  *) echo "mt: unknown command '$1'" >&2; usage >&2; exit 2 ;;
-esac
+async function main(args: string[]): Promise<number> {
+  const [command = "", ...rest] = args;
+  switch (command) {
+    case "get":
+      return cmdGet(rest);
+    case "list":
+      return cmdList();
+    case "shape":
+      return cmdShape(rest);
+    case "":
+    case "-h":
+    case "--help":
+    case "help":
+      process.stdout.write(USAGE);
+      return 0;
+    default:
+      throw new UsageError(`unknown command '${command}'`);
+  }
+}
+
+try {
+  process.exitCode = await main(process.argv.slice(2));
+} catch (error) {
+  if (!(error instanceof UsageError)) throw error;
+  process.stderr.write(`mt: ${error.message}\n${USAGE}`);
+  process.exitCode = 2;
+}

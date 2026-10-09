@@ -1,0 +1,11 @@
+{
+  "name": "agent-tools",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "bun test"
+  },
+  "dependencies": {
+    "zod": "^4.6.5"
+  }
+}
