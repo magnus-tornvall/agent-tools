@@ -26,3 +26,13 @@ themselves say how they are meant to work.
   at 4348866.
 - The second round of judges found three two-way findings, two introduced by the first fix round;
   no one-way door was decided without a question. Seen at 4348866.
+- `mt` was not installed during the Run. Workers ran `cli/mt` from their worktree only because
+  each spec said so; no stub was reachable through a skill list. Seen at 5066581.
+- The coordinator read the guides straight from the worktree, so the log has no to-orca, overlay
+  or door-rule load from its session. In a Run on agent-tools the guides sit in the worktree, and
+  nothing steers an agent to `mt get` over opening the file. Seen at 5066581.
+
+## Seen installing `mt`
+
+- The main clone pulled #23 while orca-worker was already linked from it, so the linked skill
+  became a stub that runs `mt get` with `mt` not yet on PATH. Seen at 06afad7.
