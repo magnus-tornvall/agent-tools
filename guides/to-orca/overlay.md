@@ -1,9 +1,9 @@
 # to-orca overlay
 
 What is known about Orca that its orchestration skill does not say, each with the Orca version it
-was seen on. What a Run learns is recorded, with the version or commit it was seen on, in a
-tracked file per area in the agent-tools repo: `docs/orca-behaviour.md` for Orca,
-`docs/guides-behaviour.md` for the guides, `mt` and to-orca.
+was seen on. What a Run learns goes in its hand-off, with the version or commit it was seen on;
+when the Run's repo is agent-tools it is also committed to `docs/orca-behaviour.md` for Orca or
+`docs/guides-behaviour.md` for the guides, `mt` and to-orca, and otherwise the owner commits it.
 
 - `worker-start` has no permission flag. A `claude` worker launches with Orca's default arguments
   for that agent, the worktree's committed `.claude/settings.json` and the owner's own permission

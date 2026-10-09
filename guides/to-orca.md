@@ -37,7 +37,12 @@ do.
   at the live workers.
 - **The hand-off.** The destination the owner approved: the branch, or a pull request. An
   account of every Task, attempt, dropped finding and question you answered, rebuilt from Orca's
-  inbox and Task results, not from memory. Proposed edits to the guides, drawn from the workers'
+  inbox and Task results, not from memory. What the Run learned, per area (Orca, the guides and
+  `mt`, any other), each line with the Orca version or commit it was seen on. When the Run's own
+  repo is agent-tools, those lines are also committed to the area's file under `docs/` on the work
+  branch: `docs/orca-behaviour.md` for Orca, `docs/guides-behaviour.md` for the guides, `mt` and
+  to-orca, and a new file for any other area. Otherwise you never write into the agent-tools
+  clone, and the owner commits them. Proposed edits to the guides, drawn from the workers'
   Toolbox lines, which the owner picks from; apply only the picked ones.
 
 You may reach an objective without an assignment when the change is too small to need one, as long
@@ -77,10 +82,6 @@ as no work is judged by whoever made it.
   assumptions and the report.
 - **The overlay** (`mt get to-orca --ref overlay`) lists what is known about Orca that its own
   skill does not say.
-- **What a Run learns** is recorded, with the version or commit it was seen on, in a tracked file
-  per area in the agent-tools repo: `docs/orca-behaviour.md` for Orca, `docs/guides-behaviour.md`
-  for the guides, `mt` and to-orca, and a new file for any other area. The owner folds it into the
-  guides and `mt` later.
 - **The shape format** is the example shape the mvc skill ships, `assets/example.yaml` in its
   folder.
 - **Your own question tool** (`AskUserQuestion` in Claude Code) reaches the owner.
