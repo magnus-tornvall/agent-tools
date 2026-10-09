@@ -7,15 +7,16 @@
  *                                       otherwise the check's violations and exit 1
  *
  * A slug has one draft, at ${XDG_STATE_HOME:-$HOME/.local/state}/mt/mvc/<repo>/<slug>/draft.md,
- * where <repo> is the name of the main clone's directory, shared by every worktree of the clone.
+ * where <repo> is the name of the git common directory, or of its parent when that is named .git:
+ * the main clone's directory, shared by every worktree of the clone.
  * Its front matter is mt's: repo, commit (HEAD of the repo save runs in), saved and status, open
  * or closed. The body is the agent's, written verbatim; mt never checks it.
  *
- * Usage errors exit 2; outside a git repository, an unknown slug or an unreadable file exit 1.
+ * Usage errors exit 2; outside a git repository, an unknown slug, an unreadable file or a draft it
+ * cannot write exit 1.
  */
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
-import { runShape } from "../shape/command.ts";
 
 const USAGE = `usage: mt mvc save <slug> <file>
        mt mvc close <slug> <shape-file>
@@ -63,6 +64,20 @@ function read(file: string | 0): string {
   }
 }
 
+/** Writes beside the draft and renames over it, so an interrupted write never truncates the only copy. */
+function write(path: string, text: string): void {
+  const temp = `${path}.${process.pid}.tmp`;
+  try {
+    mkdirSync(dirname(path), { recursive: true });
+    writeFileSync(temp, text);
+    renameSync(temp, path);
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    if (existsSync(temp)) rmSync(temp);
+    throw new Failure(`cannot write ${path}: ${reason}`);
+  }
+}
+
 type FrontMatter = Record<string, unknown>;
 
 function draft(frontMatter: FrontMatter, body: string): string {
@@ -98,33 +113,33 @@ function save(args: readonly string[], validName: (name: string) => boolean): nu
   const repo = currentRepo();
   const path = draftPath(repo.name, slug);
   const saved = new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
-  mkdirSync(dirname(path), { recursive: true });
-  writeFileSync(path, draft({ repo: repo.name, commit: repo.commit, saved, status: "open" }, body));
+  write(path, draft({ repo: repo.name, commit: repo.commit, saved, status: "open" }, body));
   process.stdout.write(`${path}\n`);
   return 0;
 }
 
-function close(args: readonly string[], validName: (name: string) => boolean): number {
+async function close(args: readonly string[], validName: (name: string) => boolean): Promise<number> {
   const [slug, shapeFile] = operands("close", args, "shape file", validName);
   const repo = currentRepo();
   const path = draftPath(repo.name, slug);
   if (!existsSync(path)) throw new Failure(`no draft '${slug}' for ${repo.name}, looked for ${path}`);
   const { frontMatter, body } = parseDraft(path, read(path));
+  const { runShape }: typeof import("../shape/command.ts") = await import("../shape/command.ts");
   const checked = runShape(["check", shapeFile]);
   if (checked !== 0) return checked;
-  writeFileSync(path, draft({ ...frontMatter, status: "closed" }, body));
+  write(path, draft({ ...frontMatter, status: "closed" }, body));
   return 0;
 }
 
 /** `mt mvc <args>`; validName is mt's rule for a name, which a slug follows. */
-export function runMvc(args: readonly string[], validName: (name: string) => boolean): number {
+export async function runMvc(args: readonly string[], validName: (name: string) => boolean): Promise<number> {
   const [subcommand, ...rest] = args;
   try {
     switch (subcommand) {
       case "save":
         return save(rest, validName);
       case "close":
-        return close(rest, validName);
+        return await close(rest, validName);
       default:
         throw new UsageError(subcommand === undefined ? "mvc needs save or close" : `unknown mvc command '${subcommand}'`);
     }

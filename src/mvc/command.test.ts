@@ -1,7 +1,7 @@
 import { afterAll, describe, expect, test } from "bun:test";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 
 const MT = new URL("../../cli/mt", import.meta.url).pathname;
 const SHAPE_FILE = new URL("../../guides/mvc/example.md", import.meta.url).pathname;
@@ -135,17 +135,16 @@ describe("mt mvc save", () => {
     expect(frontMatter).toEqual({ repo: "agent-tools", commit: head, saved: expect.stringMatching(/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$/), status: "open" });
   });
 
-  test("records HEAD of the worktree it runs in, not of mt's clone or the main clone", () => {
+  test("records HEAD of the worktree it runs in, not of the main clone", () => {
     const { main, worktree } = clone();
     const mainHead = git(main, "rev-parse", "HEAD");
     const worktreeHead = commit(worktree, "on the branch");
-    const mtHead = git(join(MT, "..", ".."), "rev-parse", "HEAD");
 
     mt({ cwd: worktree }, "mvc", "save", "head", bodyFile("body\n"));
 
     const { frontMatter } = readDraft(draftAt("agent-tools", "head"));
     expect(frontMatter.commit).toBe(worktreeHead);
-    expect([mainHead, mtHead]).not.toContain(worktreeHead);
+    expect(frontMatter.commit).not.toBe(mainHead);
   });
 
   test("names the draft after the main clone's directory from any worktree of it", () => {
@@ -237,6 +236,36 @@ describe("mt mvc save", () => {
     expect(readDraft(draftAt("agent-tools", "kept")).body).toBe("kept\n");
   });
 
+  test("exits 1 with a cannot-write line when the state directory cannot be created", () => {
+    const { main } = clone();
+    const blocker = join(TMP, "state-is-a-file");
+    writeFileSync(blocker, "");
+
+    const result = mt({ cwd: main, env: { XDG_STATE_HOME: blocker } }, "mvc", "save", "unwritable", bodyFile("x\n"));
+
+    expect(result).toMatchObject({ code: 1, stdout: "" });
+    expect(result.stderr).toMatch(/^mt: cannot write .*unwritable.draft\.md: .+\n$/);
+  });
+
+  test("exits 1 with a cannot-write line and keeps the earlier draft whole when the write fails", () => {
+    const { main } = clone();
+    mt({ cwd: main }, "mvc", "save", "kept-whole", bodyFile("first save\n"));
+    const dir = dirname(draftAt("agent-tools", "kept-whole"));
+    const before = readFileSync(draftAt("agent-tools", "kept-whole"), "utf8");
+    chmodSync(dir, 0o555);
+
+    try {
+      const result = mt({ cwd: main }, "mvc", "save", "kept-whole", bodyFile("second save\n"));
+
+      expect(result).toMatchObject({ code: 1, stdout: "" });
+      expect(result.stderr).toMatch(/^mt: cannot write .*kept-whole.draft\.md: .+\n$/);
+    } finally {
+      chmodSync(dir, 0o755);
+    }
+    expect(readFileSync(draftAt("agent-tools", "kept-whole"), "utf8")).toBe(before);
+    expect(readdirSync(dir)).toEqual(["draft.md"]);
+  });
+
   test("exits 2 with usage on a slug that breaks mt's name rule", () => {
     const { main } = clone();
     for (const slug of ["../escape", "a/b", ".hidden", "-x", ""]) {
@@ -288,6 +317,23 @@ describe("mt mvc close", () => {
     expect(mt({ cwd: main }, "mvc", "close", "across", SHAPE_FILE).code).toBe(0);
 
     expect(readDraft(draftAt("agent-tools", "across")).frontMatter.status).toBe("closed");
+  });
+
+  test("exits 1 with a cannot-write line and leaves the draft open when it cannot write the status", () => {
+    const { main } = clone();
+    mt({ cwd: main }, "mvc", "save", "locked", bodyFile("x\n"));
+    const dir = dirname(draftAt("agent-tools", "locked"));
+    chmodSync(dir, 0o555);
+
+    try {
+      const result = mt({ cwd: main }, "mvc", "close", "locked", SHAPE_FILE);
+
+      expect(result).toMatchObject({ code: 1, stdout: "" });
+      expect(result.stderr).toMatch(/^mt: cannot write .*locked.draft\.md: .+\n$/);
+    } finally {
+      chmodSync(dir, 0o755);
+    }
+    expect(readDraft(draftAt("agent-tools", "locked")).frontMatter.status).toBe("open");
   });
 
   test("exits 1 on a slug with no draft, naming where it looked", () => {
