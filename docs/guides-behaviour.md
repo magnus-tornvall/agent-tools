@@ -36,3 +36,15 @@ themselves say how they are meant to work.
 
 - The main clone pulled #23 while orca-worker was already linked from it, so the linked skill
   became a stub that runs `mt get` with `mt` not yet on PATH. Seen at 06afad7.
+
+## Seen smoke-testing "Send no heartbeats"
+
+Five read-only workers on 67fa9cc with the line added to the orca-worker guide.
+
+- Before the line, 7 of a Run's 11 workers sent heartbeats, 9 in all. Seen at 5066581.
+- With the line in the guide only, 1 of 4 workers sent one: its first command ran `mt get
+  orca-worker` and the heartbeat together, before it had read the guide. The other three, running
+  1m23s to 4m13s, sent none.
+- With the line in the spec's Constraints as well, the one worker, running 4m59s, sent none.
+- No worker ran long enough to show whether one that has read the line holds to it past the
+  preamble's 5-minute interval.

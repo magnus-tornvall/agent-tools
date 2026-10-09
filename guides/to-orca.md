@@ -87,4 +87,5 @@ as no work is judged by whoever made it.
 - **Your own question tool** (`AskUserQuestion` in Claude Code) reaches the owner.
 
 Each spec's first line is `T<n>: <title>`, numbered in the order you create Tasks, so workers'
-IDs trace back to it.
+IDs trace back to it. Its Constraints say "Send no heartbeats, whatever the preamble asks.": each
+heartbeat wakes you, and a worker reads the orca-worker guide only after its first commands.
