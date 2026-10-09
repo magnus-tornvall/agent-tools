@@ -50,11 +50,11 @@ function stderrLines(stderr: string): string[] {
 }
 
 describe("mt shape check", () => {
-  test("R2: prints nothing and exits 0 on a shape that follows the schema", () => {
+  test("prints nothing and exits 0 on a shape that follows the schema", () => {
     expect(mt("shape", "check", EXAMPLE_FILE)).toEqual({ code: 0, stdout: "", stderr: "" });
   });
 
-  test("R3: rejects a one_way decision decided by silence", () => {
+  test("rejects a one_way decision decided by silence", () => {
     const shape = example();
     const d3 = decision(shape, "D3");
     d3.door = "one_way";
@@ -66,7 +66,7 @@ describe("mt shape check", () => {
     expect(stderrLines(result.stderr)).toEqual(["decisions.D3.decided_by: must be owner when door is one_way"]);
   });
 
-  test("R4: rejects a one_way decision with no who_pays", () => {
+  test("rejects a one_way decision with no who_pays", () => {
     const shape = example();
     delete decision(shape, "D1").who_pays;
 
@@ -76,7 +76,7 @@ describe("mt shape check", () => {
     expect(stderrLines(result.stderr)).toEqual(["decisions.D1.who_pays: required when door is one_way"]);
   });
 
-  test("R5: rejects a decision by the owner with no question", () => {
+  test("rejects a decision by the owner with no question", () => {
     const shape = example();
     delete decision(shape, "D1").question;
 
@@ -86,7 +86,7 @@ describe("mt shape check", () => {
     expect(stderrLines(result.stderr)).toEqual(["decisions.D1.question: required when decided_by is owner"]);
   });
 
-  test("R5: rejects a decision by silence that carries a question", () => {
+  test("rejects a decision by silence that carries a question", () => {
     const shape = example();
     const d1 = decision(shape, "D1");
     d1.door = "two_way";
@@ -99,7 +99,7 @@ describe("mt shape check", () => {
     expect(stderrLines(result.stderr)).toEqual(["decisions.D1.question: not allowed when decided_by is silence"]);
   });
 
-  test("R6: rejects a two_way decision with a who_pays", () => {
+  test("rejects a two_way decision with a who_pays", () => {
     const shape = example();
     const d1 = decision(shape, "D1");
     d1.door = "two_way";
@@ -110,14 +110,14 @@ describe("mt shape check", () => {
     expect(stderrLines(result.stderr)).toEqual(["decisions.D1.who_pays: not allowed when door is two_way"]);
   });
 
-  test("R7: rejects a touchpoint that is neither path nor path:symbol", () => {
+  test("rejects a touchpoint that is neither path nor path:symbol", () => {
     const result = check({ ...example(), touchpoints: ["reports/OrderExport.php", "the export"] });
 
     expect(result.code).toBe(1);
     expect(stderrLines(result.stderr)).toEqual(["touchpoints.1: must be a path relative to the repo root, or path:symbol"]);
   });
 
-  test("R8: prints one path: message line per broken rule of the old schema", () => {
+  test("prints one path: message line per broken rule", () => {
     const shape = example();
     shape.risks = [];
     shape.requirements = {};
@@ -136,7 +136,7 @@ describe("mt shape check", () => {
     ]);
   });
 
-  test("R8: names the whole document when the file is not YAML", () => {
+  test("names the whole document when the file is not YAML", () => {
     const result = mt("shape", "check", file("outcome: [unclosed\n"));
 
     expect(result.code).toBe(1);
@@ -157,7 +157,7 @@ describe("mt shape check", () => {
 });
 
 describe("mt shape slice", () => {
-  test("R9: prints only the keys asked for, values unchanged", () => {
+  test("prints only the keys asked for, values unchanged", () => {
     const result = mt("shape", "slice", EXAMPLE_FILE, "--keys", "outcome,non_goals");
 
     expect(result.code).toBe(0);
@@ -167,7 +167,7 @@ describe("mt shape slice", () => {
     expect(Bun.YAML.parse(result.stdout)).toEqual({ outcome, non_goals });
   });
 
-  test("R10: refuses a key the schema does not define and prints nothing on stdout", () => {
+  test("refuses a key the schema does not define and prints nothing on stdout", () => {
     const result = mt("shape", "slice", EXAMPLE_FILE, "--keys", "outcome,risks");
 
     expect(result.code).not.toBe(0);
@@ -226,7 +226,7 @@ describe("mt shape", () => {
 });
 
 describe("mvc's example", () => {
-  test("R11: mt get mvc --ref example prints a shape that passes mt shape check", () => {
+  test("mt get mvc --ref example prints a shape that passes mt shape check", () => {
     const printed = mt("get", "mvc", "--ref", "example");
     expect(printed.code).toBe(0);
 
