@@ -14,9 +14,10 @@ Make the shape's change in this worktree, or fix the findings handed over.
 - **The repo's own checks pass before you claim success.** Find them in its manifests and agent
   instructions; never invent them. A failing check is not success.
 - **Commits stay on the branch.** Never push or merge.
-- **Your runs never write to the owner's `mt` usage log.** When the repo is the one `mt` serves its
-  guides from, every manual `mt` run sets `MT_LOG` to a scratch file on its own command line;
-  shell state does not carry over between commands.
+- **Your runs never write to the owner's `mt` usage log.** Every manual run of `mt`, and every run
+  of a script, test or mutant that may call it, sets `MT_LOG` and `XDG_STATE_HOME` to scratch
+  locations on its own command line. Loading your guides with the installed `mt get` is not such a
+  run; it stays logged.
 
 ## Report
 

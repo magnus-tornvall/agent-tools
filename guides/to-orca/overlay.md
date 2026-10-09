@@ -4,16 +4,17 @@ What is known about Orca that its orchestration skill does not say, each with th
 was seen on. What a Run learns goes in its hand-off, with the version or commit it was seen on, and
 is filed with `mt dogfood`.
 
-- `worker-start` has no permission flag. A `claude` worker launches with Orca's default arguments
-  for that agent, the worktree's committed `.claude/settings.json` and the owner's own permission
-  mode. A worker stopped at a prompt sends nothing. (1.4.221)
-- `worker-show`'s `observation.agentWait` names a worker parked on a prompt only a human can
-  answer. No message is sent for it, so a peek after an empty wait is the only way to find it.
-  (1.4.222)
-- `worker-list --terminal-state reclaimable` misses a settled worker whose state is `retained`,
-  which happens after `worker-stop`. (1.4.221)
+- `orca orchestration worker-start` has no permission flag. A `claude` worker launches with Orca's
+  default arguments for that agent, the worktree's committed `.claude/settings.json` and the
+  owner's own permission mode. A worker stopped at a prompt sends nothing. (1.4.221)
+- `orca orchestration worker-show`'s `observation.agentWait` names a worker parked on a prompt only
+  a human can answer. No message is sent for it, so a peek after an empty wait is the only way to
+  find it. (1.4.222)
+- `orca orchestration worker-list --terminal-state reclaimable` misses a settled worker whose state
+  is `retained`, which happens after `orca orchestration worker-stop`. (1.4.221)
 - A `worker_done` without a dispatch ID settles nothing; only the inbox reader sees why. (1.4.221)
-- `run-create` moves the terminal off a Run it already coordinates without a word, even one with
-  unsettled work. Check `run-current` and that Run's workers first. (1.4.222)
-- `ask` waits at most 30 minutes per call. A reply to a worker that has ended is refused with
-  `dispatch_inactive`. (1.4.220)
+- `orca orchestration run-create` moves the terminal off a Run it already coordinates without a
+  word, even one with unsettled work. Check `orca orchestration run-current` and that Run's workers
+  first. (1.4.222)
+- `orca orchestration ask` waits at most 30 minutes per call. A reply to a worker that has ended is
+  refused with `dispatch_inactive`. (1.4.220)

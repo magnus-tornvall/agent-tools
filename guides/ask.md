@@ -22,13 +22,13 @@ expected pick first. A question without one hands the work back to the person as
 ## Channel
 
 The channel follows the form. Options and gwt go through the asker's own question tool
-(`AskUserQuestion` in Claude Code, `--options` on Orca's `ask`): each answer one option, the
+(`AskUserQuestion` in Claude Code, `orca orchestration ask --options`): each answer one option, the
 position's pick first. In gwt, the tool's free answer is **Neither**, or **Either**. A stance goes
 in plain text, never a picker, so "you are asking the wrong thing" is as easy to type as an
 answer. Lines the tool has no field for go in the text just before it.
 
-Orca's `ask` takes `--options` as one comma-separated string, so there each option is a short
-label without commas. The citations, Rules out and the rest go in the question text.
+`orca orchestration ask --options` takes one comma-separated string, so there each option is a
+short label without commas. The citations, Rules out and the rest go in the question text.
 
 ## Every question
 

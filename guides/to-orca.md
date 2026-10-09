@@ -67,9 +67,10 @@ as no work is judged by whoever made it.
   Observable acceptance.
 - **The inbox and Task results** are the Run's durable record; the hand-off is rebuilt from them.
 - **Decision gates** hold a Task on an owner decision that blocks it.
-- **`worker-show`, `worker-read` and `worker-list`** let you peek at a worker that has gone quiet.
-- **Worktree placement** on `worker-start` puts a Task in the work's worktree or a new one cut from
-  its branch.
+- **`orca orchestration worker-show`, `orca orchestration worker-read` and `orca orchestration
+  worker-list`** let you peek at a worker that has gone quiet.
+- **Worktree placement** on `orca orchestration worker-start` puts a Task in the work's worktree or
+  a new one cut from its branch.
 - **Assignments**, each a guide a worker loads with `mt get <name>`. What a worker is given is
   all it gets.
   - `change` makes the shape's change on the work branch, or fixes findings judges handed over.
