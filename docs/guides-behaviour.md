@@ -21,3 +21,8 @@ themselves say how they are meant to work.
   one-way doors, against none from maintainer-review and two from shape-coverage.
 - The coordinator sliced the shape per judge by hand with a throwaway script, and pulled
   assumptions out of reports by matching their lines. Both are candidate tools.
+- The coordinator's own spec boilerplate kept saying "the preamble governs how you send your
+  report" after the orca-worker guide changed; specs that restate a guide go stale with it. Seen
+  at 4348866.
+- The second round of judges found three two-way findings, two introduced by the first fix round;
+  no one-way door was decided without a question. Seen at 4348866.
