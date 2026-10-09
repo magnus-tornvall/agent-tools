@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
-// mt: load the know-how of the owner's tools on demand, record every load, check shapes, and file
-// dogfooding findings. get, list and dogfood need nothing beyond this file and, for dogfood, gh;
-// shape loads src/shape/ only when it is called.
+// mt: load the know-how of the owner's tools on demand, record every load, check shapes, park mvc
+// grills, and file dogfooding findings. get, list and dogfood need nothing beyond this file and, for
+// dogfood, gh; shape and mvc load src/shape/ and src/mvc/ only when they are called.
 
 import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, statSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
@@ -11,6 +11,10 @@ const USAGE = `usage: mt get <tool> [--ref <ref>]   print the guide for a tool, 
        mt shape check <file>         check that a file is a shape
        mt shape slice <file> --keys <key,...>
                                      print only those top-level keys of a shape
+       mt mvc save <slug> <file>     park an mvc grill as the slug's draft, replacing it;
+                                     - reads the body from stdin
+       mt mvc close <slug> <shape-file>
+                                     close the slug's draft once the file is a shape
        mt dogfood <title> [--body-file <file>]
                                      file a finding as an issue labelled dogfooding on
                                      this repo's GitHub, through gh; - reads the body from stdin
@@ -240,6 +244,11 @@ async function cmdShape(args: string[]): Promise<number> {
   return runShape(args);
 }
 
+async function cmdMvc(args: string[]): Promise<number> {
+  const { runMvc }: typeof import("../src/mvc/command.ts") = await import(join(ROOT, "src/mvc/command.ts"));
+  return runMvc(args, validName);
+}
+
 async function main(args: string[]): Promise<number> {
   const [command = "", ...rest] = args;
   switch (command) {
@@ -249,6 +258,8 @@ async function main(args: string[]): Promise<number> {
       return cmdList();
     case "shape":
       return cmdShape(rest);
+    case "mvc":
+      return cmdMvc(rest);
     case "dogfood":
       return cmdDogfood(rest);
     case "":

@@ -1,7 +1,7 @@
 # agent-tools
 
-Skills for agents working in Orca, and `mt`, which loads them on demand, checks shapes and files
-dogfooding findings.
+Skills for agents working in Orca, and `mt`, which loads them on demand, checks shapes, parks mvc
+grills and files dogfooding findings.
 
 ## The shape
 
@@ -38,6 +38,9 @@ mt get <name> [--ref <ref>]   print one of the tool's references instead, and lo
 mt shape check <file>         check that a file is a shape
 mt shape slice <file> --keys <key,...>
                               print the shape with only those top-level keys
+mt mvc save <slug> <file>     park an mvc grill as the slug's draft; - reads stdin
+mt mvc close <slug> <shape-file>
+                              close the slug's draft once the file passes mt shape check
 mt dogfood <title> [--body-file <file>]
                               file a finding as an issue labelled dogfooding; - reads stdin
 ```
@@ -80,6 +83,39 @@ does not run the check, so a shape with a violation the owner ruled on can still
 
 The schema is `src/shape/shape.ts`. `mt shape` loads it only when called, so `mt get` and
 `mt list` need nothing beyond `cli/mt` and Bun.
+
+### mvc drafts
+
+mvc parks an unfinished grill on the owner's word and resumes it in a later session. A slug has
+one draft, at `${XDG_STATE_HOME:-$HOME/.local/state}/mt/mvc/<repo>/<slug>/draft.md`. `<repo>` is
+the name of the main clone's directory, the parent of `git rev-parse --git-common-dir`, or that
+directory itself in a bare clone, so every worktree of a clone shares its drafts and a draft
+outlives the worktree it was parked from. A slug follows the rule for a tool's name: letters,
+digits, `.`, `_` and `-`, not starting with `.`.
+
+`mt mvc save <slug> <file>` writes the draft, replacing the slug's earlier one, and prints its
+path. `-` reads the body from stdin. Above the body, which it writes verbatim and never checks,
+`mt` writes the front matter:
+
+| key      | value                                                                 |
+| -------- | --------------------------------------------------------------------- |
+| `repo`   | the main clone's directory name, as in the path                       |
+| `commit` | `HEAD` of the repo save runs in, not of `mt`'s clone                  |
+| `saved`  | UTC time of the save, ISO 8601                                        |
+| `status` | `open`, until `mt mvc close` sets it to `closed`; a save reopens it   |
+
+Outside a git repository, or in one with no commit yet, save exits 1 and writes nothing. There
+is no resume command: the agent reads the draft at its location, and judges what still holds of
+what it cites by what changed since its commit.
+
+`mt mvc close <slug> <shape-file>` runs `mt shape check` on the shape file. When it passes, close
+sets the draft's status to `closed`, prints nothing and exits 0; otherwise it exits 1 with the
+check's violations on stderr and leaves the draft open. It never writes the shape file. A slug
+with no draft in the current repo exits 1.
+
+A draft is never a shape: `mt shape check` fails on one. A usage error, such as a slug that breaks
+the rule, exits 2; an unreadable file exits 1. Like `mt shape`, `mt mvc` loads its code,
+`src/mvc/`, only when called.
 
 ### Dogfooding
 
@@ -180,7 +216,8 @@ or lists its commands in a shape the lint does not read (no `commands` array, or
 string `command` and an array `path`), each as one line instead of one per mention.
 
 `bun test` runs guide-lint against fixture repos and a fake `orca`, and checks the shape
-schema and `mt shape`. `bun run typecheck` runs `tsc --noEmit` over `src/`; `tsc` cannot read
+schema and `mt shape`, and `mt mvc` against throwaway git repos with `XDG_STATE_HOME` in a
+temp folder. `bun run typecheck` runs `tsc --noEmit` over `src/`; `tsc` cannot read
 `cli/mt`, which has no extension.
 
 ## Layout
@@ -188,8 +225,8 @@ schema and `mt shape`. `bun run typecheck` runs `tsc --noEmit` over `src/`; `tsc
 ```
 cli/      mt
 Makefile  make install and make uninstall
-src/      shape/, the shape schema and mt shape; install/, the settings rules; guide-lint/, the
-          check test/guides.sh runs; each with its tests
+src/      shape/, the shape schema and mt shape; mvc/, mt mvc; install/, the settings rules;
+          guide-lint/, the check test/guides.sh runs; each with its tests
 guides/   one guide per tool, <name>.md, with its references in <name>/<ref>.md
 skills/   a stub skill per guide an agent or the owner picks, <name>/SKILL.md, mvc and ask
           among them, plus the commit skill, which is whole
