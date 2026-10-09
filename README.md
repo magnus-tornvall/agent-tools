@@ -1,6 +1,7 @@
 # agent-tools
 
-Skills for agents working in Orca, and `mt`, which loads them on demand and checks shapes.
+Skills for agents working in Orca, and `mt`, which loads them on demand, checks shapes and files
+dogfooding findings.
 
 ## The shape
 
@@ -35,6 +36,8 @@ mt get <name> [--ref <ref>]   print one of the tool's references instead, and lo
 mt shape check <file>         check that a file is a shape
 mt shape slice <file> --keys <key,...>
                               print the shape with only those top-level keys
+mt dogfood <title> [--body-file <file>]
+                              file a finding as an issue labelled dogfooding; - reads stdin
 ```
 
 A reference is a file under `guides/<name>/<ref>.md`, for example
@@ -75,6 +78,25 @@ does not run the check, so a shape with a violation the owner ruled on can still
 
 The schema is `src/shape/shape.ts`. `mt shape` loads it only when called, so `mt get` and
 `mt list` need nothing beyond `cli/mt` and Bun.
+
+### Dogfooding
+
+`mt dogfood` sends findings to this repo: it opens an issue labelled `dogfooding` on the GitHub
+repo of the clone `mt` runs from, magnus-tornvall/agent-tools, which is public. It does so through
+`gh`, run in that clone rather than the caller's directory, so a finding from a Run on any other
+repo lands here too.
+
+`mt dogfood "<title>" --body-file finding.md` prints the new issue's URL. `--body-file -` reads the
+body from stdin, and the body may be left out. `mt` appends what the finding was seen on: this
+repo's `HEAD`, `orca --version` when `orca` is on PATH, and the session, terminal and worktree from
+the same variables as the usage log, each only when set.
+
+When the finding cannot be filed, because `gh` is not on PATH, not authenticated or fails
+otherwise, `mt` prints one `mt: finding not filed: <reason>` line on stderr, nothing on stdout, and
+still exits 0, so the agent carries on. A usage error exits 2, an unreadable body file 1.
+
+`mt dogfood` is not in the permission rules below and is not meant to be allowed automatically:
+each filing asks first, since it posts to a public repo.
 
 ### Install
 
@@ -133,9 +155,10 @@ bun test
 bun run typecheck
 ```
 
-`test/mt.sh` checks `mt get` and `mt list`, and needs `python3` on PATH to parse the log's
-JSON lines; `mt` itself needs only Bun. `test/install.sh` runs `make install` and `make uninstall` against throwaway
-home folders, and needs `python3` too. `bun test` checks the shape schema and `mt shape`.
+`test/mt.sh` checks `mt get`, `mt list` and `mt dogfood`, with a fake `gh`, and needs `python3`
+on PATH to parse the log's JSON lines; `mt` itself needs only Bun. `test/install.sh` runs `make
+install` and `make uninstall` against throwaway home folders, and needs `python3` too. `bun test`
+checks the shape schema and `mt shape`.
 `bun run typecheck` runs `tsc --noEmit` over `src/`; `tsc` cannot read `cli/mt`, which has no
 extension.
 
@@ -148,6 +171,7 @@ src/      shape/, the shape schema and mt shape, with their tests; install/, the
 guides/   one guide per tool, <name>.md, with its references in <name>/<ref>.md
 skills/   a stub skill per guide but orca-worker, <name>/SKILL.md, mvc and ask among them,
           plus the commit skill, which is whole
-test/     mt.sh, which checks mt get and mt list; install.sh, which checks make install and uninstall
+test/     mt.sh, which checks mt get, mt list and mt dogfood; install.sh, which checks make
+          install and uninstall
 docs/     known Orca and guide behaviour, research
 ```
