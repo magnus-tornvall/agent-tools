@@ -6,10 +6,10 @@ Skills for agents working in Orca, and `mt`, which loads them on demand and chec
 
 A shape is one YAML document: the outcome, requirements keyed `R1…`, non-goals keyed
 `N1…`, approach, constraints, touchpoints, and decisions keyed `D1…`.
-`mt get mvc --ref example` prints a filled-in example. The agent reading a shape uses
-judgement on it; no schema or script enforces the format.
+The schema in `src/shape/shape.ts` is the contract: a shape is what `mt shape check`
+accepts, and `mt get mvc --ref example` prints a filled-in example.
 
-Any producer whose shape follows the example is a valid producer. mvc is one producer,
+Any producer whose shape passes `mt shape check` is a valid producer. mvc is one producer,
 not the contract.
 
 ## mt
@@ -20,9 +20,10 @@ only tells the agent to run `mt get <name>` and follow what it prints. The agent
 list stays short, the guide enters context only when the tool is used, and each load is
 logged.
 
-Every guide has a stub and every stub a guide. `mt list` shows only tools that have both.
-Skills that are not stubs, such as commit and mvc, stay whole in `skills/` and `mt` does
-not serve them.
+Every guide has a stub and every stub a guide. `mt list` shows only tools that have both,
+among them mvc, which settles a shape with the owner, and ask, which composes a question for
+whoever owns a decision. Skills that are not stubs, such as commit,
+stay whole in `skills/` and `mt` does not serve them.
 
 ```
 mt list                       every tool, once, with its when-to-use description
@@ -91,6 +92,8 @@ done
 
 Use the skills folder your agent reads; `~/.agents/skills` is one example. `-n` replaces a
 link that is already there instead of writing a stray link inside the folder it points to.
+A real folder is not replaced: a tool installed there as a copy, such as a whole mvc from
+before it became a guide, gets a stray link inside it. Move the copy aside first.
 
 Let agents run `mt` without a prompt by adding these rules to the agent's permission
 settings, for Claude Code the `permissions.allow` list in `~/.claude/settings.json`:
@@ -121,8 +124,8 @@ JSON lines; `mt` itself needs only Bun. `bun test` checks the shape schema and `
 cli/      mt
 src/      shape/, the shape schema and mt shape, with their tests
 guides/   one guide per tool, <name>.md, with its references in <name>/<ref>.md
-skills/   a stub skill per guide, <name>/SKILL.md, plus the commit and mvc skills,
-          which are whole
+skills/   a stub skill per guide, <name>/SKILL.md, mvc and ask among them, plus the
+          commit skill, which is whole
 test/     mt.sh, which checks mt get and mt list
 docs/     known Orca and guide behaviour, research
 ```
