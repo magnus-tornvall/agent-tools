@@ -133,6 +133,7 @@ export function parseDocument(yaml: string): Mapping {
 
 const ID_MAPS = ["requirements", "non_goals", "decisions"];
 const MAP_KEY = /^( *)(?:"([^"]*)"|'([^']*)'|([^\s#:][^#:]*?))\s*:(?:\s|$)/;
+const SEQUENCE_ITEM = /^ *-(?:\s|$)/;
 
 /**
  * Bun.YAML.parse keeps the last of a repeated key, so a repeat is found in the text: a top-level
@@ -147,7 +148,7 @@ function repeatedKeys(yaml: string): Violation[] {
   const topLevel = new Set<string>();
   for (const line of yaml.split(/\r?\n/)) {
     if (line.trim() === "" || line.trimStart().startsWith("#")) continue;
-    const match = MAP_KEY.exec(line);
+    const match = SEQUENCE_ITEM.test(line) ? null : MAP_KEY.exec(line);
     const key = match?.[2] ?? match?.[3] ?? match?.[4];
     if (!line.startsWith(" ")) {
       if (key !== undefined) {

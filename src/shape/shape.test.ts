@@ -245,6 +245,14 @@ describe("parseShape", () => {
     expect(parseShape(yaml)).toEqual({ ok: false, violations: [{ path: "requirements", message: "key appears more than once" }] });
   });
 
+  test("accepts a zero-indented sequence of strings that share the text before their first colon", () => {
+    const yaml = EXAMPLE.replace(/^constraints:\n(?:  .*\n)+/m, 'constraints:\n- "rule: one"\n- "rule: two"\n- \'rule: three\'\n');
+
+    const parsed = parseShape(yaml);
+
+    expect(parsed.ok).toBe(true);
+  });
+
   test("reports a document that is not a map", () => {
     expect(paths(["a list"])).toEqual([""]);
   });
