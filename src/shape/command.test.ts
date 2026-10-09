@@ -175,12 +175,40 @@ describe("mt shape slice", () => {
     expect(result.stderr).toContain("risks");
   });
 
-  test("refuses a file that is not a shape, with its violations", () => {
-    const result = mt("shape", "slice", file(Bun.YAML.stringify({ ...example(), touchpoints: ["the export"] })), "--keys", "outcome");
+  test("slices a shape that breaks the schema, since an owner may rule on a violation", () => {
+    const shape = example();
+    decision(shape, "D2").decided_by = "user";
+    const path = file(Bun.YAML.stringify(shape, null, 2));
+    expect(mt("shape", "check", path).code).toBe(1);
+
+    const result = mt("shape", "slice", path, "--keys", "outcome,decisions");
+
+    expect(result.code).toBe(0);
+    expect(result.stderr).toBe("");
+    expect(Bun.YAML.parse(result.stdout)).toEqual({ outcome: shape.outcome, decisions: shape.decisions });
+  });
+
+  test("refuses a file that is not YAML, with its violation", () => {
+    const result = mt("shape", "slice", file("outcome: [unclosed\n"), "--keys", "outcome");
 
     expect(result.code).toBe(1);
     expect(result.stdout).toBe("");
-    expect(result.stderr).toStartWith("touchpoints.0: ");
+    expect(result.stderr).toStartWith("(document): not YAML");
+  });
+
+  test("refuses a file whose top level is not a map", () => {
+    const result = mt("shape", "slice", file("- outcome\n- requirements\n"), "--keys", "outcome");
+
+    expect(result.code).toBe(1);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).toStartWith("(document): ");
+  });
+
+  test("leaves out a key the file does not have", () => {
+    const result = mt("shape", "slice", file("outcome: x\n"), "--keys", "outcome,constraints");
+
+    expect(result.code).toBe(0);
+    expect(Bun.YAML.parse(result.stdout)).toEqual({ outcome: "x" });
   });
 
   test("exits 2 with usage without --keys or a file", () => {

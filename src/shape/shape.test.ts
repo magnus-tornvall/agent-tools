@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, spyOn, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { isTouchpoint, parseShape, type Violation } from "./shape.ts";
 
@@ -142,6 +142,41 @@ describe("parseShape", () => {
     if (parsed.ok) return;
     expect(parsed.violations).toHaveLength(1);
     expect(parsed.violations[0]?.path).toBe("");
+  });
+
+  test("lets an error that is not a YAML parse error propagate", () => {
+    const parse = spyOn(Bun.YAML, "parse").mockImplementation(() => {
+      throw new TypeError("Bun.YAML.parse is not a function");
+    });
+    try {
+      expect(() => parseShape("outcome: x\n")).toThrow(TypeError);
+    } finally {
+      parse.mockRestore();
+    }
+  });
+
+  test.each([
+    ["requirements", "R1"],
+    ["non_goals", "N1"],
+    ["decisions", "D1"],
+  ])("reports a repeated %s key as a violation on that key", (section: string, id: string) => {
+    const entry = new RegExp(`^  ${id}:.*(?:\\n    .*)*\\n`, "m").exec(EXAMPLE.slice(EXAMPLE.indexOf(`\n${section}:`) + 1));
+    if (entry === null) throw new Error(`no ${id} entry in the example`);
+    const repeated = EXAMPLE.replace(entry[0], entry[0] + entry[0]);
+
+    const parsed = parseShape(repeated);
+
+    expect(parsed).toEqual({ ok: false, violations: [{ path: `${section}.${id}`, message: "key appears more than once" }] });
+  });
+
+  test("reports a repeated quoted key once however often it repeats", () => {
+    const yaml = EXAMPLE.replace("requirements:\n", 'requirements:\n  "R1": {text: a, reason: b}\n  \'R1\': {text: a, reason: b}\n  R1: {text: a, reason: b}\n');
+
+    const parsed = parseShape(yaml);
+
+    expect(parsed.ok).toBe(false);
+    if (parsed.ok) return;
+    expect(parsed.violations.filter((violation) => violation.path === "requirements.R1")).toHaveLength(1);
   });
 
   test("reports a document that is not a map", () => {

@@ -3,12 +3,13 @@
  *
  *   mt shape check <file>                  nothing and exit 0 on a shape, otherwise one
  *                                          `path: message` line per violation and exit 1
- *   mt shape slice <file> --keys <a,b>     the shape with only those top-level keys, as YAML
+ *   mt shape slice <file> --keys <a,b>     the shape with only those top-level keys, as YAML; the
+ *                                          file need only be a YAML map, not pass the check
  *
  * Usage errors exit 2.
  */
 import { readFileSync } from "node:fs";
-import { parseShape, SHAPE_KEYS, type Parsed } from "./shape.ts";
+import { parseDocument, parseShape, SHAPE_KEYS, type Violation } from "./shape.ts";
 
 const USAGE = `usage: mt shape check <file>
        mt shape slice <file> --keys <key,...>
@@ -16,27 +17,30 @@ const USAGE = `usage: mt shape check <file>
 
 class UsageError extends Error {}
 
-function parseFile(file: string): Parsed | undefined {
-  let yaml: string;
+function readShape(file: string): string | undefined {
   try {
-    yaml = readFileSync(file, "utf8");
+    return readFileSync(file, "utf8");
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
     process.stderr.write(`mt: cannot read '${file}': ${reason}\n`);
     return undefined;
   }
-  const parsed = parseShape(yaml);
-  if (!parsed.ok) {
-    const lines = parsed.violations.map(({ path, message }) => `${path || "(document)"}: ${message}\n`);
-    process.stderr.write(lines.join(""));
-  }
-  return parsed;
+}
+
+function report(violations: readonly Violation[]): void {
+  const lines = violations.map(({ path, message }) => `${path || "(document)"}: ${message}\n`);
+  process.stderr.write(lines.join(""));
 }
 
 function check(args: readonly string[]): number {
   const [file, ...rest] = args;
   if (file === undefined || file.startsWith("-") || rest.length > 0) throw new UsageError("check takes one file");
-  return parseFile(file)?.ok ? 0 : 1;
+  const yaml = readShape(file);
+  if (yaml === undefined) return 1;
+  const parsed = parseShape(yaml);
+  if (parsed.ok) return 0;
+  report(parsed.violations);
+  return 1;
 }
 
 function slice(args: readonly string[]): number {
@@ -65,10 +69,15 @@ function slice(args: readonly string[]): number {
     return 1;
   }
 
-  const parsed = parseFile(file);
-  if (!parsed?.ok) return 1;
-  const shape: Record<string, unknown> = parsed.shape;
-  const sliced = Object.fromEntries([...new Set(keys)].map((key) => [key, shape[key]]));
+  const yaml = readShape(file);
+  if (yaml === undefined) return 1;
+  const parsed = parseDocument(yaml);
+  if (!parsed.ok) {
+    report([parsed.violation]);
+    return 1;
+  }
+  const present = [...new Set(keys)].filter((key) => key in parsed.document);
+  const sliced = Object.fromEntries(present.map((key) => [key, parsed.document[key]]));
   process.stdout.write(`${Bun.YAML.stringify(sliced, null, 2)}\n`);
   return 0;
 }

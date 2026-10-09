@@ -100,19 +100,67 @@ export type Parsed =
   | { readonly ok: true; readonly shape: Shape }
   | { readonly ok: false; readonly violations: readonly Violation[] };
 
-export function parseShape(yaml: string): Parsed {
+/** The document as a map, or the one violation that says why it is not. Only a YAML parse error is one. */
+export type Mapping =
+  | { readonly ok: true; readonly document: Record<string, unknown> }
+  | { readonly ok: false; readonly violation: Violation };
+
+export function parseDocument(yaml: string): Mapping {
   let document: unknown;
   try {
     document = Bun.YAML.parse(yaml);
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    return { ok: false, violations: [{ path: "", message: `not YAML: ${message}` }] };
+    if (!(error instanceof SyntaxError)) throw error;
+    return { ok: false, violation: { path: "", message: `not YAML: ${error.message}` } };
   }
-  const result = Shape.safeParse(document);
-  if (result.success) return { ok: true, shape: result.data };
-  const found = result.error.issues.flatMap(violations);
+  if (typeof document !== "object" || document === null || Array.isArray(document)) {
+    return { ok: false, violation: { path: "", message: "must be a map" } };
+  }
+  return { ok: true, document: Object.fromEntries(Object.entries(document)) };
+}
+
+const ID_MAPS = ["requirements", "non_goals", "decisions"];
+const MAP_KEY = /^( *)(?:"([^"]*)"|'([^']*)'|([^\s#:][^#:]*?))\s*:(?:\s|$)/;
+
+/**
+ * Bun.YAML.parse keeps the last of a repeated key, so a repeat is found in the text: the keys of
+ * the requirements, non_goals and decisions maps, written as block maps, that appear more than
+ * once under one map.
+ */
+function repeatedKeys(yaml: string): Violation[] {
+  const found: Violation[] = [];
+  let section: string | undefined;
+  let indent: number | undefined;
+  let seen = new Set<string>();
+  for (const line of yaml.split(/\r?\n/)) {
+    if (line.trim() === "" || line.trimStart().startsWith("#")) continue;
+    const match = MAP_KEY.exec(line);
+    const key = match?.[2] ?? match?.[3] ?? match?.[4];
+    if (!line.startsWith(" ")) {
+      section = key !== undefined && ID_MAPS.includes(key) ? key : undefined;
+      indent = undefined;
+      seen = new Set();
+      continue;
+    }
+    if (section === undefined || match === null || key === undefined) continue;
+    const depth = (match[1] ?? "").length;
+    indent ??= depth;
+    if (depth !== indent) continue;
+    if (seen.has(key)) found.push({ path: `${section}.${key}`, message: "key appears more than once" });
+    seen.add(key);
+  }
+  return found.filter((violation, i) => found.findIndex((other) => other.path === violation.path) === i);
+}
+
+export function parseShape(yaml: string): Parsed {
+  const parsed = parseDocument(yaml);
+  if (!parsed.ok) return { ok: false, violations: [parsed.violation] };
+  const repeated = repeatedKeys(yaml);
+  const result = Shape.safeParse(parsed.document);
+  if (result.success && repeated.length === 0) return { ok: true, shape: result.data };
+  const found = result.success ? [] : result.error.issues.flatMap(violations);
   const unique = found.filter((violation, i) => found.findIndex((other) => other.path === violation.path) === i);
-  return { ok: false, violations: unique };
+  return { ok: false, violations: [...unique, ...repeated] };
 }
 
 function violations(issue: z.core.$ZodIssue): Violation[] {
