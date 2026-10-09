@@ -204,6 +204,72 @@ assert_eq "R5 chained symlink reads the repo's guide" "$(printf '# Door rule\nbo
 out=$(cd "$OTHER" && "$TMP/bin/rel-mt" list | head -n 1)
 assert_contains "R5 relative symlink resolves" "$out" "door-rule"
 
+# dogfood: gh, orca, bun and git are the only commands on PATH; gh and orca are fakes
+FAKEBIN=$TMP/fakebin
+GH_SEEN=$TMP/gh-seen
+mkdir -p "$FAKEBIN" "$GH_SEEN"
+ln -s "$(command -v bun)" "$FAKEBIN/bun"
+ln -s "$(command -v git)" "$FAKEBIN/git"
+cat >"$FAKEBIN/gh" <<SH
+#!/bin/bash
+if [ -n "\${FAKE_GH_FAIL:-}" ]; then printf "\\ngh: not logged in\\nrun gh auth login\\n" >&2; exit 4; fi
+echo "\$PWD" >"$GH_SEEN/cwd"
+printf '%s\n' "\$@" >"$GH_SEEN/args"
+echo "\$GH_PROMPT_DISABLED" >"$GH_SEEN/prompt"
+/bin/cat >"$GH_SEEN/stdin"
+echo https://github.com/o/r/issues/7
+SH
+printf '#!/bin/bash\necho 1.4.222\n' >"$FAKEBIN/orca"
+chmod +x "$FAKEBIN/gh" "$FAKEBIN/orca"
+dogfood() { (cd "$OTHER" && PATH=$FAKEBIN "$MT" dogfood "$@"); }
+
+before=$(log_lines)
+printf '  The finding.\nSecond line.\n\n' >"$TMP/body.md"
+out=$(CLAUDE_CODE_SESSION_ID=sess-1 ORCA_TERMINAL_HANDLE=term_abc dogfood 'mt: a finding' --body-file "$TMP/body.md" 2>"$TMP/err"); rc=$?
+assert_eq "dogfood exits 0" 0 "$rc"
+assert_eq "dogfood prints the issue URL" https://github.com/o/r/issues/7 "$out"
+assert_eq "dogfood writes nothing to stderr" "" "$(cat "$TMP/err")"
+assert_eq "dogfood runs gh in mt's clone, not the caller's directory" "$REPO" "$(cat "$GH_SEEN/cwd")"
+assert_eq "dogfood files an issue titled and labelled dogfooding" \
+  "$(printf 'issue\ncreate\n--title\nmt: a finding\n--label\ndogfooding\n--body-file\n-')" "$(cat "$GH_SEEN/args")"
+assert_eq "dogfood disables gh prompts" 1 "$(cat "$GH_SEEN/prompt")"
+assert_eq "dogfood body is the finding, then what it was seen on" "$(printf 'The finding.\nSecond line.\n\n---\nFiled with `mt dogfood`.\n- mt commit: `%s`\n- orca: `1.4.222`\n- session: `sess-1`\n- terminal: `term_abc`' "$COMMIT")" "$(cat "$GH_SEEN/stdin")"
+assert_eq "dogfood is not logged" "$before" "$(log_lines)"
+
+out=$(printf 'from stdin\n' | dogfood 'stdin finding' --body-file -); rc=$?
+assert_eq "dogfood --body-file - exits 0" 0 "$rc"
+assert_contains "dogfood --body-file - reads stdin" "$(head -n 1 "$GH_SEEN/stdin")" "from stdin"
+
+dogfood 'title only' >/dev/null; rc=$?
+assert_eq "dogfood without a body exits 0" 0 "$rc"
+assert_eq "dogfood without a body sends only what it was seen on" "---" "$(head -n 1 "$GH_SEEN/stdin")"
+
+out=$(FAKE_GH_FAIL=1 dogfood 'x' 2>"$TMP/err"); rc=$?
+assert_eq "dogfood exits 0 when gh fails" 0 "$rc"
+assert_eq "dogfood prints nothing on stdout when gh fails" "" "$out"
+assert_eq "dogfood says in one line why it filed nothing" "mt: finding not filed: gh: not logged in" "$(cat "$TMP/err")"
+
+rm "$FAKEBIN/gh"
+out=$(dogfood 'x' 2>"$TMP/err"); rc=$?
+assert_eq "dogfood exits 0 without gh" 0 "$rc"
+assert_eq "dogfood prints nothing on stdout without gh" "" "$out"
+assert_eq "dogfood says gh is missing" "mt: finding not filed: gh is not on PATH" "$(cat "$TMP/err")"
+
+dogfood 'x' --body-file "$TMP/missing.md" 2>"$TMP/err"; rc=$?
+assert_eq "dogfood exits 1 on an unreadable body file" 1 "$rc"
+assert_contains "dogfood names the unreadable body file" "$(cat "$TMP/err")" "missing.md"
+
+dogfood >/dev/null 2>&1; rc=$?
+assert_eq "dogfood without a title exits 2" 2 "$rc"
+dogfood '   ' >/dev/null 2>&1; rc=$?
+assert_eq "dogfood with a blank title exits 2" 2 "$rc"
+dogfood a --body-file >/dev/null 2>&1; rc=$?
+assert_eq "dogfood --body-file without a value exits 2" 2 "$rc"
+dogfood a b >/dev/null 2>&1; rc=$?
+assert_eq "dogfood with two titles exits 2" 2 "$rc"
+dogfood a --label x >/dev/null 2>&1; rc=$?
+assert_eq "dogfood with an unknown option exits 2" 2 "$rc"
+
 # usage
 for args in "" "--help"; do
   out=$("$MT" ${args:+"$args"}); rc=$?
