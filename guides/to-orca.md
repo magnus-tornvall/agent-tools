@@ -72,21 +72,40 @@ as no work is judged by whoever made it.
 - **`worker-show`, `worker-read` and `worker-list`** let you peek at a worker that has gone quiet.
 - **Worktree placement** on `worker-start` puts a Task in the work's worktree or a new one cut from
   its branch.
-- **Assignments**, each a guide a worker loads with `mt get <name>`: `change` makes the shape's
-  change or fixes findings; `maintainer-review`, `shape-coverage` and `surprise-review` judge the
-  branch. Their skill descriptions say when each fits, what its worker is given and, where it
-  matters, what it is not. Unless the owner picks otherwise, every Task runs on `claude` at high
-  effort, with opus for `change` making the shape's change and for `surprise-review`, and sonnet
-  for `change` fixing findings and for the other judges.
+- **Assignments**, each a guide a worker loads with `mt get <name>`. What a worker is given is
+  all it gets.
+  - `change` makes the shape's change on the work branch, or fixes findings judges handed over.
+    It runs the repo's code and commits. Given the shape's outcome, requirements, non-goals,
+    approach, constraints, touchpoints and decisions, the owner's rulings, and when fixing the
+    findings with the reports that raised them and every earlier change report.
+  - `maintainer-review` judges whether a maintainer of the repo would merge the work branch. It
+    runs the repo's checks and edits nothing. Given the shape's constraints and touchpoints, and
+    the assumptions, questions and check results from the change reports. Not given the outcome,
+    requirements, non-goals, approach or decisions, since a maintainer judges the diff on its own
+    merits.
+  - `shape-coverage` judges whether the work branch does what the shape says. It runs the code and
+    edits nothing. Given the shape's outcome, requirements, non-goals, approach, constraints and
+    decisions, the owner's rulings and the change reports; not the change worker's reasoning
+    beyond its report.
+  - `surprise-review` finds what the owner would not expect on the work branch, above all one-way
+    doors decided without a question, and what a maintainer would not merge. It reads only and
+    runs none of the repo's code, so it can sit beside any Task. Given only the shape's outcome,
+    non-goals, touchpoints and decisions, the owner's rulings, and the assumptions and questions
+    from the change reports. Never given the requirements, approach or constraints, since a worker
+    cannot unsee what anchors it.
+
+  Unless the owner picks otherwise, every Task runs on `claude` at high effort, with opus for
+  `change` making the shape's change and for `surprise-review`, and sonnet for `change` fixing
+  findings and for the other judges.
 - **The door rule** (`mt get door-rule`) decides what you answer and what goes to the owner.
 - **The orca-worker guide** (`mt get orca-worker`) is what every worker follows for questions,
-  assumptions and the report. It has no skill: only a spec loads it.
+  assumptions and the report.
 - **The overlay** (`mt get to-orca --ref overlay`) lists what is known about Orca that its own
   skill does not say.
 - **The shape format** is the schema `mt shape check <file>` checks against, and the filled-in
   example `mt get mvc --ref example`.
-- **`mt shape slice <file> --keys <key,...>`** gives a judge only the parts of the shape its skill
-  description says it is given.
+- **`mt shape slice <file> --keys <key,...>`** gives a judge only the parts of the shape its
+  assignment above says it is given.
 - **The ask guide** (`mt get ask`) composes every question to the owner, and says which reach the
   owner through your own question tool (`AskUserQuestion` in Claude Code).
 
