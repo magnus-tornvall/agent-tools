@@ -193,8 +193,10 @@ that allows `Read`, `Edit`, `Write`, `Bash(orca orchestration:*)` and
   data; empty for claude on this machine, and no CLI shows them), the worktree's committed
   `.claude/settings.json`, and the owner's own permission mode. With the owner's mode `auto`, none
   of the Run's seven workers stopped at a prompt.
+- `worker-show`'s `observation.agentWait` names a worker parked on a prompt only a human can
+  answer. No message is sent for it, so a peek after an empty wait is the only way to find it.
 - Orca types a nudge ("You have 1 orchestration message") into the coordinator's terminal for
-  every message, heartbeats included, whatever the wait's `--types`. With three workers that was
+  every message the wait's `--types` leaves out, heartbeats included. With three workers that was
   three wake-ups in about a minute, none actionable.
 - Heartbeats carry `payload.phase` (`investigating`, `reviewing`): a coarse sign a worker is
   moving.
@@ -293,3 +295,15 @@ Window result (owner fills in): P1 ______  P2 ______  P3 fails (error text: `Typ
   tick would be a script, not an automation.
 - "Absence never authorizes stop, abandon, retry, or release": only proven exit or a finished
   transcript with no `worker_done` allows acting on a silent worker.
+- The worker preamble asks for a heartbeat every 5 minutes while working, with `--phase` one of
+  `investigating|implementing|reviewing|waiting`, and none while blocked in `check --wait` or
+  `ask`. Workers send one within a minute of starting and another at a phase change, not on a
+  5-minute clock. (1.4.222, bundled code and a Run's inbox)
+- A heartbeat is an ordinary message in the Run's mailbox and also stamps the Dispatch's
+  `last_heartbeat_at`, shown as `lastHeartbeatAt` by `worker-show`. Orca's only other reader is
+  the retired daemon coordinator's log warning after ten silent minutes; nothing fails a silent
+  Dispatch. (1.4.222, bundled code)
+- The nudge is typed for unread messages of any type no live wait on that mailbox covers, so with
+  no wait running every `worker_done` is nudged too. Adding `heartbeat` to the wait's `--types`
+  stops its nudge but makes the wait itself return on it. A delivered batch is the whole
+  first-in-first-out batch, heartbeats included. (1.4.222, bundled code and a smoke test)

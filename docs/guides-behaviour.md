@@ -26,10 +26,33 @@ themselves say how they are meant to work.
   at 4348866.
 - The second round of judges found three two-way findings, two introduced by the first fix round;
   no one-way door was decided without a question. Seen at 4348866.
+- `mt` was not installed during the Run. Workers ran `cli/mt` from their worktree only because
+  each spec said so; no stub was reachable through a skill list. Seen at 5066581.
+- The coordinator read the guides straight from the worktree, so the log has no to-orca, overlay
+  or door-rule load from its session. In a Run on agent-tools the guides sit in the worktree, and
+  nothing steers an agent to `mt get` over opening the file. Seen at 5066581.
+
+## Seen installing `mt`
+
+- The main clone pulled #23 while orca-worker was already linked from it, so the linked skill
+  became a stub that runs `mt get` with `mt` not yet on PATH. Seen at 06afad7.
+
+## Seen smoke-testing "Send no heartbeats"
+
+Five read-only workers on 67fa9cc with the line added to the orca-worker guide.
+
+- Before the line, 7 of a Run's 11 workers sent heartbeats, 9 in all. Seen at 5066581.
+- With the line in the guide only, 1 of 4 workers sent one: its first command ran `mt get
+  orca-worker` and the heartbeat together, before it had read the guide. The other three, running
+  1m23s to 4m13s, sent none.
+- With the line in the spec's Constraints as well, the one worker, running 4m59s, sent none.
+- No worker ran long enough to show whether one that has read the line holds to it past the
+  preamble's 5-minute interval.
 
 ## Seen coordinating the mvc Run
 
-Guides as installed from the main clone at 67fa9cc; the branch under change was this repo's own.
+Guides as installed from the main clone: 67fa9cc until it moved to the heartbeat change mid-Run
+(b8ade75); the branch under change was this repo's own.
 
 - to-orca's stub has `disable-model-invocation`, so an agent asked to "use orca to drive this
   shape" has its skill call refused; the owner has to type `/to-orca <shape>`.
@@ -47,8 +70,11 @@ Guides as installed from the main clone at 67fa9cc; the branch under change was 
   next maintainer-review caught.
 - A finding whose fix needed dependencies the shape's constraints forbade (type-checking) went to
   the owner, as the door rule says a contradiction with the spec does.
-- A surprise-review judge reported that orca-worker tells it to send no heartbeats; the guide says
-  nothing about heartbeats.
+- The main clone took "Send no heartbeats" (312c155) mid-Run, and the workers picked it up through
+  `mt get`: T1 to T6 sent heartbeats, the five Tasks started while it was being written (T7 to
+  T11) sent none, and one judge named the line. The last Task, started after the
+  merge, still sent one while implementing; its spec lacked the Constraints line, because the
+  coordinator had loaded to-orca before the change.
 - surprise-review, which runs nothing, judged runtime claims (Bun installing a missing package at
   run time, AskUserQuestion returning before the owner's next message) from documentation, and
   said so in its assumptions.

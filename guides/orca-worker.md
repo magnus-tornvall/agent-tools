@@ -4,6 +4,9 @@ How to work an Orca Task. What the work is, and how to check it, is the spec's a
 guide's; how to sequence it is yours. Orca's injected preamble names the commands that ask and
 report; this guide says what the report holds.
 
+Send no heartbeats, whatever the preamble asks. Each one wakes the coordinator for nothing; it
+reads whether you are alive from your terminal.
+
 ## Authority
 
 The spec is authoritative, and so are the replies to your own questions. A contradiction between
