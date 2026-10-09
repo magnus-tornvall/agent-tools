@@ -88,10 +88,10 @@ The schema is `src/shape/shape.ts`. `mt shape` loads it only when called, so `mt
 
 mvc parks an unfinished grill on the owner's word and resumes it in a later session. A slug has
 one draft, at `${XDG_STATE_HOME:-$HOME/.local/state}/mt/mvc/<repo>/<slug>/draft.md`. `<repo>` is
-the name of the main clone's directory, the parent of `git rev-parse --git-common-dir`, or that
-directory itself in a bare clone, so every worktree of a clone shares its drafts and a draft
-outlives the worktree it was parked from. A slug follows the rule for a tool's name: letters,
-digits, `.`, `_` and `-`, not starting with `.`.
+the name of the directory `git rev-parse --git-common-dir` prints, or of its parent when it is
+named `.git`, so every worktree of a clone shares its drafts and a draft outlives the worktree it
+was parked from. A slug follows the rule for a tool's name: letters, digits, `.`, `_` and `-`, not
+starting with `.`.
 
 `mt mvc save <slug> <file>` writes the draft, replacing the slug's earlier one, and prints its
 path. `-` reads the body from stdin. Above the body, which it writes verbatim and never checks,
@@ -99,14 +99,16 @@ path. `-` reads the body from stdin. Above the body, which it writes verbatim an
 
 | key      | value                                                                 |
 | -------- | --------------------------------------------------------------------- |
-| `repo`   | the main clone's directory name, as in the path                       |
+| `repo`   | `<repo>`, as in the path                                              |
 | `commit` | `HEAD` of the repo save runs in, not of `mt`'s clone                  |
 | `saved`  | UTC time of the save, ISO 8601                                        |
 | `status` | `open`, until `mt mvc close` sets it to `closed`; a save reopens it   |
 
-Outside a git repository, or in one with no commit yet, save exits 1 and writes nothing. There
-is no resume command: the agent reads the draft at its location, and judges what still holds of
-what it cites by what changed since its commit.
+Outside a git repository, or in one with no commit yet, save exits 1 and writes nothing. A save
+writes a temporary file beside the draft and renames it over the draft, so an interrupted save
+leaves the earlier draft whole; a draft it cannot write exits 1 with `mt: cannot write <path>`.
+There is no resume command: the agent reads the draft at its location, and judges what still holds
+of what it cites by what changed since its commit.
 
 `mt mvc close <slug> <shape-file>` runs `mt shape check` on the shape file. When it passes, close
 sets the draft's status to `closed`, prints nothing and exits 0; otherwise it exits 1 with the
@@ -114,8 +116,8 @@ check's violations on stderr and leaves the draft open. It never writes the shap
 with no draft in the current repo exits 1.
 
 A draft is never a shape: `mt shape check` fails on one. A usage error, such as a slug that breaks
-the rule, exits 2; an unreadable file exits 1. Like `mt shape`, `mt mvc` loads its code,
-`src/mvc/`, only when called.
+the rule, exits 2; an unreadable file or a draft it cannot write exits 1. Like `mt shape`, `mt mvc`
+loads its code, `src/mvc/`, only when called.
 
 ### Dogfooding
 
