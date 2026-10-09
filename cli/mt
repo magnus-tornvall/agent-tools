@@ -1,6 +1,7 @@
 #!/usr/bin/env bun
-// mt: load the know-how of the owner's tools on demand, record every load, and check shapes.
-// get and list need nothing beyond this file; shape loads src/shape/ only when it is called.
+// mt: load the know-how of the owner's tools on demand, record every load, check shapes, and file
+// dogfooding findings. get, list and dogfood need nothing beyond this file and, for dogfood, gh;
+// shape loads src/shape/ only when it is called.
 
 import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, statSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
@@ -10,6 +11,9 @@ const USAGE = `usage: mt get <tool> [--ref <ref>]   print the guide for a tool, 
        mt shape check <file>         check that a file is a shape
        mt shape slice <file> --keys <key,...>
                                      print only those top-level keys of a shape
+       mt dogfood <title> [--body-file <file>]
+                                     file a finding as an issue labelled dogfooding on
+                                     this repo's GitHub, through gh; - reads the body from stdin
        mt --help                     show this usage
 
 Every \`get\` is appended to $MT_LOG, or \${XDG_STATE_HOME:-$HOME/.local/state}/mt/usage.jsonl.
@@ -143,6 +147,75 @@ function cmdList(): number {
   return 0;
 }
 
+function orcaVersion(): string | null {
+  if (Bun.which("orca") === null) return null;
+  const result = Bun.spawnSync(["orca", "--version"], { stderr: "ignore" });
+  return result.success ? nonEmpty(result.stdout.toString().trim()) : null;
+}
+
+/** What the finding was seen on, appended to its body so the issue says it without the agent writing it. */
+function seenOn(): string {
+  const env = process.env;
+  const facts: [string, string | null][] = [
+    ["mt commit", headCommit()],
+    ["orca", orcaVersion()],
+    ["session", nonEmpty(env.CLAUDE_CODE_SESSION_ID)],
+    ["terminal", nonEmpty(env.ORCA_TERMINAL_HANDLE)],
+    ["worktree", nonEmpty(env.ORCA_WORKTREE_ID)],
+  ];
+  const lines = facts.filter(([, value]) => value !== null).map(([key, value]) => `- ${key}: \`${value}\``);
+  return `---\nFiled with \`mt dogfood\`.\n${lines.join("\n")}\n`;
+}
+
+function cmdDogfood(args: string[]): number {
+  let title = "";
+  let bodyFile = "";
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i] ?? "";
+    if (arg === "--body-file") {
+      if (i + 1 >= args.length) throw new UsageError("--body-file needs a value");
+      bodyFile = args[++i] ?? "";
+    } else if (arg.startsWith("-")) {
+      throw new UsageError(`unknown option '${arg}'`);
+    } else {
+      if (title !== "") throw new UsageError(`unexpected argument '${arg}'`);
+      title = arg;
+    }
+  }
+  if (title.trim() === "") throw new UsageError("dogfood needs a title");
+
+  let body = "";
+  if (bodyFile !== "") {
+    try {
+      body = readFileSync(bodyFile === "-" ? 0 : bodyFile, "utf8").trim();
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error);
+      process.stderr.write(`mt: cannot read '${bodyFile}': ${reason}\n`);
+      return 1;
+    }
+  }
+
+  if (Bun.which("gh") === null) {
+    process.stderr.write("mt: finding not filed: gh is not on PATH\n");
+    return 0;
+  }
+  const result = Bun.spawnSync(
+    ["gh", "issue", "create", "--title", title, "--label", "dogfooding", "--body-file", "-"],
+    {
+      cwd: ROOT,
+      stdin: Buffer.from(body === "" ? seenOn() : `${body}\n\n${seenOn()}`),
+      env: { ...process.env, GH_PROMPT_DISABLED: "1" },
+    },
+  );
+  if (!result.success) {
+    const reason = result.stderr.toString().split("\n").find((line) => line.trim() !== "") ?? "gh failed";
+    process.stderr.write(`mt: finding not filed: ${reason.trim()}\n`);
+    return 0;
+  }
+  process.stdout.write(result.stdout);
+  return 0;
+}
+
 async function cmdShape(args: string[]): Promise<number> {
   const { runShape }: typeof import("../src/shape/command.ts") = await import(join(ROOT, "src/shape/command.ts"));
   return runShape(args);
@@ -157,6 +230,8 @@ async function main(args: string[]): Promise<number> {
       return cmdList();
     case "shape":
       return cmdShape(rest);
+    case "dogfood":
+      return cmdDogfood(rest);
     case "":
     case "-h":
     case "--help":
