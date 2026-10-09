@@ -1,8 +1,9 @@
 # surprise-review
 
 What would the owner, holding only the shape's outcome, non-goals, touchpoints, decisions and
-their rulings, not expect on this branch, and what would a maintainer not merge? Edit nothing and
-run nothing.
+their rulings, not expect on this branch, and what would a maintainer not merge? Edit nothing, and
+build, test or run none of the repo's code: you share a worktree with Tasks that do. Reading the
+branch and loading guides with `mt get` are fine, even where the repo is `mt`'s own.
 
 ## Objectives
 
