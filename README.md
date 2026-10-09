@@ -61,11 +61,14 @@ If the log cannot be written, `mt` says so on stderr and still prints the guide.
 
 `mt shape check <file>` prints nothing and exits 0 when the file is a shape. Otherwise it
 prints one `path: message` line per violation on stderr and exits 1; a file that is not YAML
-is one violation, on `(document)`.
+is one violation, on `(document)`. A key repeated in `requirements`, `non_goals` or
+`decisions` is a violation on that key, found in block-style maps; YAML keeps only the last
+of a repeated key, so without this one entry would be dropped silently.
 
 `mt shape slice <file> --keys outcome,non_goals` prints a YAML document with only those
 top-level keys of the shape, their values unchanged. A key the schema does not define, or a
-file that is not a shape, exits 1 with nothing on stdout.
+file that is not YAML or whose top level is not a map, exits 1 with nothing on stdout. Slice
+does not run the check, so a shape with a violation the owner ruled on can still be sliced.
 
 The schema is `src/shape/shape.ts`. `mt shape` loads it only when called, so `mt get` and
 `mt list` need nothing beyond `cli/mt` and Bun.
@@ -74,7 +77,11 @@ The schema is `src/shape/shape.ts`. `mt shape` loads it only when called, so `mt
 
 `mt` is TypeScript run by [Bun](https://bun.sh). Bun must be on the PATH that agents and Orca
 workers launch with, not only on your interactive shell's, or every `mt` command they run
-fails. Install Bun, then install the dependencies from the clone; `mt shape` needs them:
+fails. Use Bun 1.2.23 or later: `Bun.YAML.parse` arrived in 1.2.21, `Bun.YAML.stringify` in
+1.2.22, and from 1.2.23 `Bun.YAML.parse` throws a `SyntaxError` on invalid input, which `mt
+shape` relies on ([release notes](https://bun.com/blog/release-notes/bun-v1.2.23)). It is
+tested on 1.3.14. Install Bun, then install the dependencies from the clone; `mt shape` needs
+them:
 
 ```sh
 bun install
@@ -92,8 +99,10 @@ done
 
 Use the skills folder your agent reads; `~/.agents/skills` is one example. `-n` replaces a
 link that is already there instead of writing a stray link inside the folder it points to.
-A real folder is not replaced: a tool installed there as a copy, such as a whole mvc from
-before it became a guide, gets a stray link inside it. Move the copy aside first.
+A skill installed as a real folder is not replaced by the loop, and the loop writes a stray
+link inside it. The whole mvc from before it became a guide is such a folder, and the old and
+the new mvc cannot both be installed as `mvc`. To keep the old one for a later comparison, move
+it out of the skills folder rather than delete it.
 
 Let agents run `mt` without a prompt by adding these rules to the agent's permission
 settings, for Claude Code the `permissions.allow` list in `~/.claude/settings.json`:
@@ -113,10 +122,13 @@ fails on its first command.
 ```sh
 bash test/mt.sh
 bun test
+bun run typecheck
 ```
 
 `test/mt.sh` checks `mt get` and `mt list`, and needs `python3` on PATH to parse the log's
 JSON lines; `mt` itself needs only Bun. `bun test` checks the shape schema and `mt shape`.
+`bun run typecheck` runs `tsc --noEmit` over `src/`; `tsc` cannot read `cli/mt`, which has no
+extension.
 
 ## Layout
 
