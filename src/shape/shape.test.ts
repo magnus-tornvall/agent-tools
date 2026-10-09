@@ -135,6 +135,60 @@ describe("parseShape", () => {
     ]);
   });
 
+  test.each(["", "   ", "\t"])("reports a who_pays of %p as empty, not as missing", (empty: string) => {
+    const shape = example();
+    decision(shape, "D1").who_pays = empty;
+
+    expect(violationsOf(shape)).toEqual([{ path: "decisions.D1.who_pays", message: "must not be empty" }]);
+  });
+
+  test.each(["", "  "])("reports a question of %p as empty, not as missing", (empty: string) => {
+    const shape = example();
+    decision(shape, "D1").question = empty;
+
+    expect(violationsOf(shape)).toEqual([{ path: "decisions.D1.question", message: "must not be empty" }]);
+  });
+
+  test.each(["", "  "])("reports an outcome of %p as empty", (empty: string) => {
+    expect(violationsOf({ ...example(), outcome: empty })).toEqual([{ path: "outcome", message: "must not be empty" }]);
+  });
+
+  test("reports each empty string in a decision, a non-goal and the lists at its own path", () => {
+    const shape = example();
+    const d1 = decision(shape, "D1");
+    d1.decision = " ";
+    d1.provenance = "";
+    d1.rejected = ["a real alternative", ""];
+    const n1 = fields(fields(shape.non_goals, "non_goals").N1, "N1");
+    n1.item = "";
+    n1.reason = " ";
+    shape.approach = ["", "a step"];
+    shape.constraints = ["a limit", " "];
+
+    expect(paths(shape).sort()).toEqual([
+      "approach.0",
+      "constraints.1",
+      "decisions.D1.decision",
+      "decisions.D1.provenance",
+      "decisions.D1.rejected.1",
+      "non_goals.N1.item",
+      "non_goals.N1.reason",
+    ]);
+  });
+
+  test("reports each empty field of a requirement at its own path, whichever form it has", () => {
+    const shape = example();
+    const requirements = fields(shape.requirements, "requirements");
+    requirements.R1 = { given: "", when: "it is cancelled", then: " " };
+    requirements.R3 = { text: "", reason: "no way to observe it" };
+
+    expect(violationsOf(shape)).toEqual([
+      { path: "requirements.R1.given", message: "must not be empty" },
+      { path: "requirements.R1.then", message: "must not be empty" },
+      { path: "requirements.R3.text", message: "must not be empty" },
+    ]);
+  });
+
   test("reports a file that is not YAML as one violation on the whole document", () => {
     const parsed = parseShape("outcome: [unclosed\n");
 
@@ -177,6 +231,18 @@ describe("parseShape", () => {
     expect(parsed.ok).toBe(false);
     if (parsed.ok) return;
     expect(parsed.violations.filter((violation) => violation.path === "requirements.R1")).toHaveLength(1);
+  });
+
+  test("reports a repeated top-level key as a violation on that key", () => {
+    const yaml = `${EXAMPLE}\noutcome: a second outcome\n`;
+
+    expect(parseShape(yaml)).toEqual({ ok: false, violations: [{ path: "outcome", message: "key appears more than once" }] });
+  });
+
+  test("reports a repeated top-level map key, which would drop the first map's entries", () => {
+    const yaml = `${EXAMPLE}\nrequirements:\n  R9: {text: a, reason: b}\n`;
+
+    expect(parseShape(yaml)).toEqual({ ok: false, violations: [{ path: "requirements", message: "key appears more than once" }] });
   });
 
   test("reports a document that is not a map", () => {

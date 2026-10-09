@@ -6,9 +6,15 @@
  */
 import { z } from "zod";
 
-export function idKey(prefix: string) {
+function idKey(prefix: string) {
   return z.string().regex(new RegExp(`^${prefix}[1-9][0-9]*$`), `must be ${prefix} followed by a number from 1`);
 }
+
+const EMPTY = "must not be empty";
+
+const hasContent = (value: string) => value.trim() !== "";
+
+const Text = z.string().refine(hasContent, EMPTY);
 
 const Observable = z.strictObject({ given: z.string(), when: z.string(), then: z.string() });
 
@@ -20,28 +26,34 @@ const NotObservable = z.strictObject({
 
 const REQUIREMENT_FORMS = "must be either given, when and then, or text and reason";
 
-const Requirement = z.union([Observable, NotObservable], { error: REQUIREMENT_FORMS });
+// The form is checked on plain strings so a wrong form is reported once, whole; the content of
+// each field is checked after, so an empty one is reported at its own path.
+const Requirement = z.union([Observable, NotObservable], { error: REQUIREMENT_FORMS }).superRefine((requirement, context) => {
+  for (const [field, value] of Object.entries(requirement)) {
+    if (!hasContent(value)) context.addIssue({ code: "custom", path: [field], message: EMPTY });
+  }
+});
 
 const NonGoal = z.strictObject({
-  item: z.string(),
+  item: Text,
   type: z.enum(["boundary", "deferral"]),
   /** The line that separates a boundary from this change, or why a deferral is not now. */
-  reason: z.string(),
+  reason: Text,
 });
 
 const Decision = z
   .strictObject({
-    decision: z.string(),
-    rejected: z.array(z.string()).min(1, "must name at least one rejected alternative"),
+    decision: Text,
+    rejected: z.array(Text).min(1, "must name at least one rejected alternative"),
     /** Evidence for the decision, never a bare question or assumption ID. */
-    provenance: z.string(),
+    provenance: Text,
     door: z.enum(["one_way", "two_way"]),
     /** Who pays if a one-way door turns out wrong. */
-    who_pays: z.string().optional(),
+    who_pays: Text.optional(),
     /** `silence` when the decision was an assumption nobody corrected. */
     decided_by: z.enum(["owner", "silence"]),
     /** The question the owner answered, as it was asked. */
-    question: z.string().optional(),
+    question: Text.optional(),
   })
   .superRefine((decision, context) => {
     if (decision.door === "one_way" && decision.who_pays === undefined) {
@@ -78,13 +90,13 @@ export function isTouchpoint(touchpoint: string): boolean {
 const Touchpoint = z.string().refine(isTouchpoint, "must be a path relative to the repo root, or path:symbol");
 
 export const Shape = z.strictObject({
-  outcome: z.string(),
+  outcome: Text,
   requirements: z
     .record(idKey("R"), Requirement)
     .refine((requirements) => Object.keys(requirements).length > 0, "must have at least one requirement"),
   non_goals: z.record(idKey("N"), NonGoal),
-  approach: z.array(z.string()),
-  constraints: z.array(z.string()),
+  approach: z.array(Text),
+  constraints: z.array(Text),
   touchpoints: z.array(Touchpoint),
   decisions: z.record(idKey("D"), Decision),
 });
@@ -123,20 +135,25 @@ const ID_MAPS = ["requirements", "non_goals", "decisions"];
 const MAP_KEY = /^( *)(?:"([^"]*)"|'([^']*)'|([^\s#:][^#:]*?))\s*:(?:\s|$)/;
 
 /**
- * Bun.YAML.parse keeps the last of a repeated key, so a repeat is found in the text: the keys of
- * the requirements, non_goals and decisions maps, written as block maps, that appear more than
- * once under one map.
+ * Bun.YAML.parse keeps the last of a repeated key, so a repeat is found in the text: a top-level
+ * key, or a key of the requirements, non_goals or decisions map, written as a block map, that
+ * appears more than once under one map.
  */
 function repeatedKeys(yaml: string): Violation[] {
   const found: Violation[] = [];
   let section: string | undefined;
   let indent: number | undefined;
   let seen = new Set<string>();
+  const topLevel = new Set<string>();
   for (const line of yaml.split(/\r?\n/)) {
     if (line.trim() === "" || line.trimStart().startsWith("#")) continue;
     const match = MAP_KEY.exec(line);
     const key = match?.[2] ?? match?.[3] ?? match?.[4];
     if (!line.startsWith(" ")) {
+      if (key !== undefined) {
+        if (topLevel.has(key)) found.push({ path: key, message: "key appears more than once" });
+        topLevel.add(key);
+      }
       section = key !== undefined && ID_MAPS.includes(key) ? key : undefined;
       indent = undefined;
       seen = new Set();
@@ -167,7 +184,7 @@ function violations(issue: z.core.$ZodIssue): Violation[] {
   const path = issue.path.map(String);
   // Zod reports a union that one branch nearly matched as that branch's issues; a requirement is
   // reported whole, so a mixed form does not read as an error in one form.
-  if (path[0] === "requirements" && path.length >= 2 && issue.code !== "invalid_key") {
+  if (path[0] === "requirements" && path.length >= 2 && issue.code !== "invalid_key" && issue.code !== "custom") {
     return [{ path: path.slice(0, 2).join("."), message: REQUIREMENT_FORMS }];
   }
   switch (issue.code) {
