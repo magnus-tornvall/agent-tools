@@ -258,6 +258,18 @@ describe("parseShape", () => {
   });
 });
 
+describe("parseShape on a draft", () => {
+  test("lists the draft line before every other violation", () => {
+    const yaml = Bun.YAML.stringify({ draft: { budget: 3, rounds_spent: 1, open: [] } });
+    const parsed = parseShape(yaml);
+
+    expect(parsed.ok).toBe(false);
+    const violations = parsed.ok ? [] : parsed.violations;
+    expect(violations.length).toBeGreaterThan(1);
+    expect(violations[0]).toEqual({ path: "draft", message: "a draft is not a shape; check it with --draft" });
+  });
+});
+
 describe("parseDraft", () => {
   const block = { budget: 3, rounds_spent: 1, open: [{ question: "Who reads the export?", stance: "Finance only." }] };
 

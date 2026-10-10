@@ -201,8 +201,9 @@ export function parseShape(yaml: string): Parsed {
   const parsed = parseDocument(yaml);
   if (!parsed.ok) return { ok: false, violations: [parsed.violation] };
   const { draft, ...document } = parsed.document;
-  const drafted: Violation[] = draft === undefined ? [] : [{ path: "draft", message: NOT_A_SHAPE }];
-  return checked(Shape, document, [...drafted, ...repeatedKeys(yaml)]);
+  const result = checked(Shape, document, repeatedKeys(yaml));
+  if (draft === undefined) return result;
+  return { ok: false, violations: [{ path: "draft", message: NOT_A_SHAPE }, ...(result.ok ? [] : result.violations)] };
 }
 
 /** A draft: its `draft` block, and whatever shape fields it has so far. */
