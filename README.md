@@ -79,9 +79,10 @@ If the log cannot be written, `mt` says so on stderr and still prints the guide.
 prints one `path: message` line per violation on stderr and exits 1; a file that is not YAML
 is one violation, on `(document)`, and a `draft` key is one on `draft`. With `--draft` it
 checks a draft instead: the `draft` block is required and checked, and every other key is
-optional but checked when present, `requirements` with no minimum. A key repeated in `requirements`, `non_goals` or
-`decisions` is a violation on that key, found in block-style maps; YAML keeps only the last
-of a repeated key, so without this one entry would be dropped silently.
+optional but checked when present, `requirements` with no minimum. A key repeated in
+`requirements`, `non_goals` or `decisions` is a violation on that key, found in block-style
+maps; YAML keeps only the last of a repeated key, so without this one entry would be dropped
+silently.
 
 `mt shape slice <file> --keys outcome,non_goals` prints a YAML document with only those
 top-level keys of the shape, their values unchanged. A key the schema does not define, or a
