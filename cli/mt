@@ -1,7 +1,8 @@
 #!/usr/bin/env bun
 // mt: load the know-how of the owner's tools on demand, record every load, check shapes, park mvc
-// grills, and file dogfooding findings. get, list and dogfood need nothing beyond this file and, for
-// dogfood, gh; shape and mvc load src/shape/ and src/mvc/ only when they are called.
+// grills, and file and triage dogfooding findings. get, list and dogfood need nothing beyond this file
+// and, for dogfood, gh; shape, mvc and dogfood triage load src/shape/, src/mvc/ and src/dogfood/ only
+// when they are called.
 
 import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, statSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
@@ -18,6 +19,9 @@ const USAGE = `usage: mt get <tool> [--ref <ref>]   print the guide for a tool, 
        mt dogfood <title> [--body-file <file>]
                                      file a finding as an issue labelled dogfooding on
                                      this repo's GitHub, through gh; - reads the body from stdin
+       mt dogfood triage             sort the open dogfooding issues into duplicates,
+                                     no-brainers and ones to rule on, as jev judges them;
+                                     needs TYPESAFE_API_KEY, and changes nothing on GitHub
        mt --help                     show this usage
 
 Every \`get\` is appended to $MT_LOG, or \${XDG_STATE_HOME:-$HOME/.local/state}/mt/usage.jsonl.
@@ -190,7 +194,11 @@ function seenOn(): string {
   return `---\nFiled with \`mt dogfood\`.\n${lines.join("\n")}\n`;
 }
 
-function cmdDogfood(args: string[]): number {
+async function cmdDogfood(args: string[]): Promise<number> {
+  if (args[0] === "triage") {
+    const { runTriage }: typeof import("../src/dogfood/triage.ts") = await import(join(ROOT, "src/dogfood/triage.ts"));
+    return runTriage(args.slice(1), ROOT);
+  }
   let title = "";
   let bodyFile = "";
   for (let i = 0; i < args.length; i++) {
