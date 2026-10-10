@@ -41,6 +41,17 @@ function mt(...args: string[]) {
   return { code: result.exitCode, stdout: result.stdout.toString(), stderr: result.stderr.toString() };
 }
 
+function mtWith(stdin: string, ...args: string[]) {
+  const result = Bun.spawnSync([MT, ...args], { env: { ...process.env, MT_LOG: join(TMP, "usage.jsonl") }, stdin: Buffer.from(stdin) });
+  return { code: result.exitCode, stdout: result.stdout.toString(), stderr: result.stderr.toString() };
+}
+
+/** The example made a draft: one open question, no requirements yet. */
+function draft(): Fields {
+  const { requirements: _requirements, ...rest } = example();
+  return { ...rest, draft: { commit: "21d46e6", budget: 3, rounds_spent: 1, open: [{ question: "Is a closed export emailed?", stance: "No; it is downloaded." }] } };
+}
+
 function check(shape: unknown) {
   return mt("shape", "check", file(Bun.YAML.stringify(shape, null, 2)));
 }
@@ -154,6 +165,81 @@ describe("mt shape check", () => {
     expect(mt("shape", "check")).toMatchObject({ code: 2, stdout: "" });
     expect(mt("shape", "check", EXAMPLE_FILE, EXAMPLE_FILE)).toMatchObject({ code: 2, stdout: "" });
   });
+
+  test("exits 2 with usage on an option it does not know", () => {
+    expect(mt("shape", "check", "--drafts", EXAMPLE_FILE)).toMatchObject({ code: 2, stdout: "" });
+  });
+
+  test("reads a shape from stdin given -, printing nothing and exiting 0", () => {
+    expect(mtWith(EXAMPLE, "shape", "check", "-")).toEqual({ code: 0, stdout: "", stderr: "" });
+  });
+
+  test("reads a shape with a violation from stdin given -, one path: message line each", () => {
+    const shape = example();
+    shape.requirements = {};
+    decision(shape, "D3").rejected = [];
+
+    const result = mtWith(Bun.YAML.stringify(shape, null, 2), "shape", "check", "-");
+
+    expect(result.code).toBe(1);
+    expect(result.stdout).toBe("");
+    expect(stderrLines(result.stderr).sort()).toEqual([
+      "decisions.D3.rejected: must name at least one rejected alternative",
+      "requirements: must have at least one requirement",
+    ]);
+  });
+
+  test("fails a shape with a top-level draft key, naming the key", () => {
+    const result = check({ ...example(), draft: { budget: 3, rounds_spent: 0, open: [] } });
+
+    expect(result.code).toBe(1);
+    expect(stderrLines(result.stderr)).toEqual(["draft: a draft is not a shape; check it with --draft"]);
+  });
+
+  test("fails a draft on its draft key alongside what it still lacks", () => {
+    const result = check(draft());
+
+    expect(result.code).toBe(1);
+    expect(stderrLines(result.stderr).sort()).toEqual(["draft: a draft is not a shape; check it with --draft", expect.stringMatching(/^requirements: /)]);
+  });
+});
+
+describe("mt shape check --draft", () => {
+  test("prints nothing and exits 0 on a draft with an open question and no requirements", () => {
+    expect(mt("shape", "check", "--draft", file(Bun.YAML.stringify(draft(), null, 2)))).toEqual({ code: 0, stdout: "", stderr: "" });
+  });
+
+  test("takes --draft after the file, and the draft from stdin", () => {
+    expect(mtWith(Bun.YAML.stringify(draft(), null, 2), "shape", "check", "-", "--draft")).toEqual({ code: 0, stdout: "", stderr: "" });
+  });
+
+  test("fails a draft whose rounds_spent is not a number, at draft.rounds_spent", () => {
+    const document = draft();
+    fields(document.draft, "draft").rounds_spent = "one";
+
+    const result = mt("shape", "check", "--draft", file(Bun.YAML.stringify(document, null, 2)));
+
+    expect(result.code).toBe(1);
+    expect(result.stdout).toBe("");
+    expect(stderrLines(result.stderr)).toEqual([expect.stringMatching(/^draft\.rounds_spent: /)]);
+  });
+
+  test("checks every shape field the draft has", () => {
+    const document = draft();
+    decision(document, "D3").rejected = [];
+
+    const result = mt("shape", "check", "--draft", file(Bun.YAML.stringify(document, null, 2)));
+
+    expect(result.code).toBe(1);
+    expect(stderrLines(result.stderr)).toEqual(["decisions.D3.rejected: must name at least one rejected alternative"]);
+  });
+
+  test("fails a closed shape, which has no draft block", () => {
+    const result = mt("shape", "check", "--draft", EXAMPLE_FILE);
+
+    expect(result.code).toBe(1);
+    expect(stderrLines(result.stderr)).toEqual([expect.stringMatching(/^draft: /)]);
+  });
 });
 
 describe("mt shape slice", () => {
@@ -209,6 +295,24 @@ describe("mt shape slice", () => {
 
     expect(result.code).toBe(0);
     expect(Bun.YAML.parse(result.stdout)).toEqual({ outcome: "x" });
+  });
+
+  test("reads the shape from stdin given -", () => {
+    const result = mtWith(EXAMPLE, "shape", "slice", "-", "--keys", "outcome,non_goals");
+
+    expect(result.code).toBe(0);
+    expect(result.stderr).toBe("");
+    const { outcome, non_goals } = example();
+    expect(Bun.YAML.parse(result.stdout)).toEqual({ outcome, non_goals });
+  });
+
+  test("slices a draft's draft block", () => {
+    const document = draft();
+
+    const result = mtWith(Bun.YAML.stringify(document, null, 2), "shape", "slice", "-", "--keys", "draft");
+
+    expect(result.code).toBe(0);
+    expect(Bun.YAML.parse(result.stdout)).toEqual({ draft: document.draft });
   });
 
   test("exits 2 with usage without --keys or a file", () => {

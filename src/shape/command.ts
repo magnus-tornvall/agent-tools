@@ -1,25 +1,27 @@
 /**
  * `mt shape`, which cli/mt loads only when it is called.
  *
- *   mt shape check <file>                  nothing and exit 0 on a shape, otherwise one
- *                                          `path: message` line per violation and exit 1
+ *   mt shape check [--draft] <file>        nothing and exit 0 on a shape, or with --draft on a
+ *                                          draft, otherwise one `path: message` line per violation
+ *                                          and exit 1
  *   mt shape slice <file> --keys <a,b>     the shape with only those top-level keys, as YAML; the
  *                                          file need only be a YAML map, not pass the check
  *
- * Usage errors exit 2.
+ * A file of `-` is read from stdin. Usage errors exit 2.
  */
 import { readFileSync } from "node:fs";
-import { parseDocument, parseShape, SHAPE_KEYS, type Violation } from "./shape.ts";
+import { parseDocument, parseDraft, parseShape, SHAPE_KEYS, type Violation } from "./shape.ts";
 
-const USAGE = `usage: mt shape check <file>
+const USAGE = `usage: mt shape check [--draft] <file>
        mt shape slice <file> --keys <key,...>
+A file of - is read from stdin.
 `;
 
 class UsageError extends Error {}
 
 function readShape(file: string): string | undefined {
   try {
-    return readFileSync(file, "utf8");
+    return readFileSync(file === "-" ? 0 : file, "utf8");
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
     process.stderr.write(`mt: cannot read '${file}': ${reason}\n`);
@@ -32,12 +34,24 @@ function report(violations: readonly Violation[]): void {
   process.stderr.write(lines.join(""));
 }
 
+/** A file operand: `-` for stdin, or a path that does not start with `-`. */
+function isFile(arg: string): boolean {
+  return arg === "-" || !arg.startsWith("-");
+}
+
 function check(args: readonly string[]): number {
-  const [file, ...rest] = args;
-  if (file === undefined || file.startsWith("-") || rest.length > 0) throw new UsageError("check takes one file");
+  let draft = false;
+  const files: string[] = [];
+  for (const arg of args) {
+    if (arg === "--draft") draft = true;
+    else if (isFile(arg)) files.push(arg);
+    else throw new UsageError(`unknown option '${arg}'`);
+  }
+  const [file, ...rest] = files;
+  if (file === undefined || rest.length > 0) throw new UsageError("check takes one file");
   const yaml = readShape(file);
   if (yaml === undefined) return 1;
-  const parsed = parseShape(yaml);
+  const parsed = draft ? parseDraft(yaml) : parseShape(yaml);
   if (parsed.ok) return 0;
   report(parsed.violations);
   return 1;
@@ -52,7 +66,7 @@ function slice(args: readonly string[]): number {
       const value = args[++i];
       if (value === undefined || value === "") throw new UsageError("--keys needs a value");
       keys = value.split(",");
-    } else if (arg.startsWith("-")) {
+    } else if (!isFile(arg)) {
       throw new UsageError(`unknown option '${arg}'`);
     } else {
       if (file !== undefined) throw new UsageError(`unexpected argument '${arg}'`);
