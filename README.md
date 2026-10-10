@@ -43,6 +43,8 @@ mt mvc close <slug> <shape-file>
                               close the slug's draft once the file passes mt shape check
 mt dogfood <title> [--body-file <file>]
                               file a finding as an issue labelled dogfooding; - reads stdin
+mt dogfood triage             sort the open dogfooding issues into duplicates, no-brainers and
+                              ones to rule on; needs TYPESAFE_API_KEY
 ```
 
 A reference is a file under `guides/<name>/<ref>.md`, for example
@@ -133,11 +135,30 @@ the same variables as the usage log, each only when set.
 
 When the finding cannot be filed, because `gh` is not on PATH, not authenticated or fails
 otherwise, `mt` prints one `mt: finding not filed: <reason>` line on stderr, nothing on stdout, and
-still exits 0, so the agent carries on. A usage error exits 2, an unreadable body file 1.
+still exits 0, so the agent carries on. A usage error exits 2, an unreadable body file 1. Since
+`triage` is a subcommand, a finding titled exactly `triage` cannot be filed.
+
+`mt dogfood triage` reads the open issues labelled `dogfooding` through `gh` and asks
+[jev](https://docs.typesafe.ai) to sort them. It prints one report and changes nothing on GitHub:
+a first line names the jev model that answered (`TYPESAFE_DEFAULT_MODEL` picks one, `jev-latest`
+when unset), then three groups, each issue with its number, its title, and jev's probability and
+confidence:
+
+- duplicates: issues jev judges to describe the same defect, grouped;
+- no-brainers: defects in `mt`'s own code or tests that jev judges safe to implement unattended,
+  meaning its answers that it is `mt` code and that it is a no-brainer are each at least 0.70
+  confident;
+- rule on: everything else, including guide wording and Orca's own behaviour, with a label saying
+  why.
+
+It needs `TYPESAFE_API_KEY` set to a jev API key, read from that variable only and never printed.
+The title and body of every open dogfooding issue are sent to `api.typesafe.ai`; the issues are
+already public. Without the key, or when `gh` fails, it prints one line on stderr and exits 1.
 
 `mt dogfood` sits under an ask rule, `Bash(mt dogfood:*)` in `permissions.ask` (see Install), so
-each filing still asks first, since it posts to a public repo. Claude Code checks deny rules, then
-ask rules, then allow rules, so the ask rule prompts even though `Bash(mt:*)` is allowed.
+each filing, which posts to a public repo, and each triage, which sends the issues to jev, still
+asks first. Claude Code checks deny rules, then ask rules, then allow rules, so the ask rule
+prompts even though `Bash(mt:*)` is allowed.
 
 ### Install
 
@@ -155,8 +176,9 @@ make install
 It is safe to run again, after a pull or on a machine that is half set up; it changes only what
 is missing or stale. It:
 
-- checks Bun's version and runs `bun install --frozen-lockfile`, since `mt shape` needs the
-  dependencies;
+- checks Bun's version and runs `bun install --frozen-lockfile`, since `mt shape` needs zod and
+  `mt dogfood triage` needs the jev SDK, `@typesafe-ai/sdk`. Rerun `make install` after pulling, so
+  the SDK is installed;
 - links `cli/mt` as `~/.local/bin/mt`. `mt` finds the guides through the link, so the clone
   stays where it is;
 - links each stub skill that has a guide into `~/.agents/skills`, and removes links into this
