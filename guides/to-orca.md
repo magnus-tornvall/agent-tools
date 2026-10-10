@@ -5,8 +5,9 @@ this session's model to judge one-way doors and surprises; the judging is yours.
 Run must achieve and the lines it never crosses. How to get there, with the tools named at the
 end, is yours to decide.
 
-The shape is the path given as the argument, else the shape file the conversation names; say
-which. With none, or several, ask.
+The shape is the path or reference given as the argument, else the shape the conversation names;
+say which. With none, or several, ask. A shape held outside a file is the one at its reference:
+what is checked and sliced is read from there, piped to `mt shape` as `-`.
 
 ## Objectives
 
@@ -106,7 +107,8 @@ as no work is judged by whoever made it.
 - **The shape format** is the schema `mt shape check <file>` checks against, and the filled-in
   example `mt get mvc --ref example`.
 - **`mt shape slice <file> --keys <key,...>`** gives a judge only the parts of the shape its
-  assignment above says it is given.
+  assignment above says it is given. Both `mt shape` commands read a file of `-` from stdin, and
+  only a whole YAML document.
 - **The ask guide** (`mt get ask`) composes every question to the owner, and says which reach the
   owner through your own question tool (`AskUserQuestion` in Claude Code).
 

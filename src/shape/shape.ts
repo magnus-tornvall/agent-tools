@@ -2,6 +2,9 @@
  * The shape: the contract between whatever produces a shape and Orca. A user opts in by
  * producing one YAML document that conforms to `Shape`; mvc is one producer, not the contract.
  *
+ * A draft is an unfinished shape: the same document with a top-level `draft` block. It is never
+ * a shape; `Draft` checks it with every shape field optional.
+ *
  * This schema is the one source of truth; `mt shape check` and `mt shape slice` both use it.
  */
 import { z } from "zod";
@@ -89,11 +92,11 @@ export function isTouchpoint(touchpoint: string): boolean {
 
 const Touchpoint = z.string().refine(isTouchpoint, "must be a path relative to the repo root, or path:symbol");
 
+const Requirements = z.record(idKey("R"), Requirement);
+
 export const Shape = z.strictObject({
   outcome: Text,
-  requirements: z
-    .record(idKey("R"), Requirement)
-    .refine((requirements) => Object.keys(requirements).length > 0, "must have at least one requirement"),
+  requirements: Requirements.refine((requirements) => Object.keys(requirements).length > 0, "must have at least one requirement"),
   non_goals: z.record(idKey("N"), NonGoal),
   approach: z.array(Text),
   constraints: z.array(Text),
@@ -103,13 +106,34 @@ export const Shape = z.strictObject({
 
 export type Shape = z.infer<typeof Shape>;
 
-export const SHAPE_KEYS: readonly string[] = Shape.keyof().options;
+const Count = z.number().int().nonnegative();
+
+const OpenQuestion = z.strictObject({
+  /** The question as it was asked. */
+  question: Text,
+  /** The position put to the owner with it. */
+  stance: Text,
+});
+
+const DraftBlock = z.strictObject({
+  /** HEAD of the repo when the draft was written; without it, every cited file is read again. */
+  commit: Text.optional(),
+  budget: Count,
+  rounds_spent: Count,
+  open: z.array(OpenQuestion),
+});
+
+export const Draft = Shape.extend({ requirements: Requirements }).partial().extend({ draft: DraftBlock });
+
+export type Draft = z.infer<typeof Draft>;
+
+export const SHAPE_KEYS: readonly string[] = Draft.keyof().options;
 
 /** One way a document fails to be a shape. `path` is dotted, empty for the whole document. */
 export type Violation = { readonly path: string; readonly message: string };
 
-export type Parsed =
-  | { readonly ok: true; readonly shape: Shape }
+export type Parsed<T = Shape> =
+  | { readonly ok: true; readonly shape: T }
   | { readonly ok: false; readonly violations: readonly Violation[] };
 
 /** The document as a map, or the one violation that says why it is not. Only a YAML parse error is one. */
@@ -170,15 +194,31 @@ function repeatedKeys(yaml: string): Violation[] {
   return found.filter((violation, i) => found.findIndex((other) => other.path === violation.path) === i);
 }
 
+const NOT_A_SHAPE = "a draft is not a shape; check it with --draft";
+
+/** A shape. A document with a `draft` block fails on that key, whatever else it holds. */
 export function parseShape(yaml: string): Parsed {
   const parsed = parseDocument(yaml);
   if (!parsed.ok) return { ok: false, violations: [parsed.violation] };
-  const repeated = repeatedKeys(yaml);
-  const result = Shape.safeParse(parsed.document);
-  if (result.success && repeated.length === 0) return { ok: true, shape: result.data };
-  const found = result.success ? [] : result.error.issues.flatMap(violations);
-  const unique = found.filter((violation, i) => found.findIndex((other) => other.path === violation.path) === i);
-  return { ok: false, violations: [...unique, ...repeated] };
+  const { draft, ...document } = parsed.document;
+  const result = checked(Shape, document, repeatedKeys(yaml));
+  if (draft === undefined) return result;
+  return { ok: false, violations: [{ path: "draft", message: NOT_A_SHAPE }, ...(result.ok ? [] : result.violations)] };
+}
+
+/** A draft: its `draft` block, and whatever shape fields it has so far. */
+export function parseDraft(yaml: string): Parsed<Draft> {
+  const parsed = parseDocument(yaml);
+  if (!parsed.ok) return { ok: false, violations: [parsed.violation] };
+  return checked(Draft, parsed.document, repeatedKeys(yaml));
+}
+
+function checked<T>(schema: z.ZodType<T>, document: Record<string, unknown>, found: readonly Violation[]): Parsed<T> {
+  const result = schema.safeParse(document);
+  if (result.success && found.length === 0) return { ok: true, shape: result.data };
+  const issues = result.success ? [] : result.error.issues.flatMap(violations);
+  const unique = issues.filter((violation, i) => issues.findIndex((other) => other.path === violation.path) === i);
+  return { ok: false, violations: [...unique, ...found] };
 }
 
 function violations(issue: z.core.$ZodIssue): Violation[] {
