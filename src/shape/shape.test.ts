@@ -1,6 +1,6 @@
 import { describe, expect, spyOn, test } from "bun:test";
 import { readFileSync } from "node:fs";
-import { isTouchpoint, parseShape, type Violation } from "./shape.ts";
+import { isTouchpoint, parseDraft, parseShape, type Violation } from "./shape.ts";
 
 const EXAMPLE = readFileSync(new URL("../../guides/mvc/example.md", import.meta.url), "utf8");
 
@@ -255,6 +255,47 @@ describe("parseShape", () => {
 
   test("reports a document that is not a map", () => {
     expect(paths(["a list"])).toEqual([""]);
+  });
+});
+
+describe("parseDraft", () => {
+  const block = { budget: 3, rounds_spent: 1, open: [{ question: "Who reads the export?", stance: "Finance only." }] };
+
+  function draftPaths(document: unknown): string[] {
+    const parsed = parseDraft(Bun.YAML.stringify(document));
+    return parsed.ok ? [] : parsed.violations.map((violation) => violation.path);
+  }
+
+  test("accepts a draft block alone, with no commit and no shape field yet", () => {
+    expect(draftPaths({ draft: block })).toEqual([]);
+  });
+
+  test("accepts a whole shape with a draft block", () => {
+    expect(draftPaths({ ...example(), draft: { ...block, commit: "21d46e6", open: [] } })).toEqual([]);
+  });
+
+  test("accepts empty requirements, which a shape may not have", () => {
+    expect(draftPaths({ outcome: "x", requirements: {}, draft: block })).toEqual([]);
+  });
+
+  test("reports a document with no draft block", () => {
+    expect(draftPaths(example())).toEqual(["draft"]);
+  });
+
+  test("reports each malformed field of the draft block at its own path", () => {
+    const document = { draft: { commit: "", budget: -1, rounds_spent: 1.5, open: [{ question: "Asked?" }], saved: "now" } };
+
+    expect(draftPaths(document).sort()).toEqual(["draft.budget", "draft.commit", "draft.open.0.stance", "draft.rounds_spent", "draft.saved"]);
+  });
+
+  test("reports a key the schema does not define, at the top level too", () => {
+    expect(draftPaths({ draft: block, assumptions: {} })).toEqual(["assumptions"]);
+  });
+
+  test("reports a repeated top-level key", () => {
+    const yaml = `outcome: a\noutcome: b\n${Bun.YAML.stringify({ draft: block }, null, 2)}\n`;
+
+    expect(parseDraft(yaml)).toEqual({ ok: false, violations: [{ path: "outcome", message: "key appears more than once" }] });
   });
 });
 
