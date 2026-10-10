@@ -6,7 +6,8 @@ Does the branch do what the shape says? Edit nothing.
 
 - **Every requirement has evidence**: a test that asserts it, or your own observation from running
   it. A requirement reported done without evidence is a finding, and so is evidence weaker than
-  the requirement.
+  the requirement. Evidence files, such as screenshots, go in the worktree's gitignored
+  `.scratch/`, since a browser tool may refuse to write outside the workspace.
 - **No non-goal is built.**
 - **The outcome, approach, constraints and decisions are what the branch does.**
 
