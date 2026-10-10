@@ -23,11 +23,11 @@ it was not written to do. A test written to fail before it passes is not one; it
   changes several things at once rules nothing out. A hypothesis the evidence rules out is undone,
   not built on.
 - **The fix is one change at the root cause, proven by reproducing the failure.** When the cause is
-  in the repo's code, a regression test reproduces it, and is seen failing before the fix and
-  passing after it. When the cause is outside the repo's code (the environment, config outside
-  the repo, an external service), the command that reproduces the failure is seen failing before
-  the fix and passing after it, and no automated test is added. The rest of the repo's checks
-  still pass, and nothing rides along with the fix.
+  in the repo's source code, a regression test reproduces it, and is seen failing before the fix
+  and passing after it. When it is anywhere else (config in the repo, such as a Makefile or CI
+  YAML; the environment; an external service), the command that reproduces the failure is seen
+  failing before the fix and passing after it, and no automated test is added. The rest of the
+  repo's checks still pass, and nothing rides along with the fix.
 - **After three fixes that each failed, a fourth is asked, not tried.** The question goes to
   whoever owns the decision, naming what each attempt ruled out. Fixes that each surface a new
   problem somewhere else point at the design, not at one more patch. A fix that changes
@@ -43,8 +43,8 @@ it was not written to do. A test written to fail before it passes is not one; it
   probes, each made to answer one hypothesis and undone after it.
 - **A failing test is not edited to pass.** When the test itself is wrong, that is a finding of its
   own, and changing what an existing test asserts is a one-way door.
-- **A cause outside the code is still a cause**: an environment, a timing, a service. It is named
-  with its evidence, like any other; "flaky" is a symptom, not a cause.
+- **A cause outside the source code is still a cause**: a config, an environment, a timing, a
+  service. It is named with its evidence, like any other; "flaky" is a symptom, not a cause.
 - **What is not understood is said plainly.** When the evidence runs out, report what is known,
   what was ruled out and what is not understood, rather than fix on a guess.
 
@@ -63,6 +63,7 @@ Besides what the request asks:
 - how the failure was reproduced: the command or input, and whether it failed every time;
 - each hypothesis, with the evidence that ruled it in or out;
 - the root cause with its evidence, or what is known, ruled out and not understood;
-- the regression test, or for a cause outside the repo's code the reproducing command, seen
-  failing before the fix and passing after it; or, for a diagnosis, that no code changed;
+- the regression test, or when the cause is not in the repo's source code the reproducing
+  command, seen failing before the fix and passing after it; or, for a diagnosis, that no code
+  changed;
 - each fix that failed, and what it ruled out.
