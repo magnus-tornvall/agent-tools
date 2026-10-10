@@ -21,7 +21,9 @@ do.
   destination: the branch, or a pull request. It names anything that would stop a worker at its
   first command or at a permission prompt: `mt` or Bun missing from the PATH a worker launches
   with, and each `mt get`, `mt shape`, repo check and `git commit` a worker's launch permissions
-  would not allow. A changed plan is approved again.
+  would not allow. When a requirement needs the app running, it names where the app under test
+  actually sends its requests, read from the config it runs with, not from the docs. A changed
+  plan is approved again.
 - **The change exists on its own branch, made by workers.** The base branch is untouched.
 - **The repo's own checks pass on the branch.**
 - **Every requirement has evidence at least as strong as the requirement.**
