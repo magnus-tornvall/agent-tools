@@ -47,9 +47,17 @@ interface Script {
   fail?: { status: number; body: unknown };
   /** Leave this question's answer out. */
   omit?: string;
+  /** The model each response names, by the request's number from 1; "jev-fake" when absent. */
+  model?: (request: number) => string;
+  /**
+   * Answer this placement request, counted from 1, with HTTP 400 once a full batch of placement
+   * requests is in flight; the other placements wait until the client has had time to see it.
+   */
+  failPlacement?: number;
 }
 
 const RequestBody = z.object({
+  model: z.string().optional(),
   state: z.unknown(),
   questions: z.record(z.string(), z.object({ type: z.string(), instructions: z.unknown().optional(), criteria: z.unknown().optional() })),
 });
@@ -67,6 +75,36 @@ function stateNumber({ body }: Seen): number {
 let script: Script = { sameDefect: {}, change: {}, verdict: {} };
 let seen: Seen[] = [];
 
+const PLACEMENT_BATCH = 4;
+
+interface Deferred {
+  promise: Promise<void>;
+  resolve: () => void;
+}
+
+function deferred(): Deferred {
+  let resolve = () => {};
+  const promise = new Promise<void>((done) => {
+    resolve = done;
+  });
+  return { promise, resolve };
+}
+
+interface Gate {
+  placements: number;
+  failed: boolean;
+  /** Requests that reached the server after the failing response was sent. */
+  late: number;
+  batchInFlight: Deferred;
+  clientNoticed: Deferred;
+}
+
+function newGate(): Gate {
+  return { placements: 0, failed: false, late: 0, batchInFlight: deferred(), clientNoticed: deferred() };
+}
+
+let gate = newGate();
+
 function choiceAnswer(labels: string[], { choice, probability, confidence }: Pick) {
   const rest = (1 - probability) / (labels.length - 1);
   return {
@@ -82,8 +120,20 @@ const server = Bun.serve({
   port: 0,
   async fetch(request) {
     const received: Seen = { authorization: request.headers.get("authorization"), body: RequestBody.parse(await request.json()) };
-    seen.push(received);
+    const requestNumber = seen.push(received);
     const { body } = received;
+    if (gate.failed) gate.late++;
+    if (script.failPlacement !== undefined && "change" in body.questions) {
+      const nth = ++gate.placements;
+      if (nth === PLACEMENT_BATCH) gate.batchInFlight.resolve();
+      await gate.batchInFlight.promise;
+      if (nth === script.failPlacement) {
+        gate.failed = true;
+        setTimeout(gate.clientNoticed.resolve, 150);
+        return Response.json({ detail: "questions: too many" }, { status: 400 });
+      }
+      await gate.clientNoticed.promise;
+    }
     if (script.fail) return Response.json(script.fail.body, { status: script.fail.status });
     const answers: Record<string, unknown> = {};
     for (const key of Object.keys(body.questions)) {
@@ -99,7 +149,7 @@ const server = Bun.serve({
       const labels = key === "change" ? ["mt_code", "guide", "orca"] : ["no_brainer", "rule_on"];
       answers[key] = choiceAnswer(labels, pick);
     }
-    return Response.json({ model: "jev-fake", answers, usage: { input_tokens: 1, output_tokens: 1 } });
+    return Response.json({ model: script.model?.(requestNumber) ?? "jev-fake", answers, usage: { input_tokens: 1, output_tokens: 1 } });
   },
 });
 
@@ -110,6 +160,7 @@ afterAll(() => {
 
 beforeEach(() => {
   seen = [];
+  gate = newGate();
   rmSync(GH_CALLS, { force: true });
   rmSync(GH_CWD, { force: true });
 });
@@ -153,6 +204,8 @@ const DUP_B = issue(51, "mt shape check throws on a zero-byte shape");
 const SURE = issue(52, "mt list pads names to 20 columns, cutting long ones", "Expected: long names are not cut.");
 const AT_THRESHOLD = issue(53, "mt get --ref with an empty ref exits 0", "Expected: exit 1.");
 const UNSURE = issue(54, "mt mvc save keeps a trailing newline twice", "Expected: one trailing newline.");
+const UNSURE_CHANGE = issue(56, "mt dogfood prints the issue number twice", "Expected: once.");
+const EDGE_CHANGE = issue(57, "mt list prints an empty line after the last guide", "Expected: no empty line.");
 const ARGUABLE = issue(55, "mt dogfood should open the issue in a browser");
 
 const ALL = [ARGUABLE, GUIDE, DUP_A, ORCA, SURE, DUP_B, AT_THRESHOLD, UNSURE];
@@ -166,6 +219,8 @@ const FULL: Script = {
     53: { choice: "mt_code", probability: 0.96, confidence: 0.94 },
     54: { choice: "mt_code", probability: 0.95, confidence: 0.92 },
     55: { choice: "mt_code", probability: 0.9, confidence: 0.85 },
+    56: { choice: "mt_code", probability: 0.4, confidence: 0.05 },
+    57: { choice: "mt_code", probability: 0.8, confidence: 0.7 },
   },
   verdict: {
     39: { choice: "no_brainer", probability: 0.99, confidence: 0.98 },
@@ -174,10 +229,13 @@ const FULL: Script = {
     53: { choice: "no_brainer", probability: 0.85, confidence: 0.7 },
     54: { choice: "no_brainer", probability: 0.84, confidence: 0.69 },
     55: { choice: "rule_on", probability: 0.75, confidence: 0.5 },
+    56: { choice: "no_brainer", probability: 0.95, confidence: 0.9 },
+    57: { choice: "no_brainer", probability: 0.9, confidence: 0.7 },
   },
 };
 
-const FULL_REPORT = `duplicates
+const FULL_REPORT = `jev model: jev-fake
+duplicates
   #50, #51
     #50 mt shape check crashes on an empty file  (same defect as #51: probability 0.92, confidence 0.84)
     #51 mt shape check throws on a zero-byte shape  (same defect as #50: probability 0.92, confidence 0.84)
@@ -290,6 +348,44 @@ describe("mt dogfood triage", () => {
     expect(section(stdout, "no-brainers")).toBe("  none");
   });
 
+  test("the report names the model jev's response names, not the one the request asked for", async () => {
+    writeFileSync(ISSUES, JSON.stringify([ORCA]));
+    script = { ...FULL, model: () => "jev-2026-10-01" };
+    const { code, stdout } = await triage({ TYPESAFE_DEFAULT_MODEL: "jev-pinned" });
+    expect(code).toBe(0);
+    expect(seen[0]?.body.model).toBe("jev-pinned");
+    expect(stdout.split("\n")[0]).toBe("jev model: jev-2026-10-01");
+    expect(stdout.split("\n").filter((line) => line.includes("jev model"))).toHaveLength(1);
+  });
+
+  test("when responses name different models the report names each, sorted, in the one line", async () => {
+    writeFileSync(ISSUES, JSON.stringify([ORCA, GUIDE]));
+    script = { ...FULL, model: (request) => (request === 1 ? "jev-b" : "jev-a") };
+    const { code, stdout } = await triage();
+    expect(code).toBe(0);
+    expect(stdout.split("\n")[0]).toBe("jev model: jev-a, jev-b");
+  });
+
+  test("R5: an mt code answer below the confidence threshold goes to rule on even when jev calls it a no-brainer", async () => {
+    writeFileSync(ISSUES, JSON.stringify([UNSURE_CHANGE]));
+    script = FULL;
+    const { stdout } = await triage();
+    expect(section(stdout, "rule on")).toBe(
+      "  #56 mt dogfood prints the issue number twice  (mt code below confidence 0.70: probability 0.40, confidence 0.05)",
+    );
+    expect(section(stdout, "no-brainers")).toBe("  none");
+  });
+
+  test("R2: an mt code answer at exactly the confidence threshold, with a no-brainer verdict at it, is a no-brainer", async () => {
+    writeFileSync(ISSUES, JSON.stringify([EDGE_CHANGE]));
+    script = FULL;
+    const { stdout } = await triage();
+    expect(section(stdout, "no-brainers")).toBe(
+      "  #57 mt list prints an empty line after the last guide  (no-brainer: probability 0.90, confidence 0.70)",
+    );
+    expect(section(stdout, "rule on")).toBe("  none");
+  });
+
   test("R6: with no open issues every group says none, and jev is not called", async () => {
     writeFileSync(ISSUES, "[]");
     const { code, stdout } = await triage();
@@ -361,9 +457,11 @@ describe("mt dogfood triage", () => {
     const { code, stdout, stderr } = await triage({ TYPESAFE_LOG_LEVEL: "debug" });
     expect(code).toBe(0);
     expect(seen.map(({ authorization }) => authorization)).toEqual([`Bearer ${KEY}`, `Bearer ${KEY}`, `Bearer ${KEY}`]);
-    expect(stdout).toStartWith("duplicates\n");
+    expect(stdout).toContain("\nduplicates\n");
     expect(stdout).not.toContain(KEY);
     expect(stderr).not.toContain(KEY);
+    for (const output of [stdout, stderr]) expect(output).not.toContain(KEY.slice(-4));
+    expect(stderr).toContain("-> http://127.0.0.1");
   });
 
   test("a failing jev call prints one line on stderr, nothing on stdout, and exits 1", async () => {
@@ -373,6 +471,23 @@ describe("mt dogfood triage", () => {
     expect(code).toBe(1);
     expect(stdout).toBe("");
     expect(stderr).toBe("mt: triage: jev: 400 questions: too many\n");
+  });
+
+  test("once a placement call fails, no new placement call starts", async () => {
+    const issues = Array.from({ length: 10 }, (_, i) => issue(100 + i, `mt list defect ${i}`, "Expected: no defect."));
+    writeFileSync(ISSUES, JSON.stringify(issues));
+    script = {
+      ...FULL,
+      change: Object.fromEntries(issues.map(({ number }) => [number, { choice: "mt_code", probability: 0.9, confidence: 0.9 }])),
+      verdict: Object.fromEntries(issues.map(({ number }) => [number, { choice: "no_brainer", probability: 0.9, confidence: 0.9 }])),
+      failPlacement: 2,
+    };
+    const { code, stdout, stderr } = await triage();
+    expect(code).toBe(1);
+    expect(stdout).toBe("");
+    expect(stderr).toBe("mt: triage: jev: 400 questions: too many\n");
+    expect(gate.late).toBe(0);
+    expect(seen).toHaveLength(1 + PLACEMENT_BATCH);
   });
 
   test("an answer missing from jev's response prints one line on stderr and exits 1", async () => {

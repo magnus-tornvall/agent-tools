@@ -3,13 +3,15 @@
  * labelled dogfooding in mt's clone through gh, has jev place each one, and prints the report:
  *
  *   duplicates     issues jev judges to describe the same defect, grouped
- *   no-brainers    defects in mt's own code or tests jev judges safe to implement unattended
- *   rule on        everything else: guide wording, Orca's own behaviour, and mt code issues jev
- *                  does not call a no-brainer with confidence at or above NO_BRAINER_CONFIDENCE
+ *   no-brainers    defects in mt's own code or tests, where jev's answers that it is mt code and
+ *                  that it is a no-brainer each have confidence at or above NO_BRAINER_CONFIDENCE
+ *   rule on        everything else: guide wording, Orca's own behaviour, and mt code issues where
+ *                  either answer falls short of NO_BRAINER_CONFIDENCE
  *
  * Every issue's line shows its number, its title, and jev's probability and confidence for the
- * placement. Triage changes nothing on GitHub. jev is reached through @typesafe-ai/sdk, which
- * reads TYPESAFE_API_KEY and TYPESAFE_BASE_URL; issue titles and bodies are sent to it.
+ * placement, and a first line names the jev model that answered. Triage changes nothing on GitHub.
+ * jev is reached through @typesafe-ai/sdk, which reads TYPESAFE_API_KEY, TYPESAFE_BASE_URL and
+ * TYPESAFE_DEFAULT_MODEL (jev-latest when unset); issue titles and bodies are sent to it.
  *
  * Usage errors exit 2. A missing TYPESAFE_API_KEY, gh missing or failing, and a jev call that
  * fails each print one line on stderr, nothing on stdout, and exit 1.
@@ -17,7 +19,7 @@
 import { choice, noul, TypeSafeClient, type Logger, type NoulQuestion } from "@typesafe-ai/sdk";
 import { z } from "zod";
 
-/** The confidence below which jev's no-brainer call goes to the owner instead. */
+/** The confidence below which jev's mt-code or no-brainer answer sends the issue to the owner instead. */
 export const NO_BRAINER_CONFIDENCE = 0.7;
 
 /** A pair of issues whose same-defect probability is above this is a duplicate. */
@@ -54,6 +56,8 @@ interface Placement {
 }
 
 interface Report {
+  /** The models jev's responses name. */
+  models: string[];
   duplicates: Placement[][];
   noBrainers: Placement[];
   ruleOn: Placement[];
@@ -74,13 +78,25 @@ const VERDICT = choice("Can an agent implement this issue's fix without the owne
 
 const CHANGE_LABELS: Record<string, string> = { mt_code: "mt code", guide: "guide", orca: "Orca" };
 
+const CREDENTIAL_HEADERS = new Set(["authorization", "proxy-authorization", "x-api-key", "cookie", "set-cookie"]);
+
+/** The SDK's debug log keeps the last four characters of a credential header; none of the key may show. */
+function withoutCredentials(arg: unknown): unknown {
+  if (typeof arg !== "object" || arg === null || !("headers" in arg)) return arg;
+  const { headers } = arg;
+  if (typeof headers !== "object" || headers === null) return arg;
+  const masked = Object.fromEntries(
+    Object.entries(headers).map(([name, value]) => [name, CREDENTIAL_HEADERS.has(name.toLowerCase()) ? "***" : value]),
+  );
+  return { ...arg, headers: masked };
+}
+
 /** The SDK logs request summaries on stdout through console; triage keeps stdout for the report. */
-const STDERR_LOGGER: Logger = {
-  debug: (message, ...args) => console.error(message, ...args),
-  info: (message, ...args) => console.error(message, ...args),
-  warn: (message, ...args) => console.error(message, ...args),
-  error: (message, ...args) => console.error(message, ...args),
-};
+function toStderr(message: string, ...args: unknown[]): void {
+  console.error(message, ...args.map(withoutCredentials));
+}
+
+const STDERR_LOGGER: Logger = { debug: toStderr, info: toStderr, warn: toStderr, error: toStderr };
 
 function openIssues(root: string): Issue[] {
   if (Bun.which("gh") === null) throw new Failure("gh is not on PATH");
@@ -133,10 +149,16 @@ async function jev<T>(call: () => Promise<T>): Promise<T> {
 async function pool<T, R>(items: readonly T[], limit: number, work: (item: T) => Promise<R>): Promise<R[]> {
   const results: R[] = [];
   const queue = [...items.entries()];
+  let failed = false;
   async function worker(): Promise<void> {
-    for (let next = queue.shift(); next !== undefined; next = queue.shift()) {
+    for (let next = queue.shift(); next !== undefined && !failed; next = queue.shift()) {
       const [index, item] = next;
-      results[index] = await work(item);
+      try {
+        results[index] = await work(item);
+      } catch (error) {
+        failed = true;
+        throw error;
+      }
     }
   }
   await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
@@ -144,7 +166,7 @@ async function pool<T, R>(items: readonly T[], limit: number, work: (item: T) =>
 }
 
 /** Groups of issues jev judges to describe the same defect, each member placed by its strongest link. */
-async function duplicates(client: TypeSafeClient, issues: Issue[]): Promise<Placement[][]> {
+async function duplicates(client: TypeSafeClient, issues: Issue[], models: Set<string>): Promise<Placement[][]> {
   if (issues.length < 2) return [];
   const pairs: [Issue, Issue][] = [];
   const questions: Record<string, NoulQuestion> = {};
@@ -154,7 +176,8 @@ async function duplicates(client: TypeSafeClient, issues: Issue[]): Promise<Plac
       questions[`same_${a.number}_${b.number}`] = noul(`Issues #${a.number} and #${b.number} describe the same defect.`);
     }
   }
-  const { answers } = await jev(() => client.systemOne({ state: { issues }, questions }));
+  const { answers, model } = await jev(() => client.systemOne({ state: { issues }, questions }));
+  models.add(model);
 
   const parent = new Map(issues.map((issue) => [issue.number, issue.number]));
   const find = (n: number): number => {
@@ -184,14 +207,23 @@ async function duplicates(client: TypeSafeClient, issues: Issue[]): Promise<Plac
 }
 
 /** Where one issue that duplicates nothing goes, and jev's numbers for that placement. */
-async function place(client: TypeSafeClient, issue: Issue): Promise<{ bucket: "noBrainers" | "ruleOn"; placement: Placement }> {
-  const { answers } = await jev(() => client.systemOne({ state: issue, questions: { change: CHANGE, verdict: VERDICT } }));
+async function place(
+  client: TypeSafeClient,
+  issue: Issue,
+  models: Set<string>,
+): Promise<{ bucket: "noBrainers" | "ruleOn"; placement: Placement }> {
+  const { answers, model } = await jev(() => client.systemOne({ state: issue, questions: { change: CHANGE, verdict: VERDICT } }));
+  models.add(model);
   const change = answer(answers, "change", ChoiceAnswer);
   const changeLabel = CHANGE_LABELS[change.choice];
   if (changeLabel === undefined) throw new Failure(`jev chose '${change.choice}', which the change question does not offer`);
   if (change.choice !== "mt_code") {
     const probability = chosen("change", change);
     return { bucket: "ruleOn", placement: { issue, label: changeLabel, probability, confidence: change.confidence } };
+  }
+  if (change.confidence < NO_BRAINER_CONFIDENCE) {
+    const label = `${changeLabel} below confidence ${NO_BRAINER_CONFIDENCE.toFixed(2)}`;
+    return { bucket: "ruleOn", placement: { issue, label, probability: chosen("change", change), confidence: change.confidence } };
   }
   const verdict = answer(answers, "verdict", ChoiceAnswer);
   const probability = chosen("verdict", verdict);
@@ -207,14 +239,16 @@ async function place(client: TypeSafeClient, issue: Issue): Promise<{ bucket: "n
 }
 
 async function triage(client: TypeSafeClient, issues: Issue[]): Promise<Report> {
-  const groups = await duplicates(client, issues);
+  const models = new Set<string>();
+  const groups = await duplicates(client, issues, models);
   const grouped = new Set(groups.flat().map(({ issue }) => issue.number));
   const placed = await pool(
     issues.filter((issue) => !grouped.has(issue.number)),
     JEV_CONCURRENCY,
-    (issue) => place(client, issue),
+    (issue) => place(client, issue, models),
   );
   return {
+    models: [...models].sort(),
     duplicates: groups,
     noBrainers: placed.filter(({ bucket }) => bucket === "noBrainers").map(({ placement }) => placement),
     ruleOn: placed.filter(({ bucket }) => bucket === "ruleOn").map(({ placement }) => placement),
@@ -226,8 +260,9 @@ function line({ issue, label, probability, confidence }: Placement, indent: stri
   return `${indent}#${issue.number} ${title}  (${label}: probability ${probability.toFixed(2)}, confidence ${confidence.toFixed(2)})\n`;
 }
 
-function render({ duplicates, noBrainers, ruleOn }: Report): string {
-  let out = "duplicates\n";
+function render({ models, duplicates, noBrainers, ruleOn }: Report): string {
+  let out = models.length === 0 ? "" : `jev model: ${models.join(", ")}\n`;
+  out += "duplicates\n";
   if (duplicates.length === 0) out += "  none\n";
   for (const group of duplicates) {
     out += `  ${group.map(({ issue }) => `#${issue.number}`).join(", ")}\n`;
