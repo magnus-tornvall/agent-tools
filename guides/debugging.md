@@ -25,9 +25,9 @@ it was not written to do. A test written to fail before it passes is not one; it
 - **The fix is one change at the root cause, proven by reproducing the failure.** When the cause is
   in the repo's source code, a regression test reproduces it, and is seen failing before the fix
   and passing after it. When it is anywhere else (config in the repo, such as CI YAML or a
-  committed config file; the environment; an external service), the command that reproduces the failure is seen
-  failing before the fix and passing after it, and no automated test is added. The rest of the
-  repo's checks still pass, and nothing rides along with the fix.
+  Dockerfile; the environment; an external service), the command that reproduces the failure is
+  seen failing before the fix and passing after it, and no automated test is added. The rest of
+  the repo's checks still pass, and nothing rides along with the fix.
 - **After three fixes that each failed, a fourth is asked, not tried.** The question goes to
   whoever owns the decision, naming what each attempt ruled out. Fixes that each surface a new
   problem somewhere else point at the design, not at one more patch. A fix that changes
@@ -40,10 +40,12 @@ it was not written to do. A test written to fail before it passes is not one; it
 ## Guardrails
 
 - **No changes in response to the failure before the root cause has evidence**, except
-  probes, each made to answer one hypothesis and undone after it.
+  probes, each made to answer one hypothesis and undone after it where it can be. A probe that
+  cannot be undone, such as a cleared cache or a restarted service, is named in the report.
 - **A failing test is not edited to pass.** When the test itself is wrong, that is a finding of its
   own, and changing what an existing test asserts is a one-way door.
-- **A cause outside the source code is still a cause**: a config, an environment, a service. It is named with its evidence, like any other; "flaky" is a symptom, not a cause.
+- **A cause outside the source code is still a cause**: a config, an environment, a service. It is
+  named with its evidence, like any other; "flaky" is a symptom, not a cause.
 - **What is not understood is said plainly.** When the evidence runs out, report what is known,
   what was ruled out and what is not understood, rather than fix on a guess.
 
@@ -65,4 +67,5 @@ Besides what the request asks:
 - the regression test, or when the cause is not in the repo's source code the reproducing
   command, seen failing before the fix and passing after it; or, for a diagnosis, that nothing
   changed;
-- each fix that failed, and what it ruled out.
+- each fix that failed, and what it ruled out;
+- each probe that could not be undone.
