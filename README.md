@@ -142,7 +142,7 @@ still exits 0, so the agent carries on. A usage error exits 2, an unreadable bod
 [jev](https://docs.typesafe.ai) to sort them. It prints one report and changes nothing on GitHub:
 a first line names the jev model that answered (`TYPESAFE_DEFAULT_MODEL` picks one, `jev-latest`
 when unset), then three groups, each issue with its number, its title, and jev's probability and
-confidence:
+confidence (for a defect in `mt`'s own code, those of both its change answer and its verdict):
 
 - duplicates: issues jev judges to describe the same defect, grouped;
 - no-brainers: defects in `mt`'s own code or tests that jev judges safe to implement unattended,
@@ -152,8 +152,11 @@ confidence:
   why.
 
 It needs `TYPESAFE_API_KEY` set to a jev API key, read from that variable only and never printed.
-The title and body of every open dogfooding issue are sent to `api.typesafe.ai`; the issues are
-already public. Without the key, or when `gh` fails, it prints one line on stderr and exits 1.
+The title and body of every open dogfooding issue, and the key, are sent to `api.typesafe.ai`, or
+to `TYPESAFE_BASE_URL` when that is set; the issues are already public. `TYPESAFE_LOG_LEVEL` sets
+how much of the SDK's request log goes to stderr, which never shows the key. Without the key, when
+`gh` fails, or when a jev call fails, it prints one line on stderr, nothing on stdout, and exits 1;
+the first failed call aborts the calls still in flight and starts no more.
 
 `mt dogfood` sits under an ask rule, `Bash(mt dogfood:*)` in `permissions.ask` (see Install), so
 each filing, which posts to a public repo, and each triage, which sends the issues to jev, still
@@ -185,7 +188,7 @@ is missing or stale. It:
   clone whose stub is gone;
 - asks whether to add `Bash(mt:*)` to `permissions.allow` and `Bash(mt dogfood:*)` to
   `permissions.ask` in `~/.claude/settings.json`, so Claude Code agents run every `mt` command
-  without a prompt except `mt dogfood`, which asks before each filing. A file that still holds
+  without a prompt except `mt dogfood`, which asks before each filing and each triage. A file that still holds
   `Bash(mt get:*)`, `Bash(mt list)` or `Bash(mt shape:*)` from an earlier install has them replaced.
   A yes keeps everything else in the file; it is not asked again once the rules are there.
   `ADD_MT_RULES=yes` or `ADD_MT_RULES=no` answers without asking, and with no terminal to ask on
@@ -222,7 +225,7 @@ bun test
 bun run typecheck
 ```
 
-`test/mt.sh` checks `mt get`, `mt list` and `mt dogfood`, with a fake `gh`, and needs `python3`
+`test/mt.sh` checks `mt get`, `mt list` and filing with `mt dogfood`, with a fake `gh`, and needs `python3`
 on PATH to parse the log's JSON lines; `mt` itself needs only Bun. `test/install.sh` runs `make
 install` and `make uninstall` against throwaway home folders, and needs `python3` too.
 `test/guides.sh` is guide-lint, whose code is `src/guide-lint/`. It fails, one ``file:line:
@@ -245,7 +248,9 @@ string `command` and an array `path`), each as one line instead of one per menti
 
 `bun test` runs guide-lint against fixture repos and a fake `orca`, and checks the shape
 schema and `mt shape`, and `mt mvc` against throwaway git repos with `XDG_STATE_HOME` in a
-temp folder. `bun run typecheck` runs `tsc --noEmit` over `src/`; `tsc` cannot read
+temp folder. It also runs `mt dogfood triage` (`src/dogfood/triage.test.ts`) with the real SDK
+against a local fake jev server selected by `TYPESAFE_BASE_URL`, and a fake `gh`; no test reaches
+the real jev or GitHub. `bun run typecheck` runs `tsc --noEmit` over `src/`; `tsc` cannot read
 `cli/mt`, which has no extension.
 
 ## Layout
@@ -253,12 +258,13 @@ temp folder. `bun run typecheck` runs `tsc --noEmit` over `src/`; `tsc` cannot r
 ```
 cli/      mt
 Makefile  make install and make uninstall
-src/      shape/, the shape schema and mt shape; mvc/, mt mvc; install/, the settings rules;
-          guide-lint/, the check test/guides.sh runs; each with its tests
+src/      shape/, the shape schema and mt shape; mvc/, mt mvc; dogfood/, mt dogfood triage;
+          install/, the settings rules; guide-lint/, the check test/guides.sh runs; each with
+          its tests
 guides/   one guide per tool, <name>.md, with its references in <name>/<ref>.md
 skills/   a stub skill per guide an agent or the owner picks, <name>/SKILL.md, mvc and ask
           among them, plus the commit skill, which is whole
-test/     mt.sh, which checks mt get, mt list and mt dogfood; install.sh, which checks make
+test/     mt.sh, which checks mt get, mt list and filing with mt dogfood; install.sh, which checks make
           install and uninstall; guides.sh, which checks that what guides mention still exists
 docs/     known Orca and guide behaviour, research
 ```
