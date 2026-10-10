@@ -1,7 +1,7 @@
 # agent-tools
 
-Skills for agents working in Orca, and `mt`, which loads them on demand, checks shapes and files
-dogfooding findings.
+Skills for agents working in Orca, and `mt`, which loads them on demand, checks shapes, parks mvc
+grills and files dogfooding findings.
 
 ## The shape
 
@@ -38,6 +38,9 @@ mt get <name> [--ref <ref>]   print one of the tool's references instead, and lo
 mt shape check <file>         check that a file is a shape
 mt shape slice <file> --keys <key,...>
                               print the shape with only those top-level keys
+mt mvc save <slug> <file>     park an mvc grill as the slug's draft; - reads stdin
+mt mvc close <slug> <shape-file>
+                              close the slug's draft once the file passes mt shape check
 mt dogfood <title> [--body-file <file>]
                               file a finding as an issue labelled dogfooding; - reads stdin
 ```
@@ -81,6 +84,41 @@ does not run the check, so a shape with a violation the owner ruled on can still
 The schema is `src/shape/shape.ts`. `mt shape` loads it only when called, so `mt get` and
 `mt list` need nothing beyond `cli/mt` and Bun.
 
+### mvc drafts
+
+mvc parks an unfinished grill on the owner's word and resumes it in a later session. A slug has
+one draft, at `${XDG_STATE_HOME:-$HOME/.local/state}/mt/mvc/<repo>/<slug>/draft.md`. `<repo>` is
+the name of the directory `git rev-parse --git-common-dir` prints, or of its parent when it is
+named `.git`, so every worktree of a clone shares its drafts and a draft outlives the worktree it
+was parked from. A slug follows the rule for a tool's name: letters, digits, `.`, `_` and `-`, not
+starting with `.`.
+
+`mt mvc save <slug> <file>` writes the draft, replacing the slug's earlier one, and prints its
+path. `-` reads the body from stdin. Above the body, which it writes verbatim and never checks,
+`mt` writes the front matter:
+
+| key      | value                                                                 |
+| -------- | --------------------------------------------------------------------- |
+| `repo`   | `<repo>`, as in the path                                              |
+| `commit` | `HEAD` of the repo save runs in, not of `mt`'s clone                  |
+| `saved`  | UTC time of the save, ISO 8601                                        |
+| `status` | `open`, until `mt mvc close` sets it to `closed`; a save reopens it   |
+
+Outside a git repository, or in one with no commit yet, save exits 1 and writes nothing. A save
+writes a temporary file beside the draft and renames it over the draft, so an interrupted save
+leaves the earlier draft whole; a draft it cannot write exits 1 with `mt: cannot write <path>`.
+There is no resume command: the agent reads the draft at its location, and judges what still holds
+of what it cites by what changed since its commit.
+
+`mt mvc close <slug> <shape-file>` runs `mt shape check` on the shape file. When it passes, close
+sets the draft's status to `closed`, prints nothing and exits 0; otherwise it exits 1 with the
+check's violations on stderr and leaves the draft open. It never writes the shape file. A slug
+with no draft in the current repo exits 1.
+
+A draft is never a shape: `mt shape check` fails on one. A usage error, such as a slug that breaks
+the rule, exits 2; an unreadable file or a draft it cannot write exits 1. Like `mt shape`, `mt mvc`
+loads its code, `src/mvc/`, only when called.
+
 ### Dogfooding
 
 `mt dogfood` sends findings to this repo: it opens an issue labelled `dogfooding` on the GitHub
@@ -97,8 +135,9 @@ When the finding cannot be filed, because `gh` is not on PATH, not authenticated
 otherwise, `mt` prints one `mt: finding not filed: <reason>` line on stderr, nothing on stdout, and
 still exits 0, so the agent carries on. A usage error exits 2, an unreadable body file 1.
 
-`mt dogfood` is not in the permission rules below and is not meant to be allowed automatically:
-each filing asks first, since it posts to a public repo.
+`mt dogfood` sits under an ask rule, `Bash(mt dogfood:*)` in `permissions.ask` (see Install), so
+each filing still asks first, since it posts to a public repo. Claude Code checks deny rules, then
+ask rules, then allow rules, so the ask rule prompts even though `Bash(mt:*)` is allowed.
 
 ### Install
 
@@ -122,9 +161,11 @@ is missing or stale. It:
   stays where it is;
 - links each stub skill that has a guide into `~/.agents/skills`, and removes links into this
   clone whose stub is gone;
-- asks whether to add `Bash(mt get:*)`, `Bash(mt list)` and `Bash(mt shape:*)` to
-  `permissions.allow` in `~/.claude/settings.json`, so Claude Code agents run `mt` without a
-  prompt. A yes keeps everything else in the file; it is not asked again once the rules are there.
+- asks whether to add `Bash(mt:*)` to `permissions.allow` and `Bash(mt dogfood:*)` to
+  `permissions.ask` in `~/.claude/settings.json`, so Claude Code agents run every `mt` command
+  without a prompt except `mt dogfood`, which asks before each filing. A file that still holds
+  `Bash(mt get:*)`, `Bash(mt list)` or `Bash(mt shape:*)` from an earlier install has them replaced.
+  A yes keeps everything else in the file; it is not asked again once the rules are there.
   `ADD_MT_RULES=yes` or `ADD_MT_RULES=no` answers without asking, and with no terminal to ask on
   nothing is written;
 - checks that a login shell started from your profile alone finds `mt` and Bun. Orca starts a
@@ -135,12 +176,13 @@ Set `BIN_DIR`, `SKILLS_DIR` or `SETTINGS` to use other places, for example
 installed as a real folder is left alone and the install fails, naming it: linking over it
 would write a stray link inside it. The whole mvc from before it became a guide is such a folder,
 and the old and the new mvc cannot both be installed as `mvc`. To keep the old one for a later
-comparison, move it out of the skills folder rather than delete it. Settings that are not JSON
-are left alone too, and the install fails, naming the rules to add by hand.
+comparison, move it out of the skills folder rather than delete it. Settings that are not JSON,
+or whose `permissions.allow` or `permissions.ask` is not a list of strings, are left alone too,
+and the install fails, naming the rules to add by hand.
 
 `make uninstall` takes it back out: the `mt` link and every link in the skills folder that points
 into this clone, so a skill or `mt` installed some other way stays. It asks before removing the
-three rules from the settings; `REMOVE_MT_RULES=yes` or `=no` answers without asking. It leaves
+two rules, and any of the three earlier ones, from the settings; `REMOVE_MT_RULES=yes` or `=no` answers without asking. It leaves
 Bun, the clone and its `node_modules`, your shell profile and the usage log. Pass the same
 `BIN_DIR`, `SKILLS_DIR` and `SETTINGS` you installed with.
 
@@ -180,7 +222,8 @@ or lists its commands in a shape the lint does not read (no `commands` array, or
 string `command` and an array `path`), each as one line instead of one per mention.
 
 `bun test` runs guide-lint against fixture repos and a fake `orca`, and checks the shape
-schema and `mt shape`. `bun run typecheck` runs `tsc --noEmit` over `src/`; `tsc` cannot read
+schema and `mt shape`, and `mt mvc` against throwaway git repos with `XDG_STATE_HOME` in a
+temp folder. `bun run typecheck` runs `tsc --noEmit` over `src/`; `tsc` cannot read
 `cli/mt`, which has no extension.
 
 ## Layout
@@ -188,8 +231,8 @@ schema and `mt shape`. `bun run typecheck` runs `tsc --noEmit` over `src/`; `tsc
 ```
 cli/      mt
 Makefile  make install and make uninstall
-src/      shape/, the shape schema and mt shape; install/, the settings rules; guide-lint/, the
-          check test/guides.sh runs; each with its tests
+src/      shape/, the shape schema and mt shape; mvc/, mt mvc; install/, the settings rules;
+          guide-lint/, the check test/guides.sh runs; each with its tests
 guides/   one guide per tool, <name>.md, with its references in <name>/<ref>.md
 skills/   a stub skill per guide an agent or the owner picks, <name>/SKILL.md, mvc and ask
           among them, plus the commit skill, which is whole

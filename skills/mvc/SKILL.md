@@ -1,6 +1,6 @@
 ---
 name: mvc
-description: Settle the shape of a minimal viable change with the owner before it is built - what ships, what does not and why. Writes the shape to one file on request.
+description: Settle the shape of a minimal viable change with the owner before it is built - what ships, what does not and why. Writes the shape to one file on request, and parks an unfinished grill and resumes it in a later session.
 disable-model-invocation: true
 ---
 

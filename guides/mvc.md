@@ -61,6 +61,30 @@ Re-invoked on a settled shape, mvc asks nothing and goes straight to the report,
   what it blocks becomes a constraint. Anything left means the change is too big to define in the
   budget: name its parts and whether they are independent or a strict sequence, so each can be
   shaped on its own.
+- **A grill parks on the owner's word, and only then.** Save it with `mt mvc save <slug> <file>`,
+  or `-` to pass the body on stdin, and reply with the slug and the draft's path that save prints.
+  The slug is short, made of letters, digits, `.`, `_` and `-`, and stays the same for every save
+  of the grill. A grill's first save uses a slug with no draft at the location below; when one
+  exists, pick another, since a save replaces whatever draft the slug has. Each save writes the
+  whole body and replaces the draft. The body is the record's
+  map: each question as it was asked and the owner's answer, word for word; what is still open;
+  the assumptions, what is ruled out and the decisions; each fact as its citation and one line on
+  what matters there, never its content; the budget and the rounds spent. mt adds the repo, the
+  commit, the time and the status above it.
+- **A parked grill resumes from its draft.** Invoked naming a slug, read
+  `${XDG_STATE_HOME:-$HOME/.local/state}/mt/mvc/<repo>/<slug>/draft.md`, where `<repo>` is the
+  name of the directory `git rev-parse --path-format=absolute --git-common-dir` prints, or of its
+  parent when it is named `.git`, so every worktree of the clone finds the same draft. Before
+  reporting, check each cited file against the draft's commit with `git diff <commit> -- <file>`,
+  and read each cited source outside the repo again. When the draft's commit is not in the repo,
+  every cited file counts as changed and is read again. Then report the record, the open questions and the rounds left, and ask
+  nothing until the owner says go. Each fact whose source changed is named with what changed and
+  whether it still holds; a change that bears on a settled decision goes to the owner with both
+  sources, as a contradiction does. The budget carries over: parking earns no rounds.
+- **A parked grill closes with its shape.** Once the shape passes `mt shape check`, run
+  `mt mvc close <slug> <file>` on the same temp file; it marks the draft closed and writes no
+  shape. A parked grill that ends in a decomposition, or that the owner drops, has no shape to
+  close with: its draft stays open, and the reply says so.
 
 ## Guardrails
 
@@ -80,8 +104,10 @@ Re-invoked on a settled shape, mvc asks nothing and goes straight to the report,
   the repo, adds a dependency or challenges the architecture. Argued once; the owner decides; a
   rejected request is closed. Never admitted on mvc's own reasoning, never withheld because the
   idea was not the owner's.
-- **No git, no code, no plan, no Tasks.** One file, only on request, only once the shape closes
-  and passes `mt shape check`; asked earlier, name the open questions and write nothing. Never
+- **No git, no code, no plan, no Tasks.** No git means no git writes; the resume step's git reads
+  are allowed. One file, only on request, only once the shape closes
+  and passes `mt shape check`; asked earlier, name the open questions and write nothing. The
+  draft `mt mvc save` writes on the owner's word to park is the one exception. Never
   replace an existing file without the owner's word; given a prior shape, the owner chooses
   replace, merge or a new file.
 
@@ -96,6 +122,9 @@ Re-invoked on a settled shape, mvc asks nothing and goes straight to the report,
   written. Each line on stderr is `path: message`. A fix changes form, never content: a violation
   only new content would fix goes to the owner. Without `mt shape`, the shape is reported marked
   unchecked and no file is written.
+- **`mt mvc save <slug> <file>`** parks the grill and prints the draft's path.
+  **`mt mvc close <slug> <file>`** closes the draft once the file passes `mt shape check`;
+  otherwise it exits 1 with the check's lines and leaves the draft open.
 
 ## Report
 

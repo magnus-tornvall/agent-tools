@@ -1,27 +1,33 @@
 /**
  * Adds or removes the rules that let agents run mt without a prompt in a Claude Code settings
- * file, keeping everything else in it. Asks first, and only when there is something to change;
- * `add` creates a missing file.
+ * file, keeping everything else in it: `Bash(mt:*)` in permissions.allow, and `Bash(mt dogfood:*)`
+ * in permissions.ask so a dogfood filing still prompts. `add` also replaces the narrower allow
+ * rules an earlier install wrote, and `remove` takes those out too. Asks first, and only when
+ * there is something to change; `add` creates a missing file.
  *
  *   bun src/install/mt-rules.ts add|remove <settings.json> [yes|no]
  *
  * `yes` or `no` answers without asking. With no answer and no terminal to ask on, nothing is
- * written. A file that is not a JSON object, or whose `permissions.allow` is not a list of
- * strings, is left as it is and exits 1.
+ * written. A file that is not a JSON object, or whose `permissions.allow` or `permissions.ask`
+ * is not a list of strings, is left as it is and exits 1.
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 
-const RULES = ["Bash(mt get:*)", "Bash(mt list)", "Bash(mt shape:*)"];
+const ALLOW_RULE = "Bash(mt:*)";
+const ASK_RULE = "Bash(mt dogfood:*)";
+const EARLIER_ALLOW_RULES = ["Bash(mt get:*)", "Bash(mt list)", "Bash(mt shape:*)"];
 
 const USAGE = "usage: bun src/install/mt-rules.ts add|remove <settings.json> [yes|no]\n";
 
 type Json = Record<string, unknown>;
 type Mode = "add" | "remove";
+type Edit = { add: string[]; remove: string[] };
+type Edits = { allow: Edit; ask: Edit };
 
-const WORDING: Record<Mode, { question: string; variable: string; declined: string }> = {
-  add: { question: "Add {rules} to", variable: "ADD_MT_RULES", declined: "agents will ask before each mt command" },
-  remove: { question: "Remove {rules} from", variable: "REMOVE_MT_RULES", declined: "the mt rules stay allowed" },
+const WORDING: Record<Mode, { variable: string; declined: string }> = {
+  add: { variable: "ADD_MT_RULES", declined: "agents will ask before each mt command" },
+  remove: { variable: "REMOVE_MT_RULES", declined: "the mt rules stay allowed" },
 };
 
 function isObject(value: unknown): value is Json {
@@ -47,15 +53,45 @@ function readSettings(file: string): Json | string {
   return isObject(parsed) ? parsed : "not a JSON object";
 }
 
-function approved(mode: Mode, answer: string, file: string, rules: readonly string[]): boolean {
+function planEdits(mode: Mode, allow: readonly string[], ask: readonly string[]): Edits {
+  if (mode === "add") {
+    return {
+      allow: {
+        add: allow.includes(ALLOW_RULE) ? [] : [ALLOW_RULE],
+        remove: EARLIER_ALLOW_RULES.filter((rule) => allow.includes(rule)),
+      },
+      ask: { add: ask.includes(ASK_RULE) ? [] : [ASK_RULE], remove: [] },
+    };
+  }
+  return {
+    allow: { add: [], remove: [ALLOW_RULE, ...EARLIER_ALLOW_RULES].filter((rule) => allow.includes(rule)) },
+    ask: { add: [], remove: ask.includes(ASK_RULE) ? [ASK_RULE] : [] },
+  };
+}
+
+function describe(edits: Edits): string {
+  const parts: string[] = [];
+  for (const list of ["allow", "ask"] as const) {
+    const { add, remove } = edits[list];
+    if (add.length > 0) parts.push(`add ${add.join(", ")} to permissions.${list}`);
+    if (remove.length > 0) parts.push(`remove ${remove.join(", ")} from permissions.${list}`);
+  }
+  return parts.join("; ");
+}
+
+function applyEdit(list: readonly string[], { add, remove }: Edit): string[] {
+  return [...list.filter((rule) => !remove.includes(rule)), ...add];
+}
+
+function approved(mode: Mode, answer: string, file: string, edits: Edits): boolean {
   if (answer === "yes") return true;
   if (answer === "no") return false;
-  const { question, variable } = WORDING[mode];
+  const { variable } = WORDING[mode];
   if (!process.stdin.isTTY) {
     process.stdout.write(`left ${file} as it is: no terminal to ask on; run again with ${variable}=yes or ${variable}=no\n`);
     return false;
   }
-  const reply = prompt(`${question.replace("{rules}", rules.join(", "))} permissions.allow in ${file}? [y/N]`);
+  const reply = prompt(`In ${file}, ${describe(edits)}? [y/N]`);
   return reply !== null && /^y(es)?$/i.test(reply.trim());
 }
 
@@ -68,7 +104,7 @@ function main(args: readonly string[]): number {
   if (mode === "remove" && !existsSync(file)) return 0;
   const settings = readSettings(file);
   if (typeof settings === "string") {
-    process.stderr.write(`mt-rules: ${file} is ${settings}; ${mode} ${RULES.join(", ")} in permissions.allow by hand\n`);
+    process.stderr.write(`mt-rules: ${file} is ${settings}; ${mode} ${ALLOW_RULE} in permissions.allow and ${ASK_RULE} in permissions.ask by hand\n`);
     return 1;
   }
   const permissions = settings.permissions ?? {};
@@ -81,17 +117,24 @@ function main(args: readonly string[]): number {
     process.stderr.write(`mt-rules: ${file}: permissions.allow is not a list of strings\n`);
     return 1;
   }
-  const changing = RULES.filter((rule) => allow.includes(rule) === (mode === "remove"));
-  if (changing.length === 0) return 0;
-  if (!approved(mode, answer, file, changing)) {
+  const ask = permissions.ask ?? [];
+  if (!isStringList(ask)) {
+    process.stderr.write(`mt-rules: ${file}: permissions.ask is not a list of strings\n`);
+    return 1;
+  }
+  const edits = planEdits(mode, allow, ask);
+  const description = describe(edits);
+  if (description === "") return 0;
+  if (!approved(mode, answer, file, edits)) {
     process.stdout.write(`${WORDING[mode].declined}\n`);
     return 0;
   }
-  const next = mode === "add" ? [...allow, ...changing] : allow.filter((rule) => !changing.includes(rule));
-  settings.permissions = { ...permissions, allow: next };
+  const next: Json = { ...permissions, allow: applyEdit(allow, edits.allow) };
+  if (permissions.ask !== undefined || edits.ask.add.length > 0) next.ask = applyEdit(ask, edits.ask);
+  settings.permissions = next;
   mkdirSync(dirname(file), { recursive: true });
   writeFileSync(file, `${JSON.stringify(settings, null, 2)}\n`);
-  process.stdout.write(`${mode === "add" ? "allowed" : "removed"} ${changing.join(", ")} in ${file}\n`);
+  process.stdout.write(`${mode === "add" ? "added" : "removed"} in ${file}: ${description}\n`);
   return 0;
 }
 
