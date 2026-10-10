@@ -51,7 +51,7 @@ interface Script {
   model?: (request: number) => string;
   /**
    * Answer this placement request, counted from 1, with HTTP 400 once a full batch of placement
-   * requests is in flight; the other placements wait until the client has had time to see it.
+   * requests is in flight; the other placements are held until the client aborts them.
    */
   failPlacement?: number;
 }
@@ -95,12 +95,14 @@ interface Gate {
   failed: boolean;
   /** Requests that reached the server after the failing response was sent. */
   late: number;
+  /** Held requests the client has aborted. */
+  aborted: number;
   batchInFlight: Deferred;
-  clientNoticed: Deferred;
+  allAborted: Deferred;
 }
 
 function newGate(): Gate {
-  return { placements: 0, failed: false, late: 0, batchInFlight: deferred(), clientNoticed: deferred() };
+  return { placements: 0, failed: false, late: 0, aborted: 0, batchInFlight: deferred(), allAborted: deferred() };
 }
 
 let gate = newGate();
@@ -129,10 +131,16 @@ const server = Bun.serve({
       await gate.batchInFlight.promise;
       if (nth === script.failPlacement) {
         gate.failed = true;
-        setTimeout(gate.clientNoticed.resolve, 150);
         return Response.json({ detail: "questions: too many" }, { status: 400 });
       }
-      await gate.clientNoticed.promise;
+      await new Promise<void>((released) => {
+        const abandon = () => {
+          if (++gate.aborted === PLACEMENT_BATCH - 1) gate.allAborted.resolve();
+          released();
+        };
+        if (request.signal.aborted) abandon();
+        else request.signal.addEventListener("abort", abandon, { once: true });
+      });
     }
     if (script.fail) return Response.json(script.fail.body, { status: script.fail.status });
     const answers: Record<string, unknown> = {};
@@ -240,13 +248,13 @@ duplicates
     #50 mt shape check crashes on an empty file  (same defect as #51: probability 0.92, confidence 0.84)
     #51 mt shape check throws on a zero-byte shape  (same defect as #50: probability 0.92, confidence 0.84)
 no-brainers
-  #52 mt list pads names to 20 columns, cutting long ones  (no-brainer: probability 0.90, confidence 0.80)
-  #53 mt get --ref with an empty ref exits 0  (no-brainer: probability 0.85, confidence 0.70)
+  #52 mt list pads names to 20 columns, cutting long ones  (no-brainer: change mt code probability 0.97, confidence 0.95; verdict no-brainer probability 0.90, confidence 0.80)
+  #53 mt get --ref with an empty ref exits 0  (no-brainer: change mt code probability 0.96, confidence 0.94; verdict no-brainer probability 0.85, confidence 0.70)
 rule on
   #39 orca worktree rm deletes the worktree's branch, asynchronously  (Orca: probability 0.93, confidence 0.89)
   #41 to-orca: say that a fix round's commits are judged too  (guide: probability 0.88, confidence 0.82)
-  #54 mt mvc save keeps a trailing newline twice  (no-brainer below confidence 0.70: probability 0.84, confidence 0.69)
-  #55 mt dogfood should open the issue in a browser  (rule on: probability 0.75, confidence 0.50)
+  #54 mt mvc save keeps a trailing newline twice  (no-brainer below confidence 0.70: change mt code probability 0.95, confidence 0.92; verdict no-brainer probability 0.84, confidence 0.69)
+  #55 mt dogfood should open the issue in a browser  (rule on: change mt code probability 0.90, confidence 0.85; verdict rule on probability 0.75, confidence 0.50)
 `;
 
 function section(report: string, heading: string): string {
@@ -298,14 +306,30 @@ describe("mt dogfood triage", () => {
     expect(section(stdout, "no-brainers")).toContain("#53 ");
   });
 
+  test("R1: duplicates linked only through a later pair's shared issue form one group", async () => {
+    const issues = [issue(10, "mt list pads names"), issue(11, "mt list cuts long names"), issue(42, "mt list truncates a guide name")];
+    writeFileSync(ISSUES, JSON.stringify(issues));
+    script = { ...FULL, sameDefect: { "10_42": 0.9, "11_42": 0.8 } };
+    const { code, stdout } = await triage();
+    expect(code).toBe(0);
+    expect(section(stdout, "duplicates")).toBe(
+      [
+        "  #10, #11, #42",
+        "    #10 mt list pads names  (same defect as #42: probability 0.90, confidence 0.80)",
+        "    #11 mt list cuts long names  (same defect as #42: probability 0.80, confidence 0.60)",
+        "    #42 mt list truncates a guide name  (same defect as #10: probability 0.90, confidence 0.80)",
+      ].join("\n"),
+    );
+  });
+
   test("R2: an mt code defect jev calls a no-brainer at or above the threshold is a no-brainer", async () => {
     writeFileSync(ISSUES, JSON.stringify([SURE, AT_THRESHOLD]));
     script = FULL;
     const { stdout } = await triage();
     expect(section(stdout, "no-brainers")).toBe(
       [
-        "  #52 mt list pads names to 20 columns, cutting long ones  (no-brainer: probability 0.90, confidence 0.80)",
-        "  #53 mt get --ref with an empty ref exits 0  (no-brainer: probability 0.85, confidence 0.70)",
+        "  #52 mt list pads names to 20 columns, cutting long ones  (no-brainer: change mt code probability 0.97, confidence 0.95; verdict no-brainer probability 0.90, confidence 0.80)",
+        "  #53 mt get --ref with an empty ref exits 0  (no-brainer: change mt code probability 0.96, confidence 0.94; verdict no-brainer probability 0.85, confidence 0.70)",
       ].join("\n"),
     );
     expect(section(stdout, "rule on")).toBe("  none");
@@ -343,7 +367,7 @@ describe("mt dogfood triage", () => {
     script = FULL;
     const { stdout } = await triage();
     expect(section(stdout, "rule on")).toBe(
-      "  #54 mt mvc save keeps a trailing newline twice  (no-brainer below confidence 0.70: probability 0.84, confidence 0.69)",
+      "  #54 mt mvc save keeps a trailing newline twice  (no-brainer below confidence 0.70: change mt code probability 0.95, confidence 0.92; verdict no-brainer probability 0.84, confidence 0.69)",
     );
     expect(section(stdout, "no-brainers")).toBe("  none");
   });
@@ -371,7 +395,7 @@ describe("mt dogfood triage", () => {
     script = FULL;
     const { stdout } = await triage();
     expect(section(stdout, "rule on")).toBe(
-      "  #56 mt dogfood prints the issue number twice  (mt code below confidence 0.70: probability 0.40, confidence 0.05)",
+      "  #56 mt dogfood prints the issue number twice  (mt code below confidence 0.70: change mt code probability 0.40, confidence 0.05; verdict no-brainer probability 0.95, confidence 0.90)",
     );
     expect(section(stdout, "no-brainers")).toBe("  none");
   });
@@ -381,7 +405,7 @@ describe("mt dogfood triage", () => {
     script = FULL;
     const { stdout } = await triage();
     expect(section(stdout, "no-brainers")).toBe(
-      "  #57 mt list prints an empty line after the last guide  (no-brainer: probability 0.90, confidence 0.70)",
+      "  #57 mt list prints an empty line after the last guide  (no-brainer: change mt code probability 0.80, confidence 0.70; verdict no-brainer probability 0.90, confidence 0.70)",
     );
     expect(section(stdout, "rule on")).toBe("  none");
   });
@@ -399,6 +423,23 @@ describe("mt dogfood triage", () => {
     script = FULL;
     const { stdout } = await triage();
     expect(section(stdout, "rule on")).toBe("  #39 orca worktree rm deletes the branch  (Orca: probability 0.93, confidence 0.89)");
+  });
+
+  test("R6: control characters other than whitespace never reach the terminal from a title", async () => {
+    writeFileSync(ISSUES, JSON.stringify([{ ...ORCA, title: "orca \u001b[2Jworktree\u0007 rm\u007f\tdeletes\u0000 the branch" }]));
+    script = FULL;
+    const { stdout } = await triage();
+    expect(stdout).not.toMatch(/[\u0000-\u0008\u000b-\u001f\u007f]/);
+    expect(section(stdout, "rule on")).toBe("  #39 orca [2Jworktree rm deletes the branch  (Orca: probability 0.93, confidence 0.89)");
+  });
+
+  test("R5: a confidence just under the threshold never prints as the threshold", async () => {
+    writeFileSync(ISSUES, JSON.stringify([UNSURE_CHANGE]));
+    script = { ...FULL, change: { 56: { choice: "mt_code", probability: 0.6999, confidence: 0.6999 } } };
+    const { stdout } = await triage();
+    expect(section(stdout, "rule on")).toBe(
+      "  #56 mt dogfood prints the issue number twice  (mt code below confidence 0.70: change mt code probability 0.69, confidence 0.69; verdict no-brainer probability 0.95, confidence 0.90)",
+    );
   });
 
   test("R7: gh is asked only to list the open dogfooding issues, in mt's clone", async () => {
@@ -473,7 +514,20 @@ describe("mt dogfood triage", () => {
     expect(stderr).toBe("mt: triage: jev: 400 questions: too many\n");
   });
 
-  test("once a placement call fails, no new placement call starts", async () => {
+  test("a failing jev call with a long HTML body prints only the first line of its message, cut at a sensible length", async () => {
+    writeFileSync(ISSUES, JSON.stringify([ORCA, GUIDE]));
+    const html = `<html>\n${"<p>upstream is down</p>\n".repeat(60)}</html>`;
+    script = { ...FULL, fail: { status: 500, body: html } };
+    const { code, stdout, stderr } = await triage();
+    expect(code).toBe(1);
+    expect(stdout).toBe("");
+    expect(stderr.split("\n")).toHaveLength(2);
+    expect(stderr).toMatch(/^mt: triage: jev: .+\n$/);
+    expect(stderr).not.toContain("upstream is down");
+    expect(stderr.length).toBeLessThan(300);
+  });
+
+  test("once a placement call fails, the calls in flight are aborted and no new placement call starts", async () => {
     const issues = Array.from({ length: 10 }, (_, i) => issue(100 + i, `mt list defect ${i}`, "Expected: no defect."));
     writeFileSync(ISSUES, JSON.stringify(issues));
     script = {
@@ -486,6 +540,8 @@ describe("mt dogfood triage", () => {
     expect(code).toBe(1);
     expect(stdout).toBe("");
     expect(stderr).toBe("mt: triage: jev: 400 questions: too many\n");
+    await gate.allAborted.promise;
+    expect(gate.aborted).toBe(PLACEMENT_BATCH - 1);
     expect(gate.late).toBe(0);
     expect(seen).toHaveLength(1 + PLACEMENT_BATCH);
   });

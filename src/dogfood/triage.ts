@@ -9,7 +9,9 @@
  *                  either answer falls short of NO_BRAINER_CONFIDENCE
  *
  * Every issue's line shows its number, its title, and jev's probability and confidence for the
- * placement, and a first line names the jev model that answered. Triage changes nothing on GitHub.
+ * placement (for an mt code issue, those of both the change answer and the verdict), and a first
+ * line names the jev model that answered. Triage changes nothing on GitHub. The first jev call to
+ * fail aborts the calls still in flight and starts no more.
  * jev is reached through @typesafe-ai/sdk, which reads TYPESAFE_API_KEY, TYPESAFE_BASE_URL and
  * TYPESAFE_DEFAULT_MODEL (jev-latest when unset); issue titles and bodies are sent to it.
  *
@@ -47,12 +49,19 @@ const ChoiceAnswer = z.object({
   probabilities: z.record(z.string(), z.number().min(0).max(1)),
 });
 
-interface Placement {
-  issue: Issue;
-  /** What the probability and confidence are for, as the report names it. */
-  label: string;
+/** jev's probability for the answer it chose, and its confidence in it. */
+interface Score {
+  /** Which answer this is, when a line shows more than one. */
+  name?: string;
   probability: number;
   confidence: number;
+}
+
+interface Placement {
+  issue: Issue;
+  /** What the scores are for, as the report names it. */
+  label: string;
+  scores: Score[];
 }
 
 interface Report {
@@ -77,6 +86,8 @@ const VERDICT = choice("Can an agent implement this issue's fix without the owne
 });
 
 const CHANGE_LABELS: Record<string, string> = { mt_code: "mt code", guide: "guide", orca: "Orca" };
+
+const VERDICT_LABELS: Record<string, string> = { no_brainer: "no-brainer", rule_on: "rule on" };
 
 const CREDENTIAL_HEADERS = new Set(["authorization", "proxy-authorization", "x-api-key", "cookie", "set-cookie"]);
 
@@ -137,26 +148,35 @@ function noulConfidence(probability: number): number {
   return Math.abs(2 * probability - 1);
 }
 
+/** An error line is one line: the first line of the message, cut at this many characters. */
+const MESSAGE_LIMIT = 200;
+
+function firstLine(message: string): string {
+  const line = (message.split("\n").find((candidate) => candidate.trim() !== "") ?? "").trim();
+  return line.length > MESSAGE_LIMIT ? `${line.slice(0, MESSAGE_LIMIT)}…` : line;
+}
+
 async function jev<T>(call: () => Promise<T>): Promise<T> {
   try {
     return await call();
   } catch (error) {
     if (error instanceof Failure) throw error;
-    throw new Failure(`jev: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Failure(`jev: ${firstLine(error instanceof Error ? error.message : String(error))}`);
   }
 }
 
-async function pool<T, R>(items: readonly T[], limit: number, work: (item: T) => Promise<R>): Promise<R[]> {
+/** Runs `work` over the items, `limit` at a time. The first failure aborts the calls in flight and starts no more. */
+async function pool<T, R>(items: readonly T[], limit: number, work: (item: T, signal: AbortSignal) => Promise<R>): Promise<R[]> {
   const results: R[] = [];
   const queue = [...items.entries()];
-  let failed = false;
+  const abort = new AbortController();
   async function worker(): Promise<void> {
-    for (let next = queue.shift(); next !== undefined && !failed; next = queue.shift()) {
+    for (let next = queue.shift(); next !== undefined && !abort.signal.aborted; next = queue.shift()) {
       const [index, item] = next;
       try {
-        results[index] = await work(item);
+        results[index] = await work(item, abort.signal);
       } catch (error) {
-        failed = true;
+        abort.abort();
         throw error;
       }
     }
@@ -200,7 +220,8 @@ async function duplicates(client: TypeSafeClient, issues: Issue[], models: Set<s
     if (link === undefined) continue;
     const root = find(issue.number);
     const group = groups.get(root) ?? [];
-    group.push({ issue, label: `same defect as #${link.other}`, probability: link.probability, confidence: noulConfidence(link.probability) });
+    const scores = [{ probability: link.probability, confidence: noulConfidence(link.probability) }];
+    group.push({ issue, label: `same defect as #${link.other}`, scores });
     groups.set(root, group);
   }
   return [...groups.values()];
@@ -211,31 +232,35 @@ async function place(
   client: TypeSafeClient,
   issue: Issue,
   models: Set<string>,
+  signal: AbortSignal,
 ): Promise<{ bucket: "noBrainers" | "ruleOn"; placement: Placement }> {
-  const { answers, model } = await jev(() => client.systemOne({ state: issue, questions: { change: CHANGE, verdict: VERDICT } }));
+  const { answers, model } = await jev(() =>
+    client.systemOne({ state: issue, questions: { change: CHANGE, verdict: VERDICT } }, { signal }),
+  );
   models.add(model);
   const change = answer(answers, "change", ChoiceAnswer);
   const changeLabel = CHANGE_LABELS[change.choice];
   if (changeLabel === undefined) throw new Failure(`jev chose '${change.choice}', which the change question does not offer`);
+  const changeScore = { probability: chosen("change", change), confidence: change.confidence };
   if (change.choice !== "mt_code") {
-    const probability = chosen("change", change);
-    return { bucket: "ruleOn", placement: { issue, label: changeLabel, probability, confidence: change.confidence } };
-  }
-  if (change.confidence < NO_BRAINER_CONFIDENCE) {
-    const label = `${changeLabel} below confidence ${NO_BRAINER_CONFIDENCE.toFixed(2)}`;
-    return { bucket: "ruleOn", placement: { issue, label, probability: chosen("change", change), confidence: change.confidence } };
+    return { bucket: "ruleOn", placement: { issue, label: changeLabel, scores: [changeScore] } };
   }
   const verdict = answer(answers, "verdict", ChoiceAnswer);
-  const probability = chosen("verdict", verdict);
-  if (verdict.choice === "no_brainer") {
-    const placement = { issue, label: "no-brainer", probability, confidence: verdict.confidence };
-    if (verdict.confidence >= NO_BRAINER_CONFIDENCE) return { bucket: "noBrainers", placement };
-    return { bucket: "ruleOn", placement: { ...placement, label: `no-brainer below confidence ${NO_BRAINER_CONFIDENCE.toFixed(2)}` } };
+  const verdictLabel = VERDICT_LABELS[verdict.choice];
+  if (verdictLabel === undefined) throw new Failure(`jev chose '${verdict.choice}', which the verdict question does not offer`);
+  const scores = [
+    { name: `change ${changeLabel}`, ...changeScore },
+    { name: `verdict ${verdictLabel}`, probability: chosen("verdict", verdict), confidence: verdict.confidence },
+  ];
+  const below = `below confidence ${NO_BRAINER_CONFIDENCE.toFixed(2)}`;
+  if (change.confidence < NO_BRAINER_CONFIDENCE) {
+    return { bucket: "ruleOn", placement: { issue, label: `${changeLabel} ${below}`, scores } };
   }
-  if (verdict.choice === "rule_on") {
-    return { bucket: "ruleOn", placement: { issue, label: "rule on", probability, confidence: verdict.confidence } };
+  if (verdict.choice !== "no_brainer") return { bucket: "ruleOn", placement: { issue, label: verdictLabel, scores } };
+  if (verdict.confidence < NO_BRAINER_CONFIDENCE) {
+    return { bucket: "ruleOn", placement: { issue, label: `${verdictLabel} ${below}`, scores } };
   }
-  throw new Failure(`jev chose '${verdict.choice}', which the verdict question does not offer`);
+  return { bucket: "noBrainers", placement: { issue, label: verdictLabel, scores } };
 }
 
 async function triage(client: TypeSafeClient, issues: Issue[]): Promise<Report> {
@@ -245,7 +270,7 @@ async function triage(client: TypeSafeClient, issues: Issue[]): Promise<Report> 
   const placed = await pool(
     issues.filter((issue) => !grouped.has(issue.number)),
     JEV_CONCURRENCY,
-    (issue) => place(client, issue, models),
+    (issue, signal) => place(client, issue, models, signal),
   );
   return {
     models: [...models].sort(),
@@ -255,9 +280,20 @@ async function triage(client: TypeSafeClient, issues: Issue[]): Promise<Report> 
   };
 }
 
-function line({ issue, label, probability, confidence }: Placement, indent: string): string {
-  const title = issue.title.replace(/\s+/g, " ").trim();
-  return `${indent}#${issue.number} ${title}  (${label}: probability ${probability.toFixed(2)}, confidence ${confidence.toFixed(2)})\n`;
+/** A probability or confidence cut, not rounded, to two places, so a value under the threshold never prints as the threshold. */
+function twoPlaces(value: number): string {
+  return value.toFixed(8).slice(0, -6);
+}
+
+function line({ issue, label, scores }: Placement, indent: string): string {
+  const title = issue.title
+    .replace(/(?!\s)\p{Cc}/gu, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  const shown = scores
+    .map(({ name, probability, confidence }) => `${name === undefined ? "" : `${name} `}probability ${twoPlaces(probability)}, confidence ${twoPlaces(confidence)}`)
+    .join("; ");
+  return `${indent}#${issue.number} ${title}  (${label}: ${shown})\n`;
 }
 
 function render({ models, duplicates, noBrainers, ruleOn }: Report): string {
