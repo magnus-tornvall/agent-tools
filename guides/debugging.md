@@ -4,9 +4,6 @@ Find why something fails, with evidence, before changing anything to make it pas
 failure nobody expected: a test that should pass fails, a build or command breaks, code does what
 it was not written to do. A test written to fail before it passes is not one; it is doing its job.
 
-When the request asks only why something fails, the work ends at the root cause. Otherwise it
-carries through the fix and its regression test.
-
 ## Objectives
 
 - **The failure is reproduced before it is explained.** Read the whole error first: the message,
@@ -25,15 +22,18 @@ carries through the fix and its regression test.
   smallest change or probe that can rule it in or out, and recorded with its result. A probe that
   changes several things at once rules nothing out. A hypothesis the evidence rules out is undone,
   not built on.
-- **The fix is one change at the root cause, proven by a regression test.** The test reproduces
-  the failure, and is seen failing before the fix and passing after it; the rest of the repo's
-  checks still pass. Nothing rides along with the fix.
+- **The fix is one change at the root cause, proven by reproducing the failure.** When the cause is
+  in the repo's code, a regression test reproduces it, and is seen failing before the fix and
+  passing after it. When the cause is outside the repo's code (the environment, config outside
+  the repo, an external service), the command that reproduces the failure is seen failing before
+  the fix and passing after it, and no automated test is added. The rest of the repo's checks
+  still pass, and nothing rides along with the fix.
 - **After three fixes that each failed, a fourth is asked, not tried.** The question goes to
   whoever owns the decision, naming what each attempt ruled out. Fixes that each surface a new
   problem somewhere else point at the design, not at one more patch. A fix that changes
   architecture is asked whatever the count.
-- **A diagnosis changes no code.** When the request asks only why, the root cause and its evidence
-  are the result; every probe is undone and no fix is made.
+- **A diagnosis changes no code.** When the request asks only why, the work ends at the root cause
+  and its evidence; no fix is made. Otherwise the work carries through the fix.
 - **Diagnostics leave with the investigation.** Logging, prints, probes and scratch scripts added
   to find the cause are gone before the work is reported done.
 
@@ -62,7 +62,7 @@ Besides what the request asks:
 
 - how the failure was reproduced: the command or input, and whether it failed every time;
 - each hypothesis, with the evidence that ruled it in or out;
-- the root cause, with its evidence;
-- the regression test, seen failing before the fix and passing after it; or, for a diagnosis, that
-  no code changed;
+- the root cause with its evidence, or what is known, ruled out and not understood;
+- the regression test, or for a cause outside the repo's code the reproducing command, seen
+  failing before the fix and passing after it; or, for a diagnosis, that no code changed;
 - each fix that failed, and what it ruled out.
