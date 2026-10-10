@@ -135,8 +135,9 @@ When the finding cannot be filed, because `gh` is not on PATH, not authenticated
 otherwise, `mt` prints one `mt: finding not filed: <reason>` line on stderr, nothing on stdout, and
 still exits 0, so the agent carries on. A usage error exits 2, an unreadable body file 1.
 
-`mt dogfood` is not in the permission rules below and is not meant to be allowed automatically:
-each filing asks first, since it posts to a public repo.
+`mt dogfood` sits under an ask rule, `Bash(mt dogfood:*)` in `permissions.ask` (see Install), so
+each filing still asks first, since it posts to a public repo. Claude Code checks deny rules, then
+ask rules, then allow rules, so the ask rule prompts even though `Bash(mt:*)` is allowed.
 
 ### Install
 
@@ -160,9 +161,11 @@ is missing or stale. It:
   stays where it is;
 - links each stub skill that has a guide into `~/.agents/skills`, and removes links into this
   clone whose stub is gone;
-- asks whether to add `Bash(mt get:*)`, `Bash(mt list)` and `Bash(mt shape:*)` to
-  `permissions.allow` in `~/.claude/settings.json`, so Claude Code agents run `mt` without a
-  prompt. A yes keeps everything else in the file; it is not asked again once the rules are there.
+- asks whether to add `Bash(mt:*)` to `permissions.allow` and `Bash(mt dogfood:*)` to
+  `permissions.ask` in `~/.claude/settings.json`, so Claude Code agents run every `mt` command
+  without a prompt except `mt dogfood`, which asks before each filing. A file that still holds
+  `Bash(mt get:*)`, `Bash(mt list)` or `Bash(mt shape:*)` from an earlier install has them replaced.
+  A yes keeps everything else in the file; it is not asked again once the rules are there.
   `ADD_MT_RULES=yes` or `ADD_MT_RULES=no` answers without asking, and with no terminal to ask on
   nothing is written;
 - checks that a login shell started from your profile alone finds `mt` and Bun. Orca starts a
@@ -173,12 +176,13 @@ Set `BIN_DIR`, `SKILLS_DIR` or `SETTINGS` to use other places, for example
 installed as a real folder is left alone and the install fails, naming it: linking over it
 would write a stray link inside it. The whole mvc from before it became a guide is such a folder,
 and the old and the new mvc cannot both be installed as `mvc`. To keep the old one for a later
-comparison, move it out of the skills folder rather than delete it. Settings that are not JSON
-are left alone too, and the install fails, naming the rules to add by hand.
+comparison, move it out of the skills folder rather than delete it. Settings that are not JSON,
+or whose `permissions.allow` or `permissions.ask` is not a list of strings, are left alone too,
+and the install fails, naming the rules to add by hand.
 
 `make uninstall` takes it back out: the `mt` link and every link in the skills folder that points
 into this clone, so a skill or `mt` installed some other way stays. It asks before removing the
-three rules from the settings; `REMOVE_MT_RULES=yes` or `=no` answers without asking. It leaves
+two rules, and any of the three earlier ones, from the settings; `REMOVE_MT_RULES=yes` or `=no` answers without asking. It leaves
 Bun, the clone and its `node_modules`, your shell profile and the usage log. Pass the same
 `BIN_DIR`, `SKILLS_DIR` and `SETTINGS` you installed with.
 
