@@ -158,7 +158,7 @@ a first line names the jev model that answered (`TYPESAFE_DEFAULT_MODEL` picks o
 when unset), then three groups, each issue with its number, its title, and jev's probability and
 confidence (for a defect in `mt`'s own code, those of both its change answer and its verdict):
 
-- duplicates: issues jev judges to describe the same defect, grouped;
+- duplicates: issues jev judges to report at least one same problem, grouped;
 - no-brainers: defects in `mt`'s own code or tests that jev judges safe to implement unattended,
   meaning its answers that it is `mt` code and that it is a no-brainer are each at least 0.70
   confident;
@@ -167,7 +167,8 @@ confidence (for a defect in `mt`'s own code, those of both its change answer and
 
 It needs `TYPESAFE_API_KEY` set to a jev API key, read from that variable only and never printed.
 The title and body of every open dogfooding issue, and the key, are sent to `api.typesafe.ai`, or
-to `TYPESAFE_BASE_URL` when that is set; the issues are already public. `TYPESAFE_LOG_LEVEL` sets
+to `TYPESAFE_BASE_URL` when that is set; the issues are already public. The footer `mt dogfood`
+appends to a body, with its commit, session and worktree, is left out. `TYPESAFE_LOG_LEVEL` sets
 how much of the SDK's request log goes to stderr, which never shows the key. Without the key, when
 `gh` fails, or when a jev call fails, it prints one line on stderr, nothing on stdout, and exits 1;
 the first failed call aborts the calls still in flight and starts no more.

@@ -2,7 +2,7 @@
  * `mt dogfood triage`, which cli/mt loads only when it is called. It reads every open issue
  * labelled dogfooding in mt's clone through gh, has jev place each one, and prints the report:
  *
- *   duplicates     issues jev judges to describe the same defect, grouped
+ *   duplicates     issues jev judges to report at least one same problem, grouped
  *   no-brainers    defects in mt's own code or tests, where jev's answers that it is mt code and
  *                  that it is a no-brainer each have confidence at or above NO_BRAINER_CONFIDENCE
  *   rule on        everything else: guide wording, Orca's own behaviour, and mt code issues where
@@ -10,7 +10,8 @@
  *
  * Every issue's line shows its number, its title, and jev's probability and confidence for the
  * placement (for an mt code issue, those of both the change answer and the verdict), and a first
- * line names the jev model that answered. Triage changes nothing on GitHub. The first jev call to
+ * line names the jev model that answered. The footer `mt dogfood` appends to a body is not sent to
+ * jev. Triage changes nothing on GitHub. The first jev call to
  * fail aborts the calls still in flight and starts no more.
  * jev is reached through @typesafe-ai/sdk, which reads TYPESAFE_API_KEY, TYPESAFE_BASE_URL and
  * TYPESAFE_DEFAULT_MODEL (jev-latest when unset); issue titles and bodies are sent to it.
@@ -24,8 +25,8 @@ import { z } from "zod";
 /** The confidence below which jev's mt-code or no-brainer answer sends the issue to the owner instead. */
 export const NO_BRAINER_CONFIDENCE = 0.7;
 
-/** A pair of issues whose same-defect probability is above this is a duplicate. */
-const SAME_DEFECT = 0.5;
+/** A pair of issues whose shared-problem probability is above this is a duplicate. */
+const SHARED_PROBLEM = 0.6;
 
 /** jev answers on many issues at once; each attempt gets this long before the SDK retries. */
 const JEV_TIMEOUT_MS = 120_000;
@@ -41,6 +42,16 @@ class Failure extends Error {}
 
 const IssueSchema = z.object({ number: z.number().int(), title: z.string(), body: z.string() });
 type Issue = z.infer<typeof IssueSchema>;
+
+/** How the footer cli/mt's seenOn appends to a filed body starts; the footer runs to the body's end. */
+const FOOTER = "---\nFiled with `mt dogfood`.\n";
+
+/** The body without that footer, whose commit, session and worktree lines say nothing about the issue. */
+function withoutFooter(body: string): string {
+  const at = body.lastIndexOf(FOOTER);
+  if (at === -1 || (at > 0 && body[at - 1] !== "\n")) return body;
+  return body.slice(0, at).trimEnd();
+}
 
 const NoulAnswer = z.object({ noul: z.number().min(0).max(1) });
 const ChoiceAnswer = z.object({
@@ -73,7 +84,7 @@ interface Report {
 }
 
 const CHANGE = choice("Resolving this dogfooding issue would change what?", {
-  mt_code: "mt's own code or tests in this repo: cli/mt, src/ or test/",
+  mt_code: "mt's own code or tests in this repo: cli/mt, src/, test/ or the Makefile",
   guide: "the wording of a guide or skill in this repo",
   orca: "the behaviour of Orca itself, which is not code in this repo",
 });
@@ -127,7 +138,7 @@ function openIssues(root: string): Issue[] {
   }
   const issues = z.array(IssueSchema).safeParse(listed);
   if (!issues.success) throw new Failure("gh listed the issues without a number, title and body each");
-  return issues.data.sort((a, b) => a.number - b.number);
+  return issues.data.map((issue) => ({ ...issue, body: withoutFooter(issue.body) })).sort((a, b) => a.number - b.number);
 }
 
 function answer<T>(answers: Readonly<Record<string, unknown>>, key: string, schema: z.ZodType<T>): T {
@@ -185,7 +196,7 @@ async function pool<T, R>(items: readonly T[], limit: number, work: (item: T, si
   return results;
 }
 
-/** Groups of issues jev judges to describe the same defect, each member placed by its strongest link. */
+/** Groups of issues jev judges to report at least one same problem, each member placed by its strongest link. */
 async function duplicates(client: TypeSafeClient, issues: Issue[], models: Set<string>): Promise<Placement[][]> {
   if (issues.length < 2) return [];
   const pairs: [Issue, Issue][] = [];
@@ -193,7 +204,9 @@ async function duplicates(client: TypeSafeClient, issues: Issue[], models: Set<s
   for (const [i, a] of issues.entries()) {
     for (const b of issues.slice(i + 1)) {
       pairs.push([a, b]);
-      questions[`same_${a.number}_${b.number}`] = noul(`Issues #${a.number} and #${b.number} describe the same defect.`);
+      questions[`same_${a.number}_${b.number}`] = noul(
+        `At least one problem reported in issue #${a.number} is also reported in issue #${b.number}: fixing that problem for one issue would fix it for the other.`,
+      );
     }
   }
   const { answers, model } = await jev(() => client.systemOne({ state: { issues }, questions }));
@@ -207,7 +220,7 @@ async function duplicates(client: TypeSafeClient, issues: Issue[], models: Set<s
   const strongest = new Map<number, { other: number; probability: number }>();
   for (const [a, b] of pairs) {
     const { noul: probability } = answer(answers, `same_${a.number}_${b.number}`, NoulAnswer);
-    if (probability <= SAME_DEFECT) continue;
+    if (probability <= SHARED_PROBLEM) continue;
     parent.set(find(b.number), find(a.number));
     for (const [self, other] of [[a.number, b.number], [b.number, a.number]] as const) {
       if ((strongest.get(self)?.probability ?? -1) < probability) strongest.set(self, { other, probability });
@@ -221,7 +234,7 @@ async function duplicates(client: TypeSafeClient, issues: Issue[], models: Set<s
     const root = find(issue.number);
     const group = groups.get(root) ?? [];
     const scores = [{ probability: link.probability, confidence: noulConfidence(link.probability) }];
-    group.push({ issue, label: `same defect as #${link.other}`, scores });
+    group.push({ issue, label: `shares a problem with #${link.other}`, scores });
     groups.set(root, group);
   }
   return [...groups.values()];
