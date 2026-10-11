@@ -33,9 +33,10 @@ No agent chooses them, so a skill-list entry would only cost the sessions that n
 `mt get` serves them like any other guide. Stubs remain for what an agent or the owner picks:
 mvc, which settles a shape with the owner, to-orca, which runs one, ask, which composes a
 question for whoever owns a decision, door-rule, which says whether a decision is asked at
-all, and debugging, which finds the root cause of an unexpected failure before it is fixed.
-`mt list` shows every guide. Skills that are not stubs, such as commit, stay whole in
-`skills/` and `mt` does not serve them.
+all, debugging, which finds the root cause of an unexpected failure before it is fixed, and
+research, which answers the owner's question from trusted outside sources; only the owner starts
+it, by typing `/research`. `mt list` shows every guide. Skills that are not stubs, such as
+commit, stay whole in `skills/` and `mt` does not serve them.
 
 ```
 mt list                       every guide, once, with its stub's description, or the
