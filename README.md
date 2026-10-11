@@ -1,12 +1,17 @@
 # agent-tools
 
 Skills for agents working in Orca, and `mt`, which loads them on demand, checks and slices shapes
-and drafts, and files dogfooding findings.
+and drafts, runs a shape's oracles, and files dogfooding findings.
 
 ## The shape
 
 A shape is one YAML document: the outcome, requirements keyed `R1…`, non-goals keyed
-`N1…`, approach, constraints, touchpoints, and decisions keyed `D1…`.
+`N1…`, constraints keyed `C1…`, touchpoints, and decisions keyed `D1…`. Once closed, it may
+gain oracles keyed `O1…`: acceptance tests in the repo, each naming the keys it covers, what it
+does at the base commit, the command that runs it and the sha256 of each of its files, with
+`unchecked` naming each key no oracle covers and why. With oracles, the outcome, every
+requirement, boundary non-goal and constraint must be covered or unchecked;
+`mt get oracle --ref example` prints a shape with its oracles.
 The schema in `src/shape/shape.ts` is the contract: a shape is what `mt shape check`
 accepts, and `mt get mvc --ref example` prints a filled-in example.
 
@@ -31,12 +36,13 @@ Every stub has a guide. A guide that only a spec or another guide loads has no s
 orca-worker and the assignments change, maintainer-review, shape-coverage and surprise-review.
 No agent chooses them, so a skill-list entry would only cost the sessions that never use them;
 `mt get` serves them like any other guide. Stubs remain for what an agent or the owner picks:
-mvc, which settles a shape with the owner, to-orca, which runs one, ask, which composes a
-question for whoever owns a decision, door-rule, which says whether a decision is asked at
-all, debugging, which finds the root cause of an unexpected failure before it is fixed, and
-research, which answers the owner's question from trusted outside sources; only the owner starts
-it, by typing `/research`. `mt list` shows every guide. Skills that are not stubs, such as
-commit, stay whole in `skills/` and `mt` does not serve them.
+mvc, which settles a shape with the owner, oracle, which writes a closed shape's oracles before
+it is built, to-orca, which runs one, ask, which composes a question for whoever owns a
+decision, door-rule, which says whether a decision is asked at all, debugging, which finds the
+root cause of an unexpected failure before it is fixed, and research, which answers the owner's
+question from trusted outside sources; only the owner starts it, by typing `/research`.
+`mt list` shows every guide. Skills that are not stubs, such as commit, stay whole in
+`skills/` and `mt` does not serve them.
 
 ```
 mt list                       every guide, once, with its stub's description, or the
@@ -48,6 +54,10 @@ mt shape check [--draft] <file>
                               - reads stdin
 mt shape slice <file> --keys <key,...>
                               print the shape with only those top-level keys; - reads stdin
+mt oracle hash <file>...      print each file's path from the repo root and sha256, to pin it
+mt oracle run [--base] [--timeout <seconds>] <shape>
+                              check each oracle's pinned files and run it from the repo root;
+                              --base checks each does what its base says; - reads stdin
 mt dogfood <title> [--body-file <file>]
                               file a finding as an issue labelled dogfooding; - reads stdin
 mt dogfood triage             sort the open dogfooding issues into duplicates, no-brainers and
@@ -83,10 +93,10 @@ If the log cannot be written, `mt` says so on stderr and still prints the guide.
 prints one `path: message` line per violation on stderr and exits 1; a file that is not YAML
 is one violation, on `(document)`, and a `draft` key is one on `draft`. With `--draft` it
 checks a draft instead: the `draft` block is required and checked, and every other key is
-optional but checked when present, `requirements` with no minimum. A key repeated in
-`requirements`, `non_goals` or `decisions` is a violation on that key, found in block-style
-maps; YAML keeps only the last of a repeated key, so without this one entry would be dropped
-silently.
+optional but checked when present, `requirements` with no minimum and oracles without the
+coverage rule. A key repeated in `requirements`, `non_goals`, `constraints`, `decisions`,
+`oracles` or `unchecked` is a violation on that key, found in block-style maps; YAML keeps only
+the last of a repeated key, so without this one entry would be dropped silently.
 
 `mt shape slice <file> --keys outcome,non_goals` prints a YAML document with only those
 top-level keys of the shape, their values unchanged. A key the schema does not define, or a
@@ -96,8 +106,34 @@ does not run the check, so a shape with a violation the owner ruled on can still
 Both read the document from stdin when the file is `-`, and read only a whole YAML document:
 a shape inside other text, such as Markdown, is taken out of it by whoever pipes it in.
 
-The schema is `src/shape/shape.ts`. `mt shape` loads it only when called, so `mt get` and
-`mt list` need nothing beyond `cli/mt` and Bun.
+The schema is `src/shape/shape.ts`. `mt shape` and `mt oracle` load it only when called, so
+`mt get` and `mt list` need nothing beyond `cli/mt` and Bun.
+
+### Oracles
+
+`mt oracle run <shape>`, run anywhere in a git repo, takes each oracle in turn; pinned files,
+`junit` and commands are relative to the repo root. A pinned file that is missing, not a file, or
+whose sha256 differs makes the oracle `tampered`, and it is not run. Otherwise its command runs
+through `sh -c`, its output going to stderr, and it is `pass`, `fail`, `blocked` or `broken`: from
+its JUnit report when it names one in `junit`, where an error is broken, a failure fails, a skip is
+blocked and a report with no test case, or one that does not end its root element, is broken,
+comments and CDATA unread; else from its exit code, read as automake does, 0 pass, 77 blocked, 99
+broken, anything else fail, except 126 or 127, a command that did not start, and 128 and up, a
+signal, which are broken. Those exit codes are broken even when a report was written. The file
+`junit` names is deleted before the run, so a report from an earlier run never answers; a `junit`
+that names a folder is broken, and the schema refuses one that names a file any oracle pins. Each
+command runs in a process group of its own, killed when the command exits, so nothing it started in
+the background outlives it. With `--timeout`, an oracle still running after that many seconds is
+killed and broken. It prints one `O<n>: <verdict> (covers <keys>)` line per oracle on stdout and
+exits 0 when every oracle passes. With `--base` it exits 0 when each does what its `base` says
+instead: `fail` for new behaviour, `pass` for what must not change. Only the `oracles` block has to
+be sound; the rest of the shape is not checked, so an owner's ruling on another violation does not
+stop the run, and the block piped alone as `-` is enough. Each command is run as written: `mt oracle
+run` executes what the shape says, so run it only on a shape you trust.
+
+`mt oracle hash <file>...` prints `<path>: <sha256>` per file, the form `files` takes, with the
+path from the repo root whichever folder it runs in; a file outside the repo, or whose path holds
+whitespace, cannot be pinned and exits 1.
 
 ### Dogfooding
 
@@ -235,8 +271,9 @@ reaches the real jev or GitHub. `bun run typecheck` runs `tsc --noEmit` over `sr
 ```
 cli/      mt
 Makefile  make install and make uninstall
-src/      shape/, the shape schema and mt shape; dogfood/, mt dogfood triage; install/, the
-          settings rules; guide-lint/, the check test/guides.sh runs; each with its tests
+src/      shape/, the shape schema and mt shape; oracle/, mt oracle; dogfood/, mt dogfood triage;
+          install/, the settings rules; guide-lint/, the check test/guides.sh runs; each with its
+          tests
 guides/   one guide per tool, <name>.md, with its references in <name>/<ref>.md
 skills/   a stub skill per guide an agent or the owner picks, <name>/SKILL.md, mvc and ask
           among them, plus the commit skill, which is whole

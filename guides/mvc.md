@@ -53,8 +53,8 @@ Re-invoked on a settled shape, mvc asks nothing and goes straight to the report,
   non-goal: a boundary, never this change, with the line between them; or a deferral, not now,
   with why. What nobody would have asked for is left out.
 - **Every decision names what it rejected.** A decision that rules nothing out is a description.
-- **IDs are stable.** Questions, assumptions, requirements, non-goals and decisions keep their
-  numbers, and a retired number is never reused.
+- **IDs are stable.** Questions, assumptions, requirements, non-goals, constraints and decisions
+  keep their numbers, and a retired number is never reused.
 - **The shape closes within the budget, or a decomposition is reported instead.** At close, each
   open question either gets the owner's answer or becomes a deferral with its reason. A question
   with a Risk line is never deferred; one with a One-way door line only on the owner's word, and
@@ -137,20 +137,29 @@ rest? Then the shape, as one YAML document that passes `mt shape check`, with no
 placeholders, so a consumer copies it rather than translates it. Or, when the shape cannot close,
 the decomposition, and no shape.
 
-- `outcome` is the one scalar, with no weasel words. Every other field is a collection, and an
-  empty one is a statement; `requirements` holds at least one.
-- `outcome`, `requirements` and `non_goals` are what the change does; `approach`, `constraints`
-  and `touchpoints` are how. A file, symbol, technology or value is how, never a requirement.
+- `outcome` is the one scalar, with no weasel words: an end state the owner would call done,
+  observable whichever way the change is built. Every other field is a collection, and an empty
+  one is a statement; `requirements` holds at least one.
+- `outcome`, `requirements` and `non_goals` are what the change does; `constraints`,
+  `touchpoints` and `decisions` are how. A file, symbol, technology or value is how, never a
+  requirement. A mechanism the change must use is a decision, with what it rejected; one it need
+  not use is left out.
 - A requirement is given, when, then, or a `text` with the `reason` it cannot be observed. A
-  settled example lands here as asked.
+  settled example lands here as asked. Each `given` sets up its own state, never another
+  requirement passing, so one failure never fails two; requirements whose givens are alternatives
+  never overlap, so no input fires both.
+- A boundary non-goal says what still holds, so its absence can be checked: what is still refused,
+  or still unchanged.
+- `constraints` are keyed `C1…`.
 - `touchpoints` are the expected blast radius, each a path from the repo root or `path:symbol`.
 - A risk has no field: mitigated, it is a constraint; avoided, a non-goal; accepted, a decision
   that says what accepting it costs.
 - Each decision has its `rejected` alternatives and its `provenance`, the evidence only, never a
-  bare question or assumption ID. A one-way door records `who_pays`. `decided_by` is `owner`, with
-  the `question` as it was asked, or `silence` for an assumption nobody corrected; a one-way door
-  is always the owner's. An Either answer is a decision naming the input it covers.
+  bare question or assumption ID. `decided_by` is `owner`, or `silence` for an assumption nobody
+  corrected; a one-way door is always the owner's. An Either answer is a decision naming the input
+  it covers.
 - Earlier decision records go in `constraints`, not `decisions`.
+- mvc writes no `oracles` or `unchecked`; the oracle tool adds them to the closed shape.
 
 A shape written to a file is the checked report verbatim. A parked grill's shape goes where its
 draft was. Otherwise, with no location given, it goes to `mvc-<slug>.yaml` in `.scratch` at the

@@ -19,7 +19,7 @@ A file of - is read from stdin.
 
 class UsageError extends Error {}
 
-function readShape(file: string): string | undefined {
+export function readShape(file: string): string | undefined {
   try {
     return readFileSync(file === "-" ? 0 : file, "utf8");
   } catch (error) {
@@ -29,13 +29,13 @@ function readShape(file: string): string | undefined {
   }
 }
 
-function report(violations: readonly Violation[]): void {
+export function report(violations: readonly Violation[]): void {
   const lines = violations.map(({ path, message }) => `${path || "(document)"}: ${message}\n`);
   process.stderr.write(lines.join(""));
 }
 
 /** A file operand: `-` for stdin, or a path that does not start with `-`. */
-function isFile(arg: string): boolean {
+export function isFile(arg: string): boolean {
   return arg === "-" || !arg.startsWith("-");
 }
 

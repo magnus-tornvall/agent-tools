@@ -20,10 +20,8 @@ non_goals:
     item: Editing the reason after cancellation
     type: deferral
     reason: No operator has asked for it yet.
-approach:
-  - A nullable cancel_reason column on orders.
 constraints:
-  - The export's column order does not change; cancel_reason is appended.
+  C1: The export's column order does not change; cancel_reason is appended.
 touchpoints:
   - app/Models/Order.php:cancel
   - reports/OrderExport.php
@@ -36,9 +34,7 @@ decisions:
       - Keeping the reason only in the event log
     provenance: Finance imports the nightly export by column position, and the event log is pruned after 90 days.
     door: one_way
-    who_pays: Finance's import, which reads the export's columns.
     decided_by: owner
-    question: Where is a cancelled order's reason stored?
   D3:
     decision: The API returns the reason as a plain string.
     rejected:

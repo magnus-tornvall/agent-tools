@@ -1,8 +1,8 @@
 #!/usr/bin/env bun
 // mt: load the know-how of the owner's tools on demand, record every load, check and slice shapes
-// and drafts, and file and triage dogfooding findings. get, list and dogfood need nothing beyond this
-// file and, for dogfood, gh; shape and dogfood triage load src/shape/ and src/dogfood/ only when they
-// are called.
+// and drafts, run a shape's oracles, and file and triage dogfooding findings. get, list and dogfood
+// need nothing beyond this file and, for dogfood, gh; shape, oracle and dogfood triage load
+// src/shape/, src/oracle/ and src/dogfood/ only when they are called.
 
 import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, statSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
@@ -14,6 +14,13 @@ const USAGE = `usage: mt get <tool> [--ref <ref>]   print the guide for a tool, 
                                      - reads stdin
        mt shape slice <file> --keys <key,...>
                                      print only those top-level keys of a shape; - reads stdin
+       mt oracle hash <file>...      print each file's path from the repo root and sha256,
+                                     to pin it under an oracle
+       mt oracle run [--base] [--timeout <seconds>] <shape>
+                                     check each oracle's pinned files and run it from the
+                                     repo root, from any folder of the repo; --base checks
+                                     what each does at the base commit instead of that it
+                                     passes; - reads stdin
        mt dogfood <title> [--body-file <file>]
                                      file a finding as an issue labelled dogfooding on
                                      this repo's GitHub, through gh; - reads the body from stdin
@@ -250,6 +257,11 @@ async function cmdShape(args: string[]): Promise<number> {
   return runShape(args);
 }
 
+async function cmdOracle(args: string[]): Promise<number> {
+  const { runOracleCommand }: typeof import("../src/oracle/command.ts") = await import(join(ROOT, "src/oracle/command.ts"));
+  return runOracleCommand(args);
+}
+
 async function main(args: string[]): Promise<number> {
   const [command = "", ...rest] = args;
   switch (command) {
@@ -259,6 +271,8 @@ async function main(args: string[]): Promise<number> {
       return cmdList();
     case "shape":
       return cmdShape(rest);
+    case "oracle":
+      return cmdOracle(rest);
     case "dogfood":
       return cmdDogfood(rest);
     case "":
