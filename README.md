@@ -35,8 +35,8 @@ mvc, which settles a shape with the owner, to-orca, which runs one, ask, which c
 question for whoever owns a decision, door-rule, which says whether a decision is asked at
 all, debugging, which finds the root cause of an unexpected failure before it is fixed, and
 research, which answers the owner's question from trusted outside sources; only the owner starts
-it, by typing /research. `mt list` shows every guide. Skills that are not stubs, such as commit, stay whole in
-`skills/` and `mt` does not serve them.
+it, by typing `/research`. `mt list` shows every guide. Skills that are not stubs, such as
+commit, stay whole in `skills/` and `mt` does not serve them.
 
 ```
 mt list                       every guide, once, with its stub's description, or the
