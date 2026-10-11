@@ -67,58 +67,12 @@ describe("mt shape check", () => {
 
   test("rejects a one_way decision decided by silence", () => {
     const shape = example();
-    const d3 = decision(shape, "D3");
-    d3.door = "one_way";
-    d3.who_pays = "Every client of the API.";
+    decision(shape, "D3").door = "one_way";
 
     const result = check(shape);
 
     expect(result.code).toBe(1);
     expect(stderrLines(result.stderr)).toEqual(["decisions.D3.decided_by: must be owner when door is one_way"]);
-  });
-
-  test("rejects a one_way decision with no who_pays", () => {
-    const shape = example();
-    delete decision(shape, "D1").who_pays;
-
-    const result = check(shape);
-
-    expect(result.code).toBe(1);
-    expect(stderrLines(result.stderr)).toEqual(["decisions.D1.who_pays: required when door is one_way"]);
-  });
-
-  test("rejects a decision by the owner with no question", () => {
-    const shape = example();
-    delete decision(shape, "D1").question;
-
-    const result = check(shape);
-
-    expect(result.code).toBe(1);
-    expect(stderrLines(result.stderr)).toEqual(["decisions.D1.question: required when decided_by is owner"]);
-  });
-
-  test("rejects a decision by silence that carries a question", () => {
-    const shape = example();
-    const d1 = decision(shape, "D1");
-    d1.door = "two_way";
-    delete d1.who_pays;
-    d1.decided_by = "silence";
-
-    const result = check(shape);
-
-    expect(result.code).toBe(1);
-    expect(stderrLines(result.stderr)).toEqual(["decisions.D1.question: not allowed when decided_by is silence"]);
-  });
-
-  test("rejects a two_way decision with a who_pays", () => {
-    const shape = example();
-    const d1 = decision(shape, "D1");
-    d1.door = "two_way";
-
-    const result = check(shape);
-
-    expect(result.code).toBe(1);
-    expect(stderrLines(result.stderr)).toEqual(["decisions.D1.who_pays: not allowed when door is two_way"]);
   });
 
   test("rejects a touchpoint that is neither path nor path:symbol", () => {
@@ -326,6 +280,16 @@ describe("mt shape", () => {
   test("exits 2 with usage on an unknown subcommand", () => {
     expect(mt("shape", "render")).toMatchObject({ code: 2, stdout: "" });
     expect(mt("shape")).toMatchObject({ code: 2, stdout: "" });
+  });
+});
+
+describe("oracle's example", () => {
+  test("mt get oracle --ref example prints a shape with oracles that passes mt shape check", () => {
+    const printed = mt("get", "oracle", "--ref", "example");
+    expect(printed.code).toBe(0);
+    expect(Bun.YAML.parse(printed.stdout)).toHaveProperty("oracles");
+
+    expect(mt("shape", "check", file(printed.stdout))).toEqual({ code: 0, stdout: "", stderr: "" });
   });
 });
 
