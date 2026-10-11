@@ -245,8 +245,8 @@ const FULL: Script = {
 const FULL_REPORT = `jev model: jev-fake
 duplicates
   #50, #51
-    #50 mt shape check crashes on an empty file  (same defect as #51: probability 0.92, confidence 0.84)
-    #51 mt shape check throws on a zero-byte shape  (same defect as #50: probability 0.92, confidence 0.84)
+    #50 mt shape check crashes on an empty file  (shares a problem with #51: probability 0.92, confidence 0.84)
+    #51 mt shape check throws on a zero-byte shape  (shares a problem with #50: probability 0.92, confidence 0.84)
 no-brainers
   #52 mt list pads names to 20 columns, cutting long ones  (no-brainer: change mt code probability 0.97, confidence 0.95; verdict no-brainer probability 0.90, confidence 0.80)
   #53 mt get --ref with an empty ref exits 0  (no-brainer: change mt code probability 0.96, confidence 0.94; verdict no-brainer probability 0.85, confidence 0.70)
@@ -274,7 +274,7 @@ describe("mt dogfood triage", () => {
     expect(stdout).toBe(FULL_REPORT);
   });
 
-  test("R1: two issues that describe the same defect are listed together under duplicates", async () => {
+  test("R1: two issues that report the same problem are listed together under duplicates", async () => {
     writeFileSync(ISSUES, JSON.stringify(ALL));
     script = FULL;
     const { stdout } = await triage();
@@ -286,21 +286,25 @@ describe("mt dogfood triage", () => {
     expect(pairs?.body.state).toEqual({ issues: [ORCA, GUIDE, DUP_A, DUP_B, SURE, AT_THRESHOLD, UNSURE, ARGUABLE] });
     const questions = Object.entries(pairs?.body.questions ?? {});
     expect(questions).toHaveLength((8 * 7) / 2);
-    expect(pairs?.body.questions.same_50_51).toEqual({ type: "noul", instructions: "Issues #50 and #51 describe the same defect." });
+    expect(pairs?.body.questions.same_50_51).toEqual({
+      type: "noul",
+      instructions:
+        "At least one problem reported in issue #50 is also reported in issue #51: fixing that problem for one issue would fix it for the other.",
+    });
     expect(placements.map(stateNumber).sort()).toEqual([39, 41, 52, 53, 54, 55]);
   });
 
-  test("R1: a pair at exactly 0.5 is not grouped, and duplicates chain into one group", async () => {
+  test("R1: a pair at exactly 0.6 is not grouped, and duplicates chain into one group", async () => {
     writeFileSync(ISSUES, JSON.stringify([DUP_A, DUP_B, SURE, AT_THRESHOLD]));
-    script = { ...FULL, sameDefect: { "50_51": 0.9, "51_52": 0.7, "52_53": 0.5 } };
+    script = { ...FULL, sameDefect: { "50_51": 0.9, "51_52": 0.7, "52_53": 0.6 } };
     const { code, stdout } = await triage();
     expect(code).toBe(0);
     expect(section(stdout, "duplicates")).toBe(
       [
         "  #50, #51, #52",
-        "    #50 mt shape check crashes on an empty file  (same defect as #51: probability 0.90, confidence 0.80)",
-        "    #51 mt shape check throws on a zero-byte shape  (same defect as #50: probability 0.90, confidence 0.80)",
-        "    #52 mt list pads names to 20 columns, cutting long ones  (same defect as #51: probability 0.70, confidence 0.40)",
+        "    #50 mt shape check crashes on an empty file  (shares a problem with #51: probability 0.90, confidence 0.80)",
+        "    #51 mt shape check throws on a zero-byte shape  (shares a problem with #50: probability 0.90, confidence 0.80)",
+        "    #52 mt list pads names to 20 columns, cutting long ones  (shares a problem with #51: probability 0.70, confidence 0.40)",
       ].join("\n"),
     );
     expect(section(stdout, "no-brainers")).toContain("#53 ");
@@ -315,9 +319,9 @@ describe("mt dogfood triage", () => {
     expect(section(stdout, "duplicates")).toBe(
       [
         "  #10, #11, #42",
-        "    #10 mt list pads names  (same defect as #42: probability 0.90, confidence 0.80)",
-        "    #11 mt list cuts long names  (same defect as #42: probability 0.80, confidence 0.60)",
-        "    #42 mt list truncates a guide name  (same defect as #10: probability 0.90, confidence 0.80)",
+        "    #10 mt list pads names  (shares a problem with #42: probability 0.90, confidence 0.80)",
+        "    #11 mt list cuts long names  (shares a problem with #42: probability 0.80, confidence 0.60)",
+        "    #42 mt list truncates a guide name  (shares a problem with #10: probability 0.90, confidence 0.80)",
       ].join("\n"),
     );
   });
@@ -346,10 +350,33 @@ describe("mt dogfood triage", () => {
     expect(seen).toHaveLength(1);
     expect(seen[0]?.body.state).toEqual(GUIDE);
     expect(seen[0]?.body.questions.change?.criteria).toEqual({
-      mt_code: expect.any(String),
+      mt_code: expect.stringContaining("Makefile"),
       guide: expect.any(String),
       orca: expect.any(String),
     });
+  });
+
+  test("R1: the footer mt dogfood appends to a body is not sent to jev, and the rest of the body is", async () => {
+    const footer = "---\nFiled with `mt dogfood`.\n- mt commit: `09cff20`\n- session: `34e3cb31`\n";
+    const filed = issue(60, "mt list cuts long names", `Seen in a Run.\n\n---\n\nExpected: long names are not cut.\n\n${footer}`);
+    const bare = issue(61, "mt list pads names", footer);
+    const unfiled = issue(62, "mt list misaligns names", "Seen in a Run.\n\n---\nFiled with a note.");
+    writeFileSync(ISSUES, JSON.stringify([filed, bare, unfiled]));
+    script = {
+      ...FULL,
+      change: Object.fromEntries([60, 61, 62].map((n) => [n, { choice: "guide", probability: 0.9, confidence: 0.9 }])),
+      verdict: Object.fromEntries([60, 61, 62].map((n) => [n, { choice: "rule_on", probability: 0.9, confidence: 0.8 }])),
+    };
+    const { code } = await triage();
+    expect(code).toBe(0);
+    const sent = [
+      { ...filed, body: "Seen in a Run.\n\n---\n\nExpected: long names are not cut." },
+      { ...bare, body: "" },
+      unfiled,
+    ];
+    const [pairs, ...placements] = seen;
+    expect(pairs?.body.state).toEqual({ issues: sent });
+    expect(placements.sort((a, b) => stateNumber(a) - stateNumber(b)).map(({ body }) => body.state)).toEqual(sent);
   });
 
   test("R4: issue 39, about Orca's own behaviour, goes to rule on", async () => {
