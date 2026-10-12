@@ -13,9 +13,10 @@ mutually exclusive and collectively exhaustive. It reads no config.
 - **The free answer stays open.** An answer outside the options is still the answer.
 
 In the question tool, each option is one option with what choosing it does as its description,
-the recommended one first and marked so. Stance, Wrong if and any Risk or One-way door line go in
-the text just before the tool. Workaround for question tools lacking a field for a position; remove
-when the asker's question tool carries one.
+the recommended one first and marked so. Stance, Wrong if, any Risk or One-way door line, and each
+option's citation and Rules out when the tool has no description field, go in the text just before
+the tool. Workaround for question tools lacking a field for a line, such as a position or an
+option's description; remove when the asker's question tool carries one.
 
 ## Example
 

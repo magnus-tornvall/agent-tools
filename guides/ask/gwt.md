@@ -15,8 +15,8 @@ different outcomes, since only then can the answer change what is done. It reads
 - **Observable thens.** Each is what an observer would see: a status, a value, a rendered state, a
   log line.
 - **Each outcome cites its reading.** A short parenthetical after it gives the source that makes
-  that reading live. An outcome nothing settled supports is invented; drop it. When the
-  supported outcomes do not differ, there is no example: ask a stance.
+  that reading live. An outcome nothing settled supports is invented; drop it. When only
+  one reading's outcome is supported, there is no example: ask a stance.
 - **The stance is a ranking.** It names the expected outcome with its reasoning and keeps Wrong
   if. Rules out says what each outcome costs: only what that outcome excludes under any mechanism.
   A mechanism the outcome does not force stays open.
@@ -29,9 +29,10 @@ given, when, then.
 
 In the question tool, the question is the given and when, each then is an option with its citation
 and what it rules out as the option's description, the expected one first and marked recommended.
-The free answer is Neither, or Either. Stance, Wrong if and any Risk or One-way door line go in
-the text just before the tool. Workaround for question tools lacking a field for a position; remove
-when the asker's question tool carries one.
+The free answer is Neither, or Either. Stance, Wrong if, any Risk or One-way door line, and each
+option's citation and Rules out when the tool has no description field, go in the text just before
+the tool. Workaround for question tools lacking a field for a line, such as a position or an
+option's description; remove when the asker's question tool carries one.
 
 ## Example
 

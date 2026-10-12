@@ -5,7 +5,9 @@ at the least cost to the person asked. The door rule (`mt get door-rule`) says w
 all; this guide says how, and what an answer means. It rests on value of information: a question
 costs the asked person's attention and pays only when its answer could change what is done, so it
 asks for the fact the decision turns on. And on falsifiability: a position says what would refute
-it. It reads no config.
+it. It takes a decision and its live readings and returns the question to put, in a form and
+channel, with a position; the owner's answer comes back to the asker, and Answers says what it
+means. It reads no config.
 
 ## Forms
 
@@ -31,7 +33,8 @@ in plain text, never a picker, so "you are asking the wrong thing" is as easy to
 answer.
 
 Lines the tool has no field for go in the text just before it. Workaround for question tools
-lacking a field for a position; remove when the asker's question tool carries one.
+lacking a field for a line, such as a position or an option's description; remove when the asker's
+question tool carries one.
 
 ## Every question
 
