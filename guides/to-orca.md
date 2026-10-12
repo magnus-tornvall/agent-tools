@@ -77,6 +77,8 @@ do, and the owner decides to remove it.
   it is gone. Absence is not proof.
 - Two Tasks that run the repo's code never run in one worktree at once. A judge that runs code can
   get its own worktree cut from the work branch.
+- A judge never runs in a worktree that holds more of the shape than its slice, such as yours with
+  the shape under `.scratch/`.
 - A spec never changes. A change is a new Task.
 
 ## Tools
