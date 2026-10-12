@@ -153,7 +153,7 @@ Re-invoked on a settled shape, mvc asks nothing and goes straight to the report,
 - A boundary non-goal says what still holds, so its absence can be checked: what is still refused,
   or still unchanged.
 - `touchpoints` are the expected blast radius.
-- An empty collection, whichever field, is a statement: none.
+- An empty `non_goals`, `constraints`, `touchpoints` or `decisions` is a statement: none.
 - A risk has no key of its own: mitigated, it is a constraint; avoided, a non-goal; accepted, a
   decision that says what accepting it costs.
 - **to-orca**, or any other consumer, starts from the closed shape as reported or written. A
