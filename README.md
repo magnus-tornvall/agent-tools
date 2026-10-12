@@ -40,10 +40,10 @@ No agent chooses them, so a skill-list entry would only cost the sessions that n
 mvc, which settles a shape with the owner, oracle, which writes a closed shape's oracles before
 it is built, to-orca, which runs one, ask, which composes a question for whoever owns a
 decision, door-rule, which says whether a decision is asked at all, debugging, which finds the
-root cause of an unexpected failure before it is fixed, and research, which answers the owner's
-question from trusted outside sources; only the owner starts it, by typing `/research`.
-`mt list` shows every guide. Skills that are not stubs, such as commit, stay whole in
-`skills/` and `mt` does not serve them.
+root cause of an unexpected failure before it is fixed, commit, which stages, writes and pushes
+commits as the session's destination allows, and research, which answers the owner's question
+from trusted outside sources; only the owner starts it, by typing `/research`. `mt list` shows
+every guide.
 
 ```
 mt list                       every guide, once, with its stub's description, or the
@@ -216,10 +216,11 @@ Set `BIN_DIR`, `SKILLS_DIR` or `SETTINGS` to use other places, for example
 `make install SKILLS_DIR=~/.claude/skills` to link the stubs straight into Claude Code's folder. A skill
 installed as a real folder is left alone and the install fails, naming it: linking over it
 would write a stray link inside it. The whole mvc from before it became a guide is such a folder,
-and the old and the new mvc cannot both be installed as `mvc`. To keep the old one for a later
-comparison, move it out of the skills folder rather than delete it. Settings that are not JSON,
-or whose `permissions.allow` or `permissions.ask` is not a list of strings, are left alone too,
-and the install fails, naming the rules to add by hand.
+and so is a whole commit skill copied in before commit became one; the old and the new cannot both
+be installed under one name. To keep the old one for a later comparison, move it out of the skills
+folder rather than delete it. Settings that are not JSON, or whose `permissions.allow` or
+`permissions.ask` is not a list of strings, are left alone too, and the install fails, naming the
+rules to add by hand.
 
 `make uninstall` takes it back out: the `mt` link and every link in the skills folder that points
 into this clone, so a skill or `mt` installed some other way stays. It asks before removing the
@@ -280,7 +281,7 @@ src/      shape/, the shape schema and mt shape; oracle/, mt oracle; dogfood/, m
           tests
 guides/   one guide per tool, <name>.md, with its references in <name>/<ref>.md
 skills/   a stub skill per guide an agent or the owner picks, <name>/SKILL.md, mvc and ask
-          among them, plus the commit skill, which is whole
+          among them
 test/     mt.sh, which checks mt get, mt list and filing with mt dogfood; install.sh, which checks make
           install and uninstall; guides.sh, which checks that what guides and AGENTS.md mention
           still exists
