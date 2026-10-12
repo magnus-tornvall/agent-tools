@@ -98,9 +98,10 @@ describe("mt config", () => {
     for (const [toml, key, why] of [
       ["fix_rounds = -1", "fix_rounds", "must be an integer of 0 or more, not -1"],
       ["fix_rounds = 1.5", "fix_rounds", "must be an integer of 0 or more, not 1.5"],
-      ["agents = []", "agents", "must be a non-empty list of Orca agent names, not []"],
-      ['agents = "claude"', "agents", 'must be a non-empty list of Orca agent names, not "claude"'],
-      ['agents = ["claude", ""]', "agents", 'must be a non-empty list of Orca agent names, not ["claude",""]'],
+      ["fix_rounds = 9007199254740993", "fix_rounds", "must be an integer of 0 or more, not a number beyond ±9007199254740991, which mt cannot read exactly"],
+      ["agents = []", "agents", "must be a non-empty list of agent names, not []"],
+      ['agents = "claude"', "agents", 'must be a non-empty list of agent names, not "claude"'],
+      ['agents = ["claude", ""]', "agents", 'must be a non-empty list of agent names, not ["claude",""]'],
       ["triage_confidence = 1.5", "triage_confidence", "must be a number from 0 to 1, not 1.5"],
       ['triage_confidence = "high"', "triage_confidence", 'must be a number from 0 to 1, not "high"'],
     ] as const) {

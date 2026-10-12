@@ -42,7 +42,7 @@ const AGENT = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 const SPECS: { [K in Key]: Spec<Values[K]> } = {
   agents: {
     kind: "binding",
-    rule: "a non-empty list of Orca agent names",
+    rule: "a non-empty list of agent names",
     schema: z.array(z.string().regex(AGENT)).min(1),
   },
   fix_rounds: { kind: "binding", rule: "an integer of 0 or more", schema: z.number().int().min(0) },
@@ -53,6 +53,14 @@ const KEYS: readonly Key[] = ["agents", "fix_rounds", "triage_confidence"];
 
 function isKey(name: string): name is Key {
   return KEYS.some((key) => key === name);
+}
+
+/** A value as the file gave it, but a number past what a double holds exactly is read already rounded, so it is described instead. */
+function shown(raw: unknown): string {
+  if (typeof raw === "number" && Number.isInteger(raw) && !Number.isSafeInteger(raw)) {
+    return `a number beyond ±${Number.MAX_SAFE_INTEGER}, which mt cannot read exactly`;
+  }
+  return JSON.stringify(raw);
 }
 
 /** A key's value, or why there is none: missing, or invalid and why. */
@@ -107,7 +115,7 @@ export function lookup<K extends Key>(config: Config, key: K): Lookup<Values[K]>
   const spec = SPECS[key];
   const parsed = spec.schema.safeParse(raw);
   if (parsed.success) return { ok: true, value: parsed.data };
-  return { ok: false, state: "invalid", why: `must be ${spec.rule}, not ${JSON.stringify(raw)}` };
+  return { ok: false, state: "invalid", why: `must be ${spec.rule}, not ${shown(raw)}` };
 }
 
 /** Why a key has no value, naming the file: `missing from <path>` or `invalid in <path>: <why>`. */
