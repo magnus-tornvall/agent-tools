@@ -60,12 +60,13 @@ function plainWords(words: readonly string[]): string[] {
   return words.slice(0, end === -1 ? words.length : end);
 }
 
-/** The command words of each `mt …` line in mt's usage text. */
+/** The command words of each `mt …` line in mt's usage text: its plain words before the column gap that sets off the description. */
 export function parseMtUsage(usage: string): string[][] {
   const verbs: string[][] = [];
   for (const line of usage.split("\n")) {
     const match = /^\s*(?:usage:\s*)?mt\s+(.*)$/.exec(line);
-    const words = plainWords((match?.[1] ?? "").split(/\s+/).filter(Boolean));
+    const command = (match?.[1] ?? "").split(/\s{2,}/)[0] ?? "";
+    const words = plainWords(command.split(/\s+/).filter(Boolean));
     if (words.length > 0) verbs.push(words);
   }
   return verbs;

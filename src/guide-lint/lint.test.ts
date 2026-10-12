@@ -56,6 +56,16 @@ describe("spans", () => {
   });
 });
 
+describe("parseMtUsage", () => {
+  test("takes the plain words before the column gap, not the description after it", () => {
+    expect(VERBS).toEqual([["get"], ["list"], ["shape", "check"], ["shape", "slice"]]);
+  });
+
+  test("a command word may hold a digit", () => {
+    expect(parseMtUsage("       mt oauth2 login <file>        sign in\n")).toEqual([["oauth2", "login"]]);
+  });
+});
+
 describe("checkMtMention", () => {
   test("passes a mt get that resolves and names the guide when it does not", () => {
     expect(mtMention("mt get ask")).toBeNull();

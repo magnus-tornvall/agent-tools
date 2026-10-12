@@ -2,21 +2,14 @@ import { describe, expect, test } from "bun:test";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { parseMtUsage } from "../guide-lint/lint.ts";
 import { COMMANDS, rules } from "./side-effects.ts";
 
 const MT = new URL("../../cli/mt", import.meta.url).pathname;
 
-/** The command words of each `mt …` line of mt's usage: its plain words before the column gap. */
+/** The command of each `mt …` line of mt's usage, as guide-lint reads them. */
 function usageCommands(): string[] {
-  const commands = new Set<string>();
-  for (const line of usage().split("\n")) {
-    const match = /^\s*(?:usage:\s*)?mt\s+(.*)$/.exec(line);
-    const words = (match?.[1] ?? "").split(/\s{2,}/)[0]?.split(" ") ?? [];
-    const end = words.findIndex((word) => !/^[a-z][a-z-]*$/.test(word));
-    const command = words.slice(0, end === -1 ? words.length : end).join(" ");
-    if (command !== "") commands.add(command);
-  }
-  return [...commands].sort();
+  return [...new Set(parseMtUsage(usage()).map((words) => words.join(" ")))].sort();
 }
 
 function usage(): string {
