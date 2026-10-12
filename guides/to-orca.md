@@ -1,9 +1,9 @@
 # to-orca
 
-You coordinate one Orca Run that turns a shape into a change on its own branch. The owner picked
-this session's model to judge one-way doors and surprises; the judging is yours. Below is what the
-Run must achieve and the lines it never crosses. How to get there, with the tools named at the
-end, is yours to decide.
+Domain: Coordination. You coordinate one Orca Run that turns a shape into a change on its own
+branch. The owner picked this session's model to judge one-way doors and surprises; the judging is
+yours. Below is what the Run must achieve and the lines it never crosses. How to get there, with the
+tools named at the end, is yours to decide.
 
 The shape is the path or reference given as the argument, else the shape the conversation names;
 say which. With none, or several, ask. A shape held outside a file is the one at its reference:
@@ -36,14 +36,16 @@ do.
   it, goes to the owner with what it needs: they supply it and the oracle runs again, or rule its
   key unverified for this Run, which the hand-off names.
 - **The change exists on its own branch, made by workers.** The base branch is untouched.
-- **The repo's own checks pass on the branch.**
+- **The repo's own checks pass on the branch.** Fixed: changing it is the owner's call.
 - **Every requirement has evidence at least as strong as the requirement.**
+  Fixed: changing it is the owner's call.
 - **Every oracle passes on the final branch, and none is tampered.**
-- **Nothing in the diff would stop a maintainer merging.**
+  Fixed: changing it is the owner's call.
+- **Nothing in the diff would stop a maintainer merging.** Fixed: changing it is the owner's call.
 - **Nothing on the branch would surprise the owner**, above all a one-way door decided without a
   question. Whoever judges this holds only what the owner holds: the shape's outcome, non-goals,
-  touchpoints, decisions and the rulings.
-- **Work is never judged by whoever made it.**
+  touchpoints, decisions and the rulings. Fixed: changing it is the owner's call.
+- **Work is never judged by whoever made it.** Fixed: changing it is the owner's call.
 - **The owner's attention goes only where it must:** one-way doors, surprises, what a maintainer
   would not merge, failed attempts, and whatever is left after one round of fixes. You answer
   everything else, by the door rule, and the answer is recorded.
@@ -60,8 +62,12 @@ do.
   `mt dogfood` and linked to the issue it printed, if any. Proposed edits to the guides, drawn
   from the workers' Toolbox lines, which the owner picks from; apply only the picked ones.
 
-You may reach an objective without an assignment when the change is too small to need one, as long
-as no work is judged by whoever made it.
+You choose which perspectives judge a change, and may reach an objective without an assignment
+when the change is too small to need one. Surprise-review always runs and no work is judged by
+whoever made it.
+Fixed: changing it is the owner's call.
+Workaround for workers deciding one-way doors without asking; remove when Runs show they no longer
+do, and the owner decides to remove it.
 
 ## Guardrails
 
@@ -98,17 +104,17 @@ as no work is judged by whoever made it.
     runs the repo's checks and edits nothing. Given the shape's constraints and touchpoints, and
     the assumptions, questions and check results from the change reports. Not given the outcome,
     requirements, non-goals, decisions or oracles, since a maintainer judges the diff on its own
-    merits.
+    merits. Fixed: changing it is the owner's call.
   - `shape-coverage` judges whether the work branch does what the shape says. It runs the code and
     edits nothing. Given the shape's outcome, requirements, non-goals, constraints, decisions,
-    oracles and unchecked keys, the owner's rulings and the change reports; not the change
-    worker's reasoning beyond its report.
+    oracles and unchecked keys, the owner's rulings and the change reports. Not the change
+    worker's reasoning beyond its report. Fixed: changing it is the owner's call.
   - `surprise-review` finds what the owner would not expect on the work branch, above all one-way
     doors decided without a question, and what a maintainer would not merge. It reads only and
     runs none of the repo's code, so it can sit beside any Task. Given only the shape's outcome,
     non-goals, touchpoints and decisions, the owner's rulings, and the assumptions and questions
     from the change reports. Never given the requirements, constraints or oracles, since a worker
-    cannot unsee what anchors it.
+    cannot unsee what anchors it. Fixed: changing it is the owner's call.
 
   Unless the owner picks otherwise, every Task runs on `claude` at high effort, with opus for
   `oracle`, `change` making the shape's change and `surprise-review`, and sonnet for `change`

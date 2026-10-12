@@ -1,8 +1,9 @@
 # mvc
 
-Settle the shape of a minimal viable change with the owner: what ships, what does not and why,
-and what each decision ruled out. The shape is what to-orca, or any other consumer, starts from.
-Re-invoked on a settled shape, mvc asks nothing and goes straight to the report, or the file.
+Domain: Intent. Settle the shape of a minimal viable change with the owner: what ships, what does
+not and why, and what each decision ruled out. The shape is what to-orca, or any other consumer,
+starts from. Re-invoked on a settled shape, mvc asks nothing and goes straight to the report, or the
+file.
 
 ## Objectives
 

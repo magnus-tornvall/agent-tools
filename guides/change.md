@@ -1,6 +1,6 @@
 # change
 
-Make the shape's change in this worktree, or fix the findings handed over.
+Domain: Change. Make the shape's change in this worktree, or fix the findings handed over.
 
 ## Objectives
 

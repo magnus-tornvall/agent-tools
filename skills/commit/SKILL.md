@@ -5,8 +5,8 @@ description: Use when committing changes, writing commit messages, or when user 
 
 # Commit Skill
 
-Detect state, stage by hand into logical units, write well-formed conventional
-commits, push per branch type.
+Domain: Change. Detect state, stage by hand into logical units, write
+well-formed conventional commits, push per branch type.
 
 **Supplements the built-in commit behavior.** Safety defaults stay — no
 destructive ops, no hook skipping. This skill owns staging strategy, message

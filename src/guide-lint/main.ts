@@ -1,7 +1,7 @@
 /**
- * guide-lint: fails, one `file:line: `mention`: reason` line each, when a guide or stub skill
- * mentions in backticks an mt guide, reference or command, or an Orca command or flag, that no
- * longer exists.
+ * guide-lint: fails, one `file:line: `mention`: reason` line each, when a guide, stub skill or the
+ * root AGENTS.md mentions in backticks an mt guide, reference or command, or an Orca command or
+ * flag, that no longer exists.
  *
  *   bun src/guide-lint/main.ts <repo>
  *
@@ -44,6 +44,7 @@ const skills = join(root, "skills");
 const stubs = (existsSync(skills) ? readdirSync(skills) : [])
   .map((name) => join(skills, name, "SKILL.md"))
   .filter((file) => existsSync(file) && statSync(file).isFile());
+const charter = [join(root, "AGENTS.md")].filter((file) => existsSync(file) && statSync(file).isFile());
 
 interface Mention {
   file: string;
@@ -52,7 +53,7 @@ interface Mention {
   words: string[];
 }
 
-const mentions: Mention[] = [...guides, ...stubs].sort().flatMap((path) => {
+const mentions: Mention[] = [...guides, ...stubs, ...charter].sort().flatMap((path) => {
   const file = relative(root, path);
   return spans(readFileSync(path, "utf8")).map(({ line, text }) => ({ file, line, text, words: text.split(" ") }));
 });

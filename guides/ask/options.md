@@ -1,7 +1,7 @@
 # options
 
-A closed set of answers for a decision whose every possible answer can be listed: which of named
-branches, environments or channels, whether a gate opens.
+Domain: Decision. A closed set of answers for a decision whose every possible answer can be listed:
+which of named branches, environments or channels, whether a gate opens.
 
 - **Two to four options**, as many as the set holds. A set that needs more is not closed, or is
   two questions.

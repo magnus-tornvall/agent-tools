@@ -1,9 +1,9 @@
 # oracle
 
-Turn a closed shape into oracles: acceptance checks, written before the change exists, that any
-implementation is then held to. They are the outer loop of the change: whoever builds it is done
-when its oracles pass. You read only the shape and the repo, never an implementation, so a
-requirement you cannot check is a finding about the shape.
+Domain: Verification. Turn a closed shape into oracles: acceptance checks, written before the change
+exists, that any implementation is then held to. They are the outer loop of the change: whoever
+builds it is done when its oracles pass. You read only the shape and the repo, never an
+implementation, so a requirement you cannot check is a finding about the shape.
 
 ## Objectives
 
