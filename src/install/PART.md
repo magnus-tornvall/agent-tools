@@ -9,7 +9,9 @@ declares each `mt` command's side-effect class. The README keeps the steps a hum
 ## Purpose
 
 An agent, or an Orca worker started in the owner's login shell, can run every `mt` command and
-load every stub, and is stopped before an `mt` command that reaches a service off the machine.
+load every stub, and is asked before an `mt` command whose own effect reaches a service off the
+machine. A class covers what `mt` itself does. `mt oracle run` runs the commands of a shape, which
+may reach further, and is allowed because the owner approved that shape.
 
 ## Principles
 
@@ -36,13 +38,14 @@ load every stub, and is stopped before an `mt` command that reaches a service of
 `REMOVE_MT_RULES`, `yes` or `no`, answer the settings question without asking. Install needs Bun
 1.2.23 or later on PATH.
 
-- `install` runs `bun install --frozen-lockfile`, links `cli/mt` as `BIN_DIR/mt`, links each stub
-  skill that has a guide into `SKILLS_DIR` and removes links into this clone whose stub is gone,
-  offers the rules, and checks the login shell. It prints what it changed and exits 0, or fails,
-  naming the cause on stderr: Bun missing or too old, `BIN_DIR/mt` a folder, a stub's place a real
-  folder, settings it cannot read, or a login shell that cannot find `mt` and Bun.
-- `uninstall` removes the `mt` link and every link in `SKILLS_DIR` that points into this clone,
-  and offers to remove the rules. It leaves Bun, the clone and its `node_modules`, the shell
+- `install` leaves the clone's dependencies installed from its lockfile, `BIN_DIR/mt` linking to
+  `cli/mt`, each stub skill that has a guide linked into `SKILLS_DIR`, no link into this clone left
+  for a stub that is gone, the rules in `SETTINGS` if the owner said yes, and a login shell that
+  finds `mt` and Bun. It prints what it changed and exits 0, or fails, naming the cause on stderr:
+  Bun missing or too old, `BIN_DIR/mt` a folder, a stub's place a real folder, settings it cannot
+  read, or a login shell that cannot find `mt` and Bun.
+- `uninstall` leaves no `mt` link and no link in `SKILLS_DIR` that points into this clone, and the
+  rules removed if the owner said yes. It leaves Bun, the clone and its `node_modules`, the shell
   profile and `mt`'s usage log.
 - `bun src/install/mt-rules.ts add|remove <settings.json> [yes|no]` adds or removes the rules,
   keeping everything else in the file. `add` creates a missing file. It asks only when there is

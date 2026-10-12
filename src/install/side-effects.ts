@@ -3,8 +3,11 @@
  * install builds from them. The README's contract for each command states the same class.
  *
  *   read-only     reads files and prints; writes nothing
- *   local write   writes on this machine only, such as the usage log or what an oracle's command does
+ *   local write   writes on this machine only, such as the usage log or the JUnit report `mt oracle run` deletes
  *   external      reaches a service off this machine, such as GitHub or jev
+ *
+ * A class covers what mt itself does. `mt oracle run` runs a shape's commands, which may reach
+ * further, and is allowed because the owner approved the shape.
  *
  * Every class but external is allowed; each external command is asked before it runs.
  */
