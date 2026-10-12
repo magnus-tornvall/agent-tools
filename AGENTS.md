@@ -90,8 +90,9 @@ Sorting a number:
   judgment.
 
 A part not yet reworked may still state such a value. Sort it by these rules as it stands: a
-default the agent could choose, however worded, is the agent's own judgment until the rework
-deletes it.
+default, count or cap the agent could choose, however worded, is the agent's own judgment until
+the rework deletes it, such as a number of rounds, questions per round or searches per fact, or a
+fallback location; a cap another tool enforces is that tool's, not the part's.
 
 ## Config rule
 
