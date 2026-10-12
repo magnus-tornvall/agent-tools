@@ -1,10 +1,10 @@
 # research
 
-Answer the owner's question from outside sources: a report that cites only sources it may trust
-and has read, weighs several perspectives and the opposing case, and draws no conclusion where
-trusted evidence runs out. The owner starts it by typing /research; a spec the owner writes may
-load it too. It answers from what is published outside the repo; reading the codebase is other
-tools' work.
+Domain: Evidence. Answer the owner's question from outside sources: a report that cites only sources
+it may trust and has read, weighs several perspectives and the opposing case, and draws no
+conclusion where trusted evidence runs out. The owner starts it by typing /research; a spec the
+owner writes may load it too. It answers from what is published outside the repo; reading the
+codebase is other tools' work.
 
 ## Objectives
 

@@ -1,8 +1,8 @@
 # ask
 
-Composes a question for whoever owns a decision: the owner, or a coordinator for its workers. mvc,
-to-orca and orca-worker ask through it. The door rule (`mt get door-rule`) says what is asked at
-all; this guide says how.
+Domain: Decision. Composes a question for whoever owns a decision: the owner, or a coordinator for
+its workers. mvc, to-orca and orca-worker ask through it. The door rule (`mt get door-rule`) says
+what is asked at all; this guide says how.
 
 ## Forms
 

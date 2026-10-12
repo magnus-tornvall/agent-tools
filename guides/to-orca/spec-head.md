@@ -1,7 +1,7 @@
 # to-orca spec head
 
-What every Task spec carries, since a worker acts on it before it has read its guides. Fill in
-`<n>`, `<title>` and `<assignment>`.
+Domain: Coordination. What every Task spec carries, since a worker acts on it before it has read its
+guides. Fill in `<n>`, `<title>` and `<assignment>`.
 
 The spec opens with:
 

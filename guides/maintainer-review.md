@@ -1,6 +1,6 @@
 # maintainer-review
 
-Would a maintainer of this repo merge the branch? Edit nothing.
+Domain: Verification. Would a maintainer of this repo merge the branch? Edit nothing.
 
 ## Objectives
 

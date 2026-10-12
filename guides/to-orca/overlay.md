@@ -1,8 +1,8 @@
 # to-orca overlay
 
-What is known about Orca that its orchestration skill does not say, each with the Orca version it
-was seen on. What a Run learns goes in its hand-off, with the version or commit it was seen on, and
-is filed with `mt dogfood`.
+Domain: Coordination. What is known about Orca that its orchestration skill does not say, each with
+the Orca version it was seen on. What a Run learns goes in its hand-off, with the version or commit
+it was seen on, and is filed with `mt dogfood`.
 
 - `orca orchestration worker-start` has no permission flag. A `claude` worker launches with Orca's
   default arguments for that agent, the worktree's committed `.claude/settings.json` and the

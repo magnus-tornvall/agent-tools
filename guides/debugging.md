@@ -1,8 +1,9 @@
 # debugging
 
-Find why something fails, with evidence, before changing anything to make it pass. It is for a
-failure nobody expected: a test that should pass fails, a build or command breaks, code does what
-it was not written to do. A test written to fail before it passes is not one; it is doing its job.
+Domain: Change. Find why something fails, with evidence, before changing anything to make it pass.
+It is for a failure nobody expected: a test that should pass fails, a build or command breaks, code
+does what it was not written to do. A test written to fail before it passes is not one; it is doing
+its job.
 
 ## Objectives
 

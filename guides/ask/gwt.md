@@ -1,7 +1,7 @@
 # gwt
 
-A key example: the question states the given and the when, and each live reading's outcome is a
-then.
+Domain: Decision. A key example: the question states the given and the when, and each live reading's
+outcome is a then.
 
 - **One given and when, two or three thens.** A concrete context and event the person asked can
   check - a route, a payload, a caller, a value - and the outcome under each live reading. A

@@ -244,13 +244,13 @@ bun run typecheck
 on PATH to parse the log's JSON lines; `mt` itself needs only Bun. `test/install.sh` runs `make
 install` and `make uninstall` against throwaway home folders, and needs `python3` too.
 `test/guides.sh` is guide-lint, whose code is `src/guide-lint/`. It fails, one ``file:line:
-`mention`: reason`` line each, when a guide or stub skill mentions in backticks an `mt get` guide or
-reference that `mt get` no longer finds, an `mt` command its usage no longer lists, or an `orca`
-command or `--flag` that `orca agent-context --json` no longer lists. A guide spells every Orca
-command in full, `orca orchestration worker-start`; only a backticked span that starts with `orca `
-is an Orca mention, so a bare `worker-start` is never checked. An Orca mention that opens with a
-flag or holds a short flag (`-x`) fails, because the lint cannot check it; write the command path
-first, then long flags. An `mt get` mention with a `<placeholder>` for its tool is skipped; a
+`mention`: reason`` line each, when a guide, stub skill or `AGENTS.md` mentions in backticks an `mt
+get` guide or reference that `mt get` no longer finds, an `mt` command its usage no longer lists, or
+an `orca` command or `--flag` that `orca agent-context --json` no longer lists. A guide spells every
+Orca command in full, `orca orchestration worker-start`; only a backticked span that starts with
+`orca ` is an Orca mention, so a bare `worker-start` is never checked. An Orca mention that opens
+with a flag or holds a short flag (`-x`) fails, because the lint cannot check it; write the command
+path first, then long flags. An `mt get` mention with a `<placeholder>` for its tool is skipped; a
 placeholder ref is dropped with its flag and the guide is still checked. Its success line counts the
 mentions it checked and says how many placeholder mentions it skipped.
 
@@ -270,6 +270,8 @@ reaches the real jev or GitHub. `bun run typecheck` runs `tsc --noEmit` over `sr
 ## Layout
 
 ```
+AGENTS.md the charter: each part's domain, what a part contains, the fixed rules, the config rule;
+          CLAUDE.md imports it
 cli/      mt
 Makefile  make install and make uninstall
 src/      shape/, the shape schema and mt shape; oracle/, mt oracle; dogfood/, mt dogfood triage;
@@ -279,6 +281,7 @@ guides/   one guide per tool, <name>.md, with its references in <name>/<ref>.md
 skills/   a stub skill per guide an agent or the owner picks, <name>/SKILL.md, mvc and ask
           among them, plus the commit skill, which is whole
 test/     mt.sh, which checks mt get, mt list and filing with mt dogfood; install.sh, which checks make
-          install and uninstall; guides.sh, which checks that what guides mention still exists
+          install and uninstall; guides.sh, which checks that what guides and AGENTS.md mention
+          still exists
 docs/     known Orca and guide behaviour, research
 ```

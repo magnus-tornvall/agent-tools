@@ -1,6 +1,6 @@
 # shape-coverage
 
-Does the branch do what the shape says? Edit nothing.
+Domain: Verification. Does the branch do what the shape says? Edit nothing.
 
 ## Objectives
 

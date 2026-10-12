@@ -1,7 +1,7 @@
 # stance
 
-A position for a decision whose readings differ in mechanism, structure or cost, but not in
-anything an input can show. Plain text, one block per question.
+Domain: Decision. A position for a decision whose readings differ in mechanism, structure or cost,
+but not in anything an input can show. Plain text, one block per question.
 
 - **A strong opinion, weakly held**, with its reasoning inline. Grounded in established guidance
   when there is some - a standard, the vendor's documented recommendation - and saying so when it
