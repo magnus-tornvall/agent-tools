@@ -18,3 +18,7 @@ it was seen on, and is filed with `mt dogfood`.
   first. (1.4.222)
 - `orca orchestration ask` waits at most 30 minutes per call. A reply to a worker that has ended is
   refused with `dispatch_inactive`. (1.4.220)
+- `orca worktree rm` on a worktree that `worker-start --worktree new-child` created also deletes
+  its branch, and the removal finishes asynchronously. (1.4.224)
+- A spec that names a guide the work branch renames or removes still resolves mid-Run only because
+  the installed `mt` serves the main clone's guides; once the change reaches main it fails.

@@ -45,9 +45,12 @@ part. Only the owner changes a fixed rule.
   pass; evidence is as strong as each requirement; oracles pass and none is tampered; nothing in
   the diff would stop a maintainer merging; nothing surprises the owner. Which Tasks meet them is
   composed. Home: the to-orca guide (`mt get to-orca`).
-- **A separate actor per verification perspective**, each naming what it withholds, so work is
-  never judged by whoever made it. Home: the verification guide. Until that guide exists, the rule
-  lives in the to-orca guide, marked fixed there.
+- **A separate actor per verification perspective**, so work is never judged by whoever made it,
+  and a judge after fixes runs in a fresh context. Home: the verification guide
+  (`mt get verification`).
+- **What each perspective is given and withholds** is its own fixed rule, so each judge is kept
+  from what would anchor it. Home: that perspective's reference
+  (`mt get verification --ref <perspective>`).
 - **One-way doors go to the owner.** A one-way door is asked of whoever owns the decision.
   Home: the door-rule guide (`mt get door-rule`).
 - **Surprise review always runs.** Home: the to-orca guide. A judge separate from the author is a

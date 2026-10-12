@@ -1,13 +1,21 @@
 # to-orca spec head
 
 Domain: Coordination. What every Task spec carries, since a worker acts on it before it has read its
-guides. Fill in `<n>`, `<title>` and `<assignment>`.
+guides. Fill in `<n>`, `<title>`, `<assignment>` and, for a judge, `<perspective>`.
 
 The spec opens with:
 
 ```
 T<n>: <title>
 Run `mt get orca-worker` and `mt get <assignment>` before anything else.
+```
+
+A judge's spec, whose `<assignment>` is `verification`, follows that with a line that loads its
+own perspective's reference and no other, `<perspective>` being `coverage`, `maintainer` or
+`surprise`:
+
+```
+Run `mt get verification --ref <perspective>` too.
 ```
 
 Its Constraints include:

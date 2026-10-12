@@ -33,7 +33,8 @@ agent's skill list stays short, the guide enters context only when the tool is u
 load is logged.
 
 Every stub has a guide. A guide that only a spec or another guide loads has no stub:
-orca-worker and the assignments change, maintainer-review, shape-coverage and surprise-review.
+orca-worker and the assignments change and verification, whose references are its judging
+perspectives coverage, maintainer and surprise.
 No agent chooses them, so a skill-list entry would only cost the sessions that never use them;
 `mt get` serves them like any other guide. Stubs remain for what an agent or the owner picks:
 mvc, which settles a shape with the owner, oracle, which writes a closed shape's oracles before

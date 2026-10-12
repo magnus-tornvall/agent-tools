@@ -142,7 +142,8 @@ Re-invoked on a settled shape, mvc asks nothing and goes straight to the report,
   `outcome`, `purpose`, `requirements`, `non_goals`, `constraints`, `touchpoints` and `decisions`;
   the schema behind `mt shape check` owns their format, and the example (`mt get mvc --ref
   example`) shows them filled in. Whatever the schema enforces is left to it; what follows is the
-  intent no check can see.
+  intent no check can see. A scalar containing ` #` is quoted, since YAML otherwise reads the rest
+  as a comment and truncates it, which `mt shape check` does not notice.
 - `outcome`, `requirements` and `non_goals` are what the change does; `constraints`,
   `touchpoints` and `decisions` are how. A file, symbol, technology or value is how, never a
   requirement. A mechanism the change must use is a decision, with what it rejected; one it need
