@@ -3,7 +3,8 @@
 # test, e.g.
 #   make install SKILLS_DIR=~/.claude/skills
 # Adding the mt rules to Claude Code's settings, or removing them, is asked first;
-# ADD_MT_RULES=yes|no and REMOVE_MT_RULES=yes|no answer without asking.
+# ADD_MT_RULES=yes|no and REMOVE_MT_RULES=yes|no answer without asking. src/install/PART.md is
+# install's contract.
 
 BIN_DIR         ?= $(HOME)/.local/bin
 SKILLS_DIR      ?= $(HOME)/.agents/skills
