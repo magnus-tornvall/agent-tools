@@ -114,10 +114,10 @@ stdin, whose `oracles` block is sound. Runs each oracle's command from the repo 
 stderr, and prints one `O<n>: <verdict> (covers <keys>)` line per oracle on stdout. Exits 0 when
 every oracle passes, or with `--base` when each does what its `base` says, and 1 otherwise, or when
 the shape cannot be read, its `oracles` block is not sound or it runs outside a git repo. No shape,
-two shapes, an unknown option or a `--timeout` that is not a whole number above 0 exits 2. It deletes
-the JUnit report each oracle names before running it, and runs each command as written, whatever
-that command does; it is classed local write and runs without a prompt because it runs the
-commands of a shape the owner approved. See Oracles.
+two shapes, an unknown option or a `--timeout` that is not a whole number above 0 exits 2. It
+deletes the JUnit report each oracle names before running it, and runs each command as written,
+whatever that command does; it is classed local write and runs without a prompt because it runs
+the commands of a shape the owner approved. See Oracles.
 
 **`mt dogfood <title> [--body-file <file>]`**, external. Files a finding as an issue labelled
 `dogfooding` on this repo's public GitHub, through `gh`; `--body-file -` reads the body from stdin.
@@ -130,7 +130,8 @@ title, a `--body-file` without a value or an unknown option exits 2. See Dogfood
 with `TYPESAFE_API_KEY`, prints one report on stdout, changes nothing on GitHub, and exits 0. It
 reads the advisory key `triage_confidence`; when that is missing or invalid it still exits 0 and
 says so on the report's first line. Without `TYPESAFE_API_KEY`, or when `gh` or a jev call fails, it
-prints one line on stderr, nothing on stdout, and exits 1. Any word after `triage` exits 2. See Dogfooding.
+prints one line on stderr, nothing on stdout, and exits 1. Any word after `triage` exits 2. See
+Dogfooding.
 
 **`mt config [<key>]`**, read-only. Prints the owner's config: the file's path, then one line per
 key. With a key, prints that key's value alone. Exits 0, 1 or 2 as Config says.
@@ -255,8 +256,8 @@ It needs `TYPESAFE_API_KEY` set to a jev API key, read from that variable only a
 The title and body of every open dogfooding issue, and the key, are sent to `api.typesafe.ai`, or
 to `TYPESAFE_BASE_URL` when that is set; the issues are already public. The footer `mt dogfood`
 appends to a body, with its commit, session and worktree, is left out. `TYPESAFE_LOG_LEVEL` sets
-how much of the SDK's request log goes to stderr, which never shows the key. Without
-`TYPESAFE_API_KEY`, when `gh` fails, or when a jev call fails, it prints one line on stderr, nothing on stdout, and exits 1;
+how much of the SDK's request log goes to stderr, which never shows the key. Without the key, when
+`gh` fails, or when a jev call fails, it prints one line on stderr, nothing on stdout, and exits 1;
 the first failed call aborts the calls still in flight and starts no more.
 
 Both are external, so `mt dogfood` sits under an ask rule, `Bash(mt dogfood:*)` in
@@ -269,14 +270,18 @@ allow rules, so the ask rule prompts even though `Bash(mt:*)` is allowed.
 The owner's config is one TOML file of standing policy for unattended work, values only the owner
 holds, at `${XDG_CONFIG_HOME:-$HOME/.config}/mt/config.toml`. `mt --help` names that path and
 `mt config` prints it, so no consumer spells it out. Only the owner edits it; `mt` only reads it,
-and an agent proposes a change with evidence. There is one file per user and no per-repo override. The owner's
-explicit choice for a Run beats it.
+and an agent proposes a change with evidence. There is one file per user and no per-repo override.
+The owner's explicit choice for a Run beats it.
 
-| key                 | kind     | value                                                            |
-| ------------------- | -------- | ---------------------------------------------------------------- |
-| `agents`            | binding  | the Orca agents unattended work may run on, a non-empty list     |
-| `fix_rounds`        | binding  | fix rounds before a finding goes to the owner, an integer from 0 |
-| `triage_confidence` | advisory | the no-brainer threshold of `mt dogfood triage`, from 0 to 1     |
+| key                 | kind     | value                                                         |
+| ------------------- | -------- | ------------------------------------------------------------- |
+| `agents`            | binding  | the Orca agents unattended work may run on, a non-empty list  |
+| `fix_rounds`        | binding  | fix rounds before the owner gets a finding, an integer from 0 |
+| `triage_confidence` | advisory | the no-brainer threshold of `mt dogfood triage`, from 0 to 1  |
+
+A TOML float with an integer value, such as `fix_rounds = 2.0`, counts as that integer, since
+`Bun.TOML.parse` cannot tell them apart. `mt` checks that an agent name is well formed, not that
+Orca knows it, and a repeated name is allowed.
 
 `mt dogfood triage` reads `triage_confidence`. No `mt` command reads `agents` or `fix_rounds`;
 whatever coordinates unattended work reads them through `mt config <key>`. For example:
@@ -309,8 +314,9 @@ exit 2.
 workers launch with, not only on your interactive shell's, or every `mt` command they run
 fails. Use Bun 1.2.23 or later: `Bun.YAML.parse` arrived in 1.2.21, `Bun.YAML.stringify` in
 1.2.22, and from 1.2.23 `Bun.YAML.parse` throws a `SyntaxError` on invalid input, which `mt
-shape` relies on ([release notes](https://bun.com/blog/release-notes/bun-v1.2.23)); `mt config`
-reads its file with `Bun.TOML.parse`, which is older. It is tested on 1.3.14. Install Bun, then run this from the clone:
+shape` relies on ([release notes](https://bun.com/blog/release-notes/bun-v1.2.23)). It is
+tested on 1.3.14. `mt config` reads its file with `Bun.TOML.parse`, which is older. Install Bun,
+then run this from the clone:
 
 ```sh
 make install
@@ -329,8 +335,9 @@ is missing or stale. It:
 - asks whether to add `Bash(mt:*)` to `permissions.allow` and `Bash(mt dogfood:*)` to
   `permissions.ask` in `~/.claude/settings.json`, so Claude Code agents run every `mt` command
   without a prompt except an external one, `mt dogfood`, which asks before each filing and each
-  triage. The rules follow from each command's side-effect class (see Contracts). A file that still holds
-  `Bash(mt get:*)`, `Bash(mt list)` or `Bash(mt shape:*)` from an earlier install has them replaced.
+  triage. The rules follow from each command's side-effect class (see Contracts). A file that still
+  holds `Bash(mt get:*)`, `Bash(mt list)` or `Bash(mt shape:*)` from an earlier install has them
+  replaced.
   A yes keeps everything else in the file; it is not asked again once the rules are there.
   `ADD_MT_RULES=yes` or `ADD_MT_RULES=no` answers without asking, and with no terminal to ask on
   nothing is written;
@@ -342,9 +349,10 @@ Set `BIN_DIR`, `SKILLS_DIR` or `SETTINGS` to use other places, for example
 installed as a real folder is left alone and the install fails, naming it: linking over it
 would write a stray link inside it. The whole mvc from before it became a guide is such a folder,
 and the old and the new mvc cannot both be installed as `mvc`. To keep the old one for a later
-comparison, move it out of the skills folder rather than delete it. Settings that are not JSON,
-or whose `permissions.allow` or `permissions.ask` is not a list of strings, are left alone too,
-and the install fails, naming the rules to add by hand.
+comparison, move it out of the skills folder rather than delete it. Settings that are not a JSON
+object, or whose `permissions` is not an object or whose `permissions.allow` or `permissions.ask`
+is not a list of strings, are left alone too, and the install fails saying which; it names the
+rules to add by hand only when the settings are not JSON or not an object.
 
 `make uninstall` takes it back out: the `mt` link and every link in the skills folder that points
 into this clone, so a skill or `mt` installed some other way stays. It asks before removing the
@@ -390,10 +398,10 @@ string `command` and an array `path`), each as one line instead of one per menti
 
 `bun test` runs guide-lint against fixture repos and a fake `orca`, and checks the shape
 schema and `mt shape`, `mt config` against a throwaway `XDG_CONFIG_HOME`, and that every command in
-`mt --help` has a side-effect class. It also runs `mt dogfood triage` (`src/dogfood/triage.test.ts`) with the
-real SDK against a local fake jev server selected by `TYPESAFE_BASE_URL`, and a fake `gh`; no test
-reaches the real jev or GitHub. `bun run typecheck` runs `tsc --noEmit` over `src/`; `tsc` cannot read
-`cli/mt`, which has no extension.
+`mt --help` has a side-effect class. It also runs `mt dogfood triage`
+(`src/dogfood/triage.test.ts`) with the real SDK against a local fake jev server selected by
+`TYPESAFE_BASE_URL`, and a fake `gh`; no test reaches the real jev or GitHub. `bun run typecheck`
+runs `tsc --noEmit` over `src/`; `tsc` cannot read `cli/mt`, which has no extension.
 
 ## Layout
 
