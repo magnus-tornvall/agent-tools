@@ -217,9 +217,9 @@ installed as a real folder is left alone and the install fails, naming it: linki
 would write a stray link inside it. The whole mvc from before it became a guide is such a folder,
 and so is a whole commit skill copied in before commit became one; the old and the new cannot both
 be installed under one name. To keep the old one for a later comparison, move it out of the skills
-folder rather than delete it. Settings that are not JSON,
-or whose `permissions.allow` or `permissions.ask` is not a list of strings, are left alone too,
-and the install fails, naming the rules to add by hand.
+folder rather than delete it. Settings that are not JSON, or whose `permissions.allow` or
+`permissions.ask` is not a list of strings, are left alone too, and the install fails, naming the
+rules to add by hand.
 
 `make uninstall` takes it back out: the `mt` link and every link in the skills folder that points
 into this clone, so a skill or `mt` installed some other way stays. It asks before removing the
