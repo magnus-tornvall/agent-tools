@@ -280,8 +280,12 @@ The owner's explicit choice for a Run beats it.
 | `triage_confidence` | advisory | the no-brainer threshold of `mt dogfood triage`, from 0 to 1  |
 
 A TOML float with an integer value, such as `fix_rounds = 2.0`, counts as that integer, since
-`Bun.TOML.parse` cannot tell them apart. `mt` checks that an agent name is well formed, not that
-Orca knows it, and a repeated name is allowed.
+`Bun.TOML.parse` cannot tell them apart. `Bun.TOML.parse` also reads some values that are not
+valid TOML as numbers: `-foo`, `+inf`, `-inf` and `-nan` as 0, `.7` as 0.7 and `07` as 7. So
+`mt config` takes `fix_rounds = -foo` as a valid 0, and `triage_confidence = -inf` as 0, which
+labels every `mt-code` issue a no-brainer. The owner writes the number keys as plain TOML numbers.
+`mt` checks that an agent name is well formed, not that Orca knows it, and a repeated name is
+allowed.
 
 `mt dogfood triage` reads `triage_confidence`. No `mt` command reads `agents` or `fix_rounds`;
 whatever coordinates unattended work reads them through `mt config <key>`. For example:
