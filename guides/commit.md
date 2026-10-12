@@ -26,8 +26,9 @@ report. It reads no config.
 - **Nothing is committed over an unfinished state.** A rebase in progress or unmerged paths are
   reported with the files they hold, and nothing is committed; a clean tree is reported as nothing
   to commit.
-- **A commit on the repo's default branch is the owner's choice**, asked before it is made unless
-  the instructions or the request already settle it: commit there, or branch out.
+- **A commit on the repo's default branch, or on a branch the owner's instructions protect, is the
+  owner's choice**, asked before it is made unless the instructions or the request already settle
+  it: commit there, or branch out.
 - **Every untracked file is a decision**: committed, ignored or left alone. Ignoring one is its own
   concern, so its own commit. Anything that reads as a credential (`.env`, `*.pem`, `*.key`,
   `credentials*`), a build artifact or scratch output is reported, not staged.
@@ -83,8 +84,8 @@ Push authority comes from the session's destination.
   pushing the current branch, it is pushed, with an upstream set when it has none. When neither
   does, nothing is pushed and the report names the branch as unpushed.
 - **In an Orca Task** the destination is the Task's, the branch its spec names. Its spec and
-  assignment guide decide; the change assignment leaves its commits unpushed on the work branch,
-  and the coordinator pushes it at hand-off (`mt get to-orca`).
+  assignment guide decide; the change assignment leaves its commits unpushed on the work branch.
+  Whether the coordinator pushes it at hand-off is the to-orca guide's (`mt get to-orca`).
 - **A rejected push is reported, not forced.** A non-fast-forward rejection means the upstream
   moved. `--force` and `--force-with-lease` are used only when the owner asks for them by name.
 
