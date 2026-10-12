@@ -1,18 +1,22 @@
 # options
 
 Domain: Decision. A closed set of answers for a decision whose every possible answer can be listed:
-which of named branches, environments or channels, whether a gate opens.
+which of named branches, environments or channels, whether a gate opens. The person asked answers
+with a pick, and can see the list is whole. It rests on a closed question whose options are
+collectively exhaustive. It reads no config.
 
-- **Two to four options**, as many as the set holds. A set that needs more is not closed, or is
-  two questions.
+- **Every answer the set holds is an option.** A set the question tool cannot hold is not closed,
+  or is two questions.
 - **The stance is a ranking.** The recommended option comes first, with the reasoning for it;
   the rest follow in order.
 - **Each option says what choosing it does**, citing what makes it live.
 - **The free answer stays open.** An answer outside the options is still the answer.
 
 In the question tool, each option is one option with what choosing it does as its description,
-the recommended one first and marked so. Stance, Wrong if and any Risk or One-way door line go in
-the text just before the tool.
+the recommended one first and marked so. Stance, Wrong if, any Risk or One-way door line, and each
+option's citation and Rules out when the tool has no description field, go in the text just before
+the tool. Workaround for question tools lacking a field for a line, such as a position or an
+option's description; remove when the asker's question tool carries one.
 
 ## Example
 
