@@ -1,8 +1,11 @@
 # ask
 
-Domain: Decision. Composes a question for whoever owns a decision: the owner, or a coordinator for
-its workers. mvc, to-orca and orca-worker ask through it. The door rule (`mt get door-rule`) says
-what is asked at all; this guide says how.
+Domain: Decision. Composes a question for whoever owns a decision, so that the answer settles it
+at the least cost to the person asked. The door rule (`mt get door-rule`) says what is asked at
+all; this guide says how, and what an answer means. It rests on value of information: a question
+costs the asked person's attention and pays only when its answer could change what is done, so it
+asks for the fact the decision turns on. And on falsifiability: a position says what would refute
+it. It reads no config.
 
 ## Forms
 
@@ -25,10 +28,10 @@ The channel follows the form. Options and gwt go through the asker's own questio
 (`AskUserQuestion` in Claude Code, `orca orchestration ask --options`): each answer one option, the
 position's pick first. In gwt, the tool's free answer is **Neither**, or **Either**. A stance goes
 in plain text, never a picker, so "you are asking the wrong thing" is as easy to type as an
-answer. Lines the tool has no field for go in the text just before it.
+answer.
 
-`orca orchestration ask --options` takes one comma-separated string, so there each option is a
-short label without commas. The citations, Rules out and the rest go in the question text.
+Lines the tool has no field for go in the text just before it. Workaround for question tools
+lacking a field for a position; remove when the asker's question tool carries one.
 
 ## Every question
 
@@ -49,7 +52,7 @@ short label without commas. The citations, Rules out and the rest go in the ques
 - **Risk** - only when the question bears on one: the risk and its source, under Rules out.
 - **One-way door** - only on a one-way door: who pays to undo it, with its source, under Rules out
   and below Risk.
-- One short paragraph per body.
+- **Short.** Each body holds only what the person asked needs to answer.
 
 ## Answers
 
