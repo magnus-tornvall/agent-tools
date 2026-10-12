@@ -631,6 +631,21 @@ describe("mt dogfood triage", () => {
       expect(section(lower.stdout, "no-brainers")).toStartWith("  #12 mt config prints the path twice  (no-brainer: ");
     });
 
+    test("#57 T4/F1: a score prints to the threshold's places, so a no-brainer never reads as under it", async () => {
+      writeFileSync(ISSUES, JSON.stringify([ISSUE_12]));
+      script = {
+        ...FULL,
+        change: { ...FULL.change, 12: { choice: "mt_code", probability: 0.8, confidence: 0.7259 } },
+        verdict: { ...FULL.verdict, 12: { choice: "no_brainer", probability: 0.95, confidence: 0.7259 } },
+      };
+      writeFileSync(CONFIG, "triage_confidence = 0.725\n");
+      const { stdout } = await triage();
+      expect(stdout.split("\n")[0]).toBe("triage_confidence: 0.725");
+      expect(section(stdout, "no-brainers")).toBe(
+        "  #12 mt config prints the path twice  (no-brainer: change mt code probability 0.800, confidence 0.725; verdict no-brainer probability 0.950, confidence 0.725)",
+      );
+    });
+
     test("#57 R10: with no triage_confidence it exits 0, says so first, shows every score and labels nothing a no-brainer", async () => {
       writeFileSync(ISSUES, JSON.stringify([ISSUE_12, SURE, GUIDE]));
       script = MT_CODE;

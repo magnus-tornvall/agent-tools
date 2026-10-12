@@ -240,9 +240,16 @@ async function duplicates(client: TypeSafeClient, issues: Issue[], models: Set<s
   return [...groups.values()];
 }
 
+/** The fewest decimal places, at least two, that write `value` exactly. */
+function placesIn(value: number): number {
+  let places = 2;
+  while (places < 20 && Number(value.toFixed(places)) !== value) places++;
+  return places;
+}
+
 /** The threshold as the owner wrote it, with at least two places. */
 function threshold(value: number): string {
-  return Number(value.toFixed(2)) === value ? value.toFixed(2) : String(value);
+  return value.toFixed(placesIn(value));
 }
 
 /**
@@ -300,38 +307,38 @@ async function triage(client: TypeSafeClient, issues: Issue[], confidence: numbe
   };
 }
 
-/** A probability or confidence cut, not rounded, to two places, so a value under the threshold never prints as the threshold. */
-function twoPlaces(value: number): string {
-  return value.toFixed(8).slice(0, -6);
+/** A probability or confidence cut, not rounded, to `places`, so a value under the threshold never prints as the threshold. */
+function cut(value: number, places: number): string {
+  return value.toFixed(places + 6).slice(0, -6);
 }
 
-function line({ issue, label, scores }: Placement, indent: string): string {
+function line({ issue, label, scores }: Placement, indent: string, places: number): string {
   const title = issue.title
     .replace(/(?!\s)\p{Cc}/gu, "")
     .replace(/\s+/g, " ")
     .trim();
   const shown = scores
-    .map(({ name, probability, confidence }) => `${name === undefined ? "" : `${name} `}probability ${twoPlaces(probability)}, confidence ${twoPlaces(confidence)}`)
+    .map(({ name, probability, confidence }) => `${name === undefined ? "" : `${name} `}probability ${cut(probability, places)}, confidence ${cut(confidence, places)}`)
     .join("; ");
   return `${indent}#${issue.number} ${title}  (${label}: ${shown})\n`;
 }
 
-/** The report: a first line on the threshold, then the model line and the three groups. */
-function render(first: string, { models, duplicates, noBrainers, ruleOn }: Report): string {
+/** The report: a first line on the threshold, then the model line and the three groups, scores cut to the threshold's `places`. */
+function render(first: string, { models, duplicates, noBrainers, ruleOn }: Report, places: number): string {
   let out = `${first}\n`;
   if (models.length > 0) out += `jev model: ${models.join(", ")}\n`;
   out += "duplicates\n";
   if (duplicates.length === 0) out += "  none\n";
   for (const group of duplicates) {
     out += `  ${group.map(({ issue }) => `#${issue.number}`).join(", ")}\n`;
-    for (const placement of group) out += line(placement, "    ");
+    for (const placement of group) out += line(placement, "    ", places);
   }
   out += "no-brainers\n";
   if (noBrainers.length === 0) out += "  none\n";
-  for (const placement of noBrainers) out += line(placement, "  ");
+  for (const placement of noBrainers) out += line(placement, "  ", places);
   out += "rule on\n";
   if (ruleOn.length === 0) out += "  none\n";
-  for (const placement of ruleOn) out += line(placement, "  ");
+  for (const placement of ruleOn) out += line(placement, "  ", places);
   return out;
 }
 
@@ -348,7 +355,7 @@ export async function runTriage(args: readonly string[], root: string): Promise<
       : `triage_confidence: ${problem(config, found)}; nothing is labelled a no-brainer`;
     const issues = openIssues(root);
     const client = new TypeSafeClient({ logger: STDERR_LOGGER, timeout: JEV_TIMEOUT_MS });
-    process.stdout.write(render(first, await triage(client, issues, confidence)));
+    process.stdout.write(render(first, await triage(client, issues, confidence), found.ok ? placesIn(found.value) : 2));
     return 0;
   } catch (error) {
     if (error instanceof UsageError) {
