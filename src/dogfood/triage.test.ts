@@ -14,9 +14,12 @@ const NOGH = join(TMP, "nogh");
 const GH_CALLS = join(TMP, "gh-calls");
 const GH_CWD = join(TMP, "gh-cwd");
 const ISSUES = join(TMP, "issues.json");
+const CONFIG_HOME = join(TMP, "config");
+const CONFIG = join(CONFIG_HOME, "mt", "config.toml");
 
 mkdirSync(FAKEBIN);
 mkdirSync(NOGH);
+mkdirSync(dirname(CONFIG), { recursive: true });
 const BUN = Bun.which("bun");
 if (BUN === null) throw new Error("bun is not on PATH");
 symlinkSync(BUN, join(FAKEBIN, "bun"));
@@ -171,6 +174,7 @@ beforeEach(() => {
   gate = newGate();
   rmSync(GH_CALLS, { force: true });
   rmSync(GH_CWD, { force: true });
+  writeFileSync(CONFIG, 'agents = ["claude"]\nfix_rounds = 1\ntriage_confidence = 0.7\n');
 });
 
 const BASE_ENV: Record<string, string | undefined> = Object.fromEntries(
@@ -185,6 +189,7 @@ async function triage(env: Record<string, string | undefined> = {}, ...extra: st
       PATH: FAKEBIN,
       MT_LOG: join(TMP, "usage.jsonl"),
       XDG_STATE_HOME: join(TMP, "state"),
+      XDG_CONFIG_HOME: CONFIG_HOME,
       TYPESAFE_API_KEY: KEY,
       TYPESAFE_BASE_URL: `http://127.0.0.1:${server.port}`,
       ...env,
@@ -242,7 +247,8 @@ const FULL: Script = {
   },
 };
 
-const FULL_REPORT = `jev model: jev-fake
+const FULL_REPORT = `triage_confidence: 0.70
+jev model: jev-fake
 duplicates
   #50, #51
     #50 mt shape check crashes on an empty file  (shares a problem with #51: probability 0.92, confidence 0.84)
@@ -251,8 +257,8 @@ no-brainers
   #52 mt list pads names to 20 columns, cutting long ones  (no-brainer: change mt code probability 0.97, confidence 0.95; verdict no-brainer probability 0.90, confidence 0.80)
   #53 mt get --ref with an empty ref exits 0  (no-brainer: change mt code probability 0.96, confidence 0.94; verdict no-brainer probability 0.85, confidence 0.70)
 rule on
-  #39 orca worktree rm deletes the worktree's branch, asynchronously  (Orca: probability 0.93, confidence 0.89)
-  #41 to-orca: say that a fix round's commits are judged too  (guide: probability 0.88, confidence 0.82)
+  #39 orca worktree rm deletes the worktree's branch, asynchronously  (Orca: change Orca probability 0.93, confidence 0.89; verdict no-brainer probability 0.99, confidence 0.98)
+  #41 to-orca: say that a fix round's commits are judged too  (guide: change guide probability 0.88, confidence 0.82; verdict no-brainer probability 0.95, confidence 0.90)
   #54 mt mvc save keeps a trailing newline twice  (no-brainer below confidence 0.70: change mt code probability 0.95, confidence 0.92; verdict no-brainer probability 0.84, confidence 0.69)
   #55 mt dogfood should open the issue in a browser  (rule on: change mt code probability 0.90, confidence 0.85; verdict rule on probability 0.75, confidence 0.50)
 `;
@@ -344,7 +350,7 @@ describe("mt dogfood triage", () => {
     script = FULL;
     const { stdout } = await triage();
     expect(section(stdout, "rule on")).toBe(
-      "  #41 to-orca: say that a fix round's commits are judged too  (guide: probability 0.88, confidence 0.82)",
+      "  #41 to-orca: say that a fix round's commits are judged too  (guide: change guide probability 0.88, confidence 0.82; verdict no-brainer probability 0.95, confidence 0.90)",
     );
     expect(section(stdout, "no-brainers")).toBe("  none");
     expect(seen).toHaveLength(1);
@@ -384,7 +390,7 @@ describe("mt dogfood triage", () => {
     script = FULL;
     const { stdout } = await triage();
     expect(section(stdout, "rule on")).toBe(
-      "  #39 orca worktree rm deletes the worktree's branch, asynchronously  (Orca: probability 0.93, confidence 0.89)",
+      "  #39 orca worktree rm deletes the worktree's branch, asynchronously  (Orca: change Orca probability 0.93, confidence 0.89; verdict no-brainer probability 0.99, confidence 0.98)",
     );
     expect(section(stdout, "no-brainers")).toBe("  none");
   });
@@ -405,7 +411,7 @@ describe("mt dogfood triage", () => {
     const { code, stdout } = await triage({ TYPESAFE_DEFAULT_MODEL: "jev-pinned" });
     expect(code).toBe(0);
     expect(seen[0]?.body.model).toBe("jev-pinned");
-    expect(stdout.split("\n")[0]).toBe("jev model: jev-2026-10-01");
+    expect(stdout.split("\n")[1]).toBe("jev model: jev-2026-10-01");
     expect(stdout.split("\n").filter((line) => line.includes("jev model"))).toHaveLength(1);
   });
 
@@ -414,7 +420,7 @@ describe("mt dogfood triage", () => {
     script = { ...FULL, model: (request) => (request === 1 ? "jev-b" : "jev-a") };
     const { code, stdout } = await triage();
     expect(code).toBe(0);
-    expect(stdout.split("\n")[0]).toBe("jev model: jev-a, jev-b");
+    expect(stdout.split("\n")[1]).toBe("jev model: jev-a, jev-b");
   });
 
   test("R5: an mt code answer below the confidence threshold goes to rule on even when jev calls it a no-brainer", async () => {
@@ -441,7 +447,7 @@ describe("mt dogfood triage", () => {
     writeFileSync(ISSUES, "[]");
     const { code, stdout } = await triage();
     expect(code).toBe(0);
-    expect(stdout).toBe("duplicates\n  none\nno-brainers\n  none\nrule on\n  none\n");
+    expect(stdout).toBe("triage_confidence: 0.70\nduplicates\n  none\nno-brainers\n  none\nrule on\n  none\n");
     expect(seen).toHaveLength(0);
   });
 
@@ -449,7 +455,9 @@ describe("mt dogfood triage", () => {
     writeFileSync(ISSUES, JSON.stringify([{ ...ORCA, title: "orca worktree rm\n  deletes the branch" }]));
     script = FULL;
     const { stdout } = await triage();
-    expect(section(stdout, "rule on")).toBe("  #39 orca worktree rm deletes the branch  (Orca: probability 0.93, confidence 0.89)");
+    expect(section(stdout, "rule on")).toBe(
+      "  #39 orca worktree rm deletes the branch  (Orca: change Orca probability 0.93, confidence 0.89; verdict no-brainer probability 0.99, confidence 0.98)",
+    );
   });
 
   test("R6: control characters other than whitespace never reach the terminal from a title", async () => {
@@ -457,7 +465,9 @@ describe("mt dogfood triage", () => {
     script = FULL;
     const { stdout } = await triage();
     expect(stdout).not.toMatch(/[\u0000-\u0008\u000b-\u001f\u007f]/);
-    expect(section(stdout, "rule on")).toBe("  #39 orca [2Jworktree rm deletes the branch  (Orca: probability 0.93, confidence 0.89)");
+    expect(section(stdout, "rule on")).toBe(
+      "  #39 orca [2Jworktree rm deletes the branch  (Orca: change Orca probability 0.93, confidence 0.89; verdict no-brainer probability 0.99, confidence 0.98)",
+    );
   });
 
   test("R5: a confidence just under the threshold never prints as the threshold", async () => {
@@ -588,5 +598,123 @@ describe("mt dogfood triage", () => {
     expect(stdout).toBe("");
     expect(stderr).toBe("mt: unexpected argument 'now'\nusage: mt dogfood triage\n");
     expect(ghCalls()).toEqual([]);
+  });
+
+  describe("the confidence threshold comes from the owner's config", () => {
+    const ISSUE_12 = issue(12, "mt config prints the path twice", "Expected: once.");
+    const MT_CODE: Script = {
+      ...FULL,
+      change: { ...FULL.change, 12: { choice: "mt_code", probability: 0.8, confidence: 0.8 } },
+      verdict: { ...FULL.verdict, 12: { choice: "no_brainer", probability: 0.95, confidence: 0.9 } },
+    };
+
+    /** The label of each issue line: what comes between its opening parenthesis and the colon. */
+    function labels(report: string): string[] {
+      return [...report.matchAll(/^ +#\d+ .*  \(([^:]*):/gm)].map((match) => match[1] ?? "");
+    }
+
+    test("#57 R9: triage_confidence 0.9 is stated, and an mt code change scored 0.80 is not a no-brainer", async () => {
+      writeFileSync(ISSUES, JSON.stringify([ISSUE_12]));
+      script = MT_CODE;
+      writeFileSync(CONFIG, "triage_confidence = 0.9\n");
+      const { code, stdout } = await triage();
+      expect(code).toBe(0);
+      expect(stdout.split("\n")[0]).toBe("triage_confidence: 0.90");
+      expect(section(stdout, "no-brainers")).toBe("  none");
+      expect(section(stdout, "rule on")).toBe(
+        "  #12 mt config prints the path twice  (mt code below confidence 0.90: change mt code probability 0.80, confidence 0.80; verdict no-brainer probability 0.95, confidence 0.90)",
+      );
+
+      writeFileSync(CONFIG, "triage_confidence = 0.75\n");
+      const lower = await triage();
+      expect(lower.stdout.split("\n")[0]).toBe("triage_confidence: 0.75");
+      expect(section(lower.stdout, "no-brainers")).toStartWith("  #12 mt config prints the path twice  (no-brainer: ");
+    });
+
+    test("#57 T4/F1: a score prints to the threshold's places, so a no-brainer never reads as under it", async () => {
+      writeFileSync(ISSUES, JSON.stringify([ISSUE_12]));
+      script = {
+        ...FULL,
+        change: { ...FULL.change, 12: { choice: "mt_code", probability: 0.8, confidence: 0.7259 } },
+        verdict: { ...FULL.verdict, 12: { choice: "no_brainer", probability: 0.95, confidence: 0.7259 } },
+      };
+      writeFileSync(CONFIG, "triage_confidence = 0.725\n");
+      const { stdout } = await triage();
+      expect(stdout.split("\n")[0]).toBe("triage_confidence: 0.725");
+      expect(section(stdout, "no-brainers")).toBe(
+        "  #12 mt config prints the path twice  (no-brainer: change mt code probability 0.800, confidence 0.725; verdict no-brainer probability 0.950, confidence 0.725)",
+      );
+    });
+
+    test("#57 R10: with no triage_confidence it exits 0, says so first, shows every score and labels nothing a no-brainer", async () => {
+      writeFileSync(ISSUES, JSON.stringify([ISSUE_12, SURE, GUIDE]));
+      script = MT_CODE;
+      for (const config of ['agents = ["claude"]\nfix_rounds = 1\n', null]) {
+        if (config === null) rmSync(CONFIG);
+        else writeFileSync(CONFIG, config);
+        const { code, stdout, stderr } = await triage();
+        expect(stderr).toBe("");
+        expect(code).toBe(0);
+        expect(stdout.split("\n")[0]).toBe(`triage_confidence: missing from ${CONFIG}; nothing is labelled a no-brainer`);
+        expect(section(stdout, "no-brainers")).toBe("  none");
+        expect(section(stdout, "rule on")).toBe(
+          [
+            "  #12 mt config prints the path twice  (mt code, no threshold: change mt code probability 0.80, confidence 0.80; verdict no-brainer probability 0.95, confidence 0.90)",
+            "  #41 to-orca: say that a fix round's commits are judged too  (guide: change guide probability 0.88, confidence 0.82; verdict no-brainer probability 0.95, confidence 0.90)",
+            "  #52 mt list pads names to 20 columns, cutting long ones  (mt code, no threshold: change mt code probability 0.97, confidence 0.95; verdict no-brainer probability 0.90, confidence 0.80)",
+          ].join("\n"),
+        );
+        expect(labels(stdout)).not.toContain("no-brainer");
+      }
+    });
+
+    test("#57 R11: with triage_confidence 1.5 it exits 0, says it is invalid and why, shows every score and labels nothing a no-brainer", async () => {
+      writeFileSync(ISSUES, JSON.stringify([ISSUE_12, SURE]));
+      script = MT_CODE;
+      writeFileSync(CONFIG, 'agents = ["claude"]\nfix_rounds = 1\ntriage_confidence = 1.5\n');
+      const { code, stdout } = await triage();
+      expect(code).toBe(0);
+      expect(stdout.split("\n")[0]).toBe(
+        `triage_confidence: invalid in ${CONFIG}: must be a number from 0 to 1, not 1.5; nothing is labelled a no-brainer`,
+      );
+      expect(section(stdout, "no-brainers")).toBe("  none");
+      expect(section(stdout, "rule on")).toContain("#12 mt config prints the path twice  (mt code, no threshold: change mt code probability 0.80");
+      expect(section(stdout, "rule on")).toContain("verdict no-brainer probability 0.90, confidence 0.80)");
+      expect(labels(stdout)).not.toContain("no-brainer");
+    });
+
+    test("#57: a config file that is not TOML leaves triage running, saying why on the first line", async () => {
+      writeFileSync(ISSUES, JSON.stringify([SURE]));
+      script = MT_CODE;
+      writeFileSync(CONFIG, "triage_confidence = \n");
+      const { code, stdout } = await triage();
+      expect(code).toBe(0);
+      expect(stdout.split("\n")[0]).toStartWith(`triage_confidence: invalid in ${CONFIG}: the file is not TOML: `);
+      expect(section(stdout, "no-brainers")).toBe("  none");
+    });
+
+    test("#57 D1: missing binding keys do not stop triage, which reads only triage_confidence", async () => {
+      writeFileSync(ISSUES, JSON.stringify([SURE]));
+      script = MT_CODE;
+      writeFileSync(CONFIG, "triage_confidence = 0.7\n");
+      const { code, stdout } = await triage();
+      expect(code).toBe(0);
+      expect(section(stdout, "no-brainers")).toStartWith("  #52 ");
+    });
+
+    test("#57 R12: an issue jev judges not mt code shows its verdict score too", async () => {
+      const issue40 = issue(40, "to-orca: name the fix round's judge");
+      writeFileSync(ISSUES, JSON.stringify([issue40]));
+      script = {
+        ...FULL,
+        change: { 40: { choice: "guide", probability: 0.86, confidence: 0.79 } },
+        verdict: { 40: { choice: "rule_on", probability: 0.5, confidence: 0 } },
+      };
+      const { code, stdout } = await triage();
+      expect(code).toBe(0);
+      expect(section(stdout, "rule on")).toBe(
+        "  #40 to-orca: name the fix round's judge  (guide: change guide probability 0.86, confidence 0.79; verdict rule on probability 0.50, confidence 0.00)",
+      );
+    });
   });
 });

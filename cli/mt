@@ -1,8 +1,9 @@
 #!/usr/bin/env bun
 // mt: load the know-how of the owner's tools on demand, record every load, check and slice shapes
-// and drafts, run a shape's oracles, and file and triage dogfooding findings. get, list and dogfood
-// need nothing beyond this file and, for dogfood, gh; shape, oracle and dogfood triage load
-// src/shape/, src/oracle/ and src/dogfood/ only when they are called.
+// and drafts, run a shape's oracles, file and triage dogfooding findings, and print the owner's
+// config. get, list and dogfood need nothing beyond this file and, for dogfood, gh; shape, oracle,
+// dogfood triage and config load src/shape/, src/oracle/, src/dogfood/ and src/config/ only when
+// they are called.
 
 import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, statSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
@@ -27,9 +28,12 @@ const USAGE = `usage: mt get <tool> [--ref <ref>]   print the guide for a tool, 
        mt dogfood triage             sort the open dogfooding issues into duplicates,
                                      no-brainers and ones to rule on, as jev judges them;
                                      needs TYPESAFE_API_KEY, and changes nothing on GitHub
+       mt config [<key>]             print the config file's path and each key, binding or
+                                     advisory, with its value; or one key's value alone
        mt --help                     show this usage
 
 Every \`get\` is appended to $MT_LOG, or \${XDG_STATE_HOME:-$HOME/.local/state}/mt/usage.jsonl.
+The owner's config is \${XDG_CONFIG_HOME:-$HOME/.config}/mt/config.toml; mt only reads it.
 `;
 
 const ROOT = dirname(dirname(realpathSync(import.meta.path)));
@@ -262,6 +266,11 @@ async function cmdOracle(args: string[]): Promise<number> {
   return runOracleCommand(args);
 }
 
+async function cmdConfig(args: string[]): Promise<number> {
+  const { runConfig }: typeof import("../src/config/config.ts") = await import(join(ROOT, "src/config/config.ts"));
+  return runConfig(args);
+}
+
 async function main(args: string[]): Promise<number> {
   const [command = "", ...rest] = args;
   switch (command) {
@@ -275,6 +284,8 @@ async function main(args: string[]): Promise<number> {
       return cmdOracle(rest);
     case "dogfood":
       return cmdDogfood(rest);
+    case "config":
+      return cmdConfig(rest);
     case "":
     case "-h":
     case "--help":

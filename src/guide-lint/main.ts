@@ -1,13 +1,8 @@
 /**
- * guide-lint: fails, one `file:line: `mention`: reason` line each, when a guide, stub skill or the
- * root AGENTS.md mentions in backticks an mt guide, reference or command, or an Orca command or
- * flag, that no longer exists.
+ * guide-lint: gathers a repo's guides, stub skills and AGENTS.md, runs mt and orca, and reports
+ * each mention that no longer resolves; src/guide-lint/PART.md is its contract.
  *
  *   bun src/guide-lint/main.ts <repo>
- *
- * It runs only `mt get` and `mt --help`, with MT_LOG on a throwaway file so the owner's usage log
- * is left alone, and `orca agent-context --json` when orca is on PATH. Without orca it checks the
- * mt mentions only and says so in one line.
  */
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
