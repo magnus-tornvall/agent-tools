@@ -191,6 +191,20 @@ describe("parseShape", () => {
     expect(violationsOf({ ...example(), outcome: empty })).toEqual([{ path: "outcome", message: "must not be empty" }]);
   });
 
+  test("accepts a purpose of non-empty text", () => {
+    expect(paths({ ...example(), purpose: "Finance reconciles cancelled orders by hand." })).toEqual([]);
+  });
+
+  test("accepts a shape without a purpose, which is optional", () => {
+    const { purpose: _purpose, ...shape } = example();
+
+    expect(paths(shape)).toEqual([]);
+  });
+
+  test.each([[""], ["  "], [3], [["why"]], [{ why: "it matters" }]])("reports a purpose of %p at purpose", (purpose: unknown) => {
+    expect(paths({ ...example(), purpose })).toEqual(["purpose"]);
+  });
+
   test("reports each empty string in a decision, a non-goal and the lists at its own path", () => {
     const shape = example();
     const d1 = decision(shape, "D1");
@@ -344,6 +358,15 @@ describe("parseShape on oracles", () => {
     ]);
   });
 
+  test("reports purpose as a key an oracle covers or unchecked names, since it is no end state", () => {
+    const shape = withOracles();
+    oracle(shape, "O1").covers = ["purpose"];
+    shape.unchecked = { ...fields(shape.unchecked, "unchecked"), purpose: "it is why, not what" };
+
+    expect(paths(shape)).toContain("oracles.O1.covers.0");
+    expect(paths(shape)).toContain("unchecked.purpose");
+  });
+
   test("reports a key that is both covered and unchecked", () => {
     const shape = withOracles();
     fields(shape.unchecked, "unchecked").R1 = "Judged by eye.";
@@ -461,6 +484,14 @@ describe("parseDraft", () => {
 
   test("accepts a whole shape with a draft block", () => {
     expect(draftPaths({ ...example(), draft: { ...block, commit: "21d46e6", open: [] } })).toEqual([]);
+  });
+
+  test("accepts a draft with a purpose, a budget, a rounds_spent and its open questions", () => {
+    expect(draftPaths({ purpose: "Finance reconciles cancelled orders by hand.", draft: block })).toEqual([]);
+  });
+
+  test("reports an empty purpose in a draft at purpose", () => {
+    expect(draftPaths({ purpose: " ", draft: block })).toEqual(["purpose"]);
   });
 
   test("accepts empty requirements, which a shape may not have", () => {

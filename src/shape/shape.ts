@@ -131,6 +131,8 @@ export const Oracles = z
 
 export const Shape = z.strictObject({
   outcome: Text,
+  /** Why the outcome matters, as the owner states it. It is no end state, so no oracle covers it. */
+  purpose: Text.optional(),
   requirements: Requirements.refine((requirements) => Object.keys(requirements).length > 0, "must have at least one requirement"),
   non_goals: z.record(idKey("N"), NonGoal),
   constraints: z.record(idKey("C"), Text),
