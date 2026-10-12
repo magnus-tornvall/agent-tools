@@ -48,18 +48,19 @@ part. Only the owner changes a fixed rule.
 - **A separate actor per verification perspective**, each naming what it withholds, so work is
   never judged by whoever made it. Home: the verification guide. Until that guide exists, the rule
   lives in the to-orca guide, marked fixed there.
-- **One-way doors go to the owner.** A one-way door is asked of whoever owns the decision, never
-  assumed, however predictable the answer. Home: the door-rule guide (`mt get door-rule`).
+- **One-way doors go to the owner.** A one-way door is asked of whoever owns the decision.
+  Home: the door-rule guide (`mt get door-rule`).
 - **Surprise review always runs.** Home: the to-orca guide. A judge separate from the author is a
   principle (separation of duties); "always runs" is a workaround: workers decide one-way doors
   without asking, and the judge holding the least found the most (`docs/guides-behaviour.md`).
   Remove when Runs show workers no longer deciding one-way doors without asking, and the owner
   decides to remove it. A Run without such a door is not evidence.
-- **The shape's format and validation.** Home: `mt`'s schema and examples, enforced by
-  `mt shape check`. Principles for writing good intent belong to the mvc guide. Other parts name
-  the shape's keys and never restate its structure or field rules.
+- **The shape's format and validation.** Home: `mt`'s schema and examples, which `mt shape check`
+  enforces in place of a mark. Principles for writing good intent belong to the mvc guide. Other
+  parts name the shape's keys and never restate its structure or field rules.
 - **Lifecycle bookkeeping belongs in tools or Orca.** Until one owns a step, the step stays in
   guide prose as a tagged workaround naming the gap. Home: this charter.
+  Fixed: changing it is the owner's call.
 
 Everything else is composed by the agent: which parts a task needs, which perspectives judge a
 change, and the model and effort for each Task.

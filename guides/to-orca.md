@@ -63,9 +63,11 @@ do.
   from the workers' Toolbox lines, which the owner picks from; apply only the picked ones.
 
 You choose which perspectives judge a change, and may reach an objective without an assignment
-when the change is too small to need one, but surprise-review always runs and no work is judged by
-whoever made it. Fixed: changing it is the owner's call. Workaround for workers deciding one-way
-doors without asking; remove when Runs show they no longer do, and the owner decides to remove it.
+when the change is too small to need one. Surprise-review always runs and no work is judged by
+whoever made it.
+Fixed: changing it is the owner's call.
+Workaround for workers deciding one-way doors without asking; remove when Runs show they no longer
+do, and the owner decides to remove it.
 
 ## Guardrails
 
@@ -102,17 +104,17 @@ doors without asking; remove when Runs show they no longer do, and the owner dec
     runs the repo's checks and edits nothing. Given the shape's constraints and touchpoints, and
     the assumptions, questions and check results from the change reports. Not given the outcome,
     requirements, non-goals, decisions or oracles, since a maintainer judges the diff on its own
-    merits.
+    merits. Fixed: changing it is the owner's call.
   - `shape-coverage` judges whether the work branch does what the shape says. It runs the code and
     edits nothing. Given the shape's outcome, requirements, non-goals, constraints, decisions,
-    oracles and unchecked keys, the owner's rulings and the change reports; not the change
-    worker's reasoning beyond its report.
+    oracles and unchecked keys, the owner's rulings and the change reports. Not the change
+    worker's reasoning beyond its report. Fixed: changing it is the owner's call.
   - `surprise-review` finds what the owner would not expect on the work branch, above all one-way
     doors decided without a question, and what a maintainer would not merge. It reads only and
     runs none of the repo's code, so it can sit beside any Task. Given only the shape's outcome,
     non-goals, touchpoints and decisions, the owner's rulings, and the assumptions and questions
     from the change reports. Never given the requirements, constraints or oracles, since a worker
-    cannot unsee what anchors it.
+    cannot unsee what anchors it. Fixed: changing it is the owner's call.
 
   Unless the owner picks otherwise, every Task runs on `claude` at high effort, with opus for
   `oracle`, `change` making the shape's change and `surprise-review`, and sonnet for `change`
