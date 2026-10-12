@@ -17,11 +17,11 @@ Re-invoked on a settled shape, mvc asks nothing and goes straight to the report,
   longer holds. Merely slower, uglier or less pleasant without it makes it a non-goal.
 - **Non-goals.** What is excluded is said, so that its absence can be checked: a boundary, never
   this change, with the line between them; or a deferral, not now, with why.
-- **Value of information.** The owner's attention is the cost. A question is worth asking only
-  when its answer could change the shape by more than the attention it takes, and a search only
-  while the fact it seeks is still open and could still change it.
-- **Reversibility.** Which decisions go to the owner, and which mvc settles and records, follows
-  the door rule.
+- **Value of information**, from the Decision domain. The owner's attention is the cost. A
+  question is worth asking only when its answer could change the shape by more than the attention
+  it takes, and a search only while the fact it seeks is still open and could still change it.
+- **Reversibility**, from the Decision domain. Which decisions go to the owner, and which mvc
+  settles and records, follows the door rule.
 
 ## Objectives
 
@@ -33,9 +33,9 @@ Re-invoked on a settled shape, mvc asks nothing and goes straight to the report,
 - **The repo is known before anything is asked**, as far as the open questions turn on it:
   precedent for what is being added, which settles a branch rather than a leaf, the touched code
   and its callers, conventions and decision docs, history, the dependency manifest, the test setup.
-  The questions drive the search, not a file list. Every finding carries `file:line`, or is unknown: looked for and not found, which is
-  itself a finding. A question that is both splits: the constraint the repo imposes is a fact, the
-  requirement it cannot know is unknown.
+  The questions drive the search, not a file list. Every finding carries `file:line`, or is
+  unknown: looked for and not found, which is itself a finding. A question that is both splits: the
+  constraint the repo imposes is a fact, the requirement it cannot know is unknown.
 - **An external fact rests on its primary source**: vendor docs, a package's own stated
   requirements, spec text, the publisher of the guidance. Only a fact a question turns on, or
   established guidance on a fork, is looked up; approaches are never compared this way. No primary
@@ -85,13 +85,12 @@ Re-invoked on a settled shape, mvc asks nothing and goes straight to the report,
 - **Nothing in the closed set is redundant.** Every shipping item still passes the deletion test
   given everything else that ships.
 - **A grill parks on the owner's word, and only then.** The draft is the shape so far with its
-  `draft` block: the `commit` of the repo it was written in, the `budget`, the `rounds_spent`, and
-  each `open` question as it was asked with its stance. Answers, assumptions, facts and exclusions
-  are already decisions, their provenance and non-goals. Each park replaces the last whole, and
-  what is written still passes `mt shape check --draft` when read back. It goes where the owner's
-  instructions put parked work; with none, to `mvc-<slug>.yaml` at the default location, the slug
-  safe as a file name, the same for every park of the grill and taken by no other draft there. The
-  reply names where it went.
+  `draft` block, with its `commit`, `budget`, `rounds_spent` and `open` questions. Answers,
+  assumptions, facts and exclusions are already decisions, their provenance and non-goals. Each
+  park replaces the last whole, and what is written still passes `mt shape check --draft` when read
+  back. It goes where the owner's instructions put parked work; with none, to `mvc-<slug>.yaml` at
+  the default location, the slug safe as a file name, the same for every park of the grill and
+  taken by no other file there. The reply names where it went.
 - **The default location** is `${XDG_STATE_HOME:-$HOME/.local/state}/mt/mvc/<repo>/`, where
   `<repo>` is the name of the directory `git rev-parse --path-format=absolute --git-common-dir`
   prints, or of its parent when it is named `.git`, so every worktree of the clone finds the same
@@ -125,11 +124,11 @@ Re-invoked on a settled shape, mvc asks nothing and goes straight to the report,
   Contradicting answers, or an answer that contradicts the repo, are named with their sources and
   the owner picks; the later one never wins quietly. A better option is argued once, then it is
   the owner's call.
-- **Scope enters after the first round only as a change request**: what it is, where it came from, why the
-  outcome is unreachable without it, what it rules out, and whether it competes with a pattern in
-  the repo, adds a dependency or challenges the architecture. Argued once; the owner decides; a
-  rejected request is closed. Never admitted on mvc's own reasoning, never withheld because the
-  idea was not the owner's.
+- **Scope enters after the first round only as a change request**: what it is, where it came from,
+  why the outcome is unreachable without it, what it rules out, and whether it competes with a
+  pattern in the repo, adds a dependency or challenges the architecture. Argued once; the owner
+  decides; a rejected request is closed. Never admitted on mvc's own reasoning, never withheld
+  because the idea was not the owner's.
 - **No git writes, no code, no plan, no Tasks.** One file, only on request, only once the shape
   closes and passes `mt shape check`; asked earlier, name the open questions and write nothing.
   The draft parked on the owner's word, and the shape that replaces it at close, are the one
@@ -153,7 +152,8 @@ Re-invoked on a settled shape, mvc asks nothing and goes straight to the report,
   fires both. A settled example lands as a requirement as asked.
 - A boundary non-goal says what still holds, so its absence can be checked: what is still refused,
   or still unchanged.
-- `touchpoints` are the expected blast radius. An empty collection is a statement: none.
+- `touchpoints` are the expected blast radius.
+- An empty collection, whichever field, is a statement: none.
 - A risk has no key of its own: mitigated, it is a constraint; avoided, a non-goal; accepted, a
   decision that says what accepting it costs.
 - **to-orca**, or any other consumer, starts from the closed shape as reported or written. A

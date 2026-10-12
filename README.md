@@ -7,12 +7,11 @@ and drafts, runs a shape's oracles, and files dogfooding findings.
 
 A shape is one YAML document: the outcome, optionally its `purpose`, why the outcome matters,
 requirements keyed `R1…`, non-goals keyed `N1…`, constraints keyed `C1…`, touchpoints, and
-decisions keyed `D1…`. Once closed, it may
-gain oracles keyed `O1…`: acceptance tests in the repo, each naming the keys it covers, what it
-does at the base commit, the command that runs it and the sha256 of each of its files, with
-`unchecked` naming each key no oracle covers and why. With oracles, the outcome, every
-requirement, boundary non-goal and constraint must be covered or unchecked;
-`mt get oracle --ref example` prints a shape with its oracles.
+decisions keyed `D1…`. Once closed, it may gain oracles keyed `O1…`: acceptance tests in the repo,
+each naming the keys it covers, what it does at the base commit, the command that runs it and the
+sha256 of each of its files, with `unchecked` naming each key no oracle covers and why. With
+oracles, the outcome, every requirement, boundary non-goal and constraint must be covered or
+unchecked; `mt get oracle --ref example` prints a shape with its oracles.
 The schema in `src/shape/shape.ts` is the contract: a shape is what `mt shape check`
 accepts, and `mt get mvc --ref example` prints a filled-in example.
 
