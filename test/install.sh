@@ -103,6 +103,9 @@ case $(cat "$TMP/out") in *"removed stale"*) fail "a fresh install removed links
 check "a fresh install removes nothing"
 assert_eq "settings allow every mt command" "Bash(mt:*)" "$(allow_list "$H/.claude/settings.json")"
 assert_eq "settings ask before mt dogfood" "Bash(mt dogfood:*)" "$(ask_list "$H/.claude/settings.json")"
+usage=$(HOME=$H "$H/.local/bin/mt" --help)
+assert_contains "the installed mt's usage lists mt config" "$usage" "mt config [<key>]"
+assert_contains "the installed mt's usage names the config file" "$usage" "\${XDG_CONFIG_HOME:-\$HOME/.config}/mt/config.toml"
 
 # the rules are added only when the owner says so
 H=$TMP/declined
