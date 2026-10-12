@@ -4,15 +4,17 @@
  *
  *   duplicates     issues jev judges to report at least one same problem, grouped
  *   no-brainers    defects in mt's own code or tests, where jev's answers that it is mt code and
- *                  that it is a no-brainer each have confidence at or above NO_BRAINER_CONFIDENCE
+ *                  that it is a no-brainer each have confidence at or above the owner's
+ *                  triage_confidence
  *   rule on        everything else: guide wording, Orca's own behaviour, and mt code issues where
- *                  either answer falls short of NO_BRAINER_CONFIDENCE
+ *                  either answer falls short of triage_confidence
  *
- * Every issue's line shows its number, its title, and jev's probability and confidence for the
- * placement (for an mt code issue, those of both the change answer and the verdict), and a first
- * line names the jev model that answered. The footer `mt dogfood` appends to a body is not sent to
- * jev. Triage changes nothing on GitHub. The first jev call to
- * fail aborts the calls still in flight and starts no more.
+ * triage_confidence is an advisory key of the owner's config: it only labels items and authorizes
+ * nothing. When it is missing or invalid triage still runs, labels nothing a no-brainer, and says
+ * so on the report's first line; otherwise that line states it. Every issue's line shows its number,
+ * its title, and jev's probability and confidence for each answer it gave, and a line names the jev
+ * model that answered. The footer `mt dogfood` appends to a body is not sent to jev. Triage changes
+ * nothing on GitHub. The first jev call to fail aborts the calls still in flight and starts no more.
  * jev is reached through @typesafe-ai/sdk, which reads TYPESAFE_API_KEY, TYPESAFE_BASE_URL and
  * TYPESAFE_DEFAULT_MODEL (jev-latest when unset); issue titles and bodies are sent to it.
  *
@@ -21,9 +23,7 @@
  */
 import { choice, noul, TypeSafeClient, type Logger, type NoulQuestion } from "@typesafe-ai/sdk";
 import { z } from "zod";
-
-/** The confidence below which jev's mt-code or no-brainer answer sends the issue to the owner instead. */
-export const NO_BRAINER_CONFIDENCE = 0.7;
+import { lookup, problem, readConfig } from "../config/config.ts";
 
 /** A pair of issues whose shared-problem probability is above this is a duplicate. */
 const SHARED_PROBLEM = 0.6;
@@ -240,10 +240,19 @@ async function duplicates(client: TypeSafeClient, issues: Issue[], models: Set<s
   return [...groups.values()];
 }
 
-/** Where one issue that duplicates nothing goes, and jev's numbers for that placement. */
+/** The threshold as the owner wrote it, with at least two places. */
+function threshold(value: number): string {
+  return Number(value.toFixed(2)) === value ? value.toFixed(2) : String(value);
+}
+
+/**
+ * Where one issue that duplicates nothing goes, and jev's numbers for each of its answers. Without
+ * a confidence threshold no mt code issue is labelled, and each goes to rule on.
+ */
 async function place(
   client: TypeSafeClient,
   issue: Issue,
+  confidence: number | null,
   models: Set<string>,
   signal: AbortSignal,
 ): Promise<{ bucket: "noBrainers" | "ruleOn"; placement: Placement }> {
@@ -254,36 +263,34 @@ async function place(
   const change = answer(answers, "change", ChoiceAnswer);
   const changeLabel = CHANGE_LABELS[change.choice];
   if (changeLabel === undefined) throw new Failure(`jev chose '${change.choice}', which the change question does not offer`);
-  const changeScore = { probability: chosen("change", change), confidence: change.confidence };
-  if (change.choice !== "mt_code") {
-    return { bucket: "ruleOn", placement: { issue, label: changeLabel, scores: [changeScore] } };
-  }
   const verdict = answer(answers, "verdict", ChoiceAnswer);
   const verdictLabel = VERDICT_LABELS[verdict.choice];
   if (verdictLabel === undefined) throw new Failure(`jev chose '${verdict.choice}', which the verdict question does not offer`);
   const scores = [
-    { name: `change ${changeLabel}`, ...changeScore },
+    { name: `change ${changeLabel}`, probability: chosen("change", change), confidence: change.confidence },
     { name: `verdict ${verdictLabel}`, probability: chosen("verdict", verdict), confidence: verdict.confidence },
   ];
-  const below = `below confidence ${NO_BRAINER_CONFIDENCE.toFixed(2)}`;
-  if (change.confidence < NO_BRAINER_CONFIDENCE) {
+  if (change.choice !== "mt_code") return { bucket: "ruleOn", placement: { issue, label: changeLabel, scores } };
+  if (confidence === null) return { bucket: "ruleOn", placement: { issue, label: `${changeLabel}, no threshold`, scores } };
+  const below = `below confidence ${threshold(confidence)}`;
+  if (change.confidence < confidence) {
     return { bucket: "ruleOn", placement: { issue, label: `${changeLabel} ${below}`, scores } };
   }
   if (verdict.choice !== "no_brainer") return { bucket: "ruleOn", placement: { issue, label: verdictLabel, scores } };
-  if (verdict.confidence < NO_BRAINER_CONFIDENCE) {
+  if (verdict.confidence < confidence) {
     return { bucket: "ruleOn", placement: { issue, label: `${verdictLabel} ${below}`, scores } };
   }
   return { bucket: "noBrainers", placement: { issue, label: verdictLabel, scores } };
 }
 
-async function triage(client: TypeSafeClient, issues: Issue[]): Promise<Report> {
+async function triage(client: TypeSafeClient, issues: Issue[], confidence: number | null): Promise<Report> {
   const models = new Set<string>();
   const groups = await duplicates(client, issues, models);
   const grouped = new Set(groups.flat().map(({ issue }) => issue.number));
   const placed = await pool(
     issues.filter((issue) => !grouped.has(issue.number)),
     JEV_CONCURRENCY,
-    (issue, signal) => place(client, issue, models, signal),
+    (issue, signal) => place(client, issue, confidence, models, signal),
   );
   return {
     models: [...models].sort(),
@@ -309,8 +316,10 @@ function line({ issue, label, scores }: Placement, indent: string): string {
   return `${indent}#${issue.number} ${title}  (${label}: ${shown})\n`;
 }
 
-function render({ models, duplicates, noBrainers, ruleOn }: Report): string {
-  let out = models.length === 0 ? "" : `jev model: ${models.join(", ")}\n`;
+/** The report: a first line on the threshold, then the model line and the three groups. */
+function render(first: string, { models, duplicates, noBrainers, ruleOn }: Report): string {
+  let out = `${first}\n`;
+  if (models.length > 0) out += `jev model: ${models.join(", ")}\n`;
   out += "duplicates\n";
   if (duplicates.length === 0) out += "  none\n";
   for (const group of duplicates) {
@@ -331,9 +340,15 @@ export async function runTriage(args: readonly string[], root: string): Promise<
   try {
     if (args.length > 0) throw new UsageError(`unexpected argument '${args[0]}'`);
     if (!process.env.TYPESAFE_API_KEY?.trim()) throw new Failure("TYPESAFE_API_KEY is not set; triage needs a jev API key");
+    const config = readConfig();
+    const found = lookup(config, "triage_confidence");
+    const confidence = found.ok ? found.value : null;
+    const first = found.ok
+      ? `triage_confidence: ${threshold(found.value)}`
+      : `triage_confidence: ${problem(config, found)}; nothing is labelled a no-brainer`;
     const issues = openIssues(root);
     const client = new TypeSafeClient({ logger: STDERR_LOGGER, timeout: JEV_TIMEOUT_MS });
-    process.stdout.write(render(await triage(client, issues)));
+    process.stdout.write(render(first, await triage(client, issues, confidence)));
     return 0;
   } catch (error) {
     if (error instanceof UsageError) {
