@@ -46,3 +46,8 @@ assumption, question and finding sits on its own line. The report gives:
 - proposed follow-ups, or none. You never create Tasks;
 - Toolbox: what the Task lacked, whether a skill, tool, permission or instruction, and what would
   have supplied it, or none.
+
+Write a long body to a file with your file tool and pass it as `--body "$(cat <file>)"`, never as a
+heredoc inside `$(...)`: bash 3.2, still `/bin/bash` on macOS, breaks that on an apostrophe.
+Workaround for Orca's send taking the body only as an argument; remove when it reads the body from
+a file or stdin.
