@@ -44,8 +44,8 @@ do.
 - **Nothing in the diff would stop a maintainer merging.** Fixed: changing it is the owner's call.
 - **Nothing on the branch would surprise the owner**, above all a one-way door decided without a
   question. Fixed: changing it is the owner's call.
-- **Each perspective is judged by a separate actor**, as the verification guide
-  (`mt get verification`) fixes it.
+- **The work is judged from each perspective by a separate actor**, never by whoever made it, as
+  the verification guide (`mt get verification`) fixes it.
 - **The owner's attention goes only where it must:** one-way doors, surprises, what a maintainer
   would not merge, failed attempts, and whatever is left after one round of fixes. You answer
   everything else, by the door rule, and the answer is recorded.

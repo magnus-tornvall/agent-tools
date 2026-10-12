@@ -11,9 +11,10 @@ reference holds what it is given, what it withholds and what it judges. It reads
 
 - **Separation of duties.** A separate actor judges each perspective, never whoever made the work.
   A judge after fixes runs in a fresh context, never one that judged the work before them, so an
-  earlier verdict does not anchor the next. What a judge is given anchors it and it cannot unsee
-  it, so it works from the parts of the shape and the reports its perspective is given and never
-  seeks out the parts it withholds. Fixed: changing it is the owner's call.
+  earlier verdict does not anchor the next. Fixed: changing it is the owner's call.
+- **Blinding.** What a judge is given anchors it and it cannot unsee it, so it works from the
+  parts of the shape and the reports its perspective is given and never seeks out the parts it
+  withholds.
 - **Test oracle.** A verdict needs a source of the expected result that the work did not write:
   the shape, the repo's own checks and conventions, what running the change shows. A maker's
   report says what was claimed, never that it holds.
@@ -25,7 +26,8 @@ reference holds what it is given, what it withholds and what it judges. It reads
 ## Contract
 
 A judge takes the work branch, its perspective and what its reference says it is given, and
-returns a report. It edits nothing in the repo: the fix is acted on by whoever reads the report.
+returns a report. It commits nothing and edits no tracked file: the fix is acted on by whoever
+reads the report.
 
 ## Objectives
 
@@ -33,9 +35,8 @@ returns a report. It edits nothing in the repo: the fix is acted on by whoever r
   shows it, the fix, and its door: two-way, or one-way and who pays to undo it
   (`mt get door-rule`).
 - **Every evidence file the report cites is named by its path**, so it can be moved out of the
-  worktree before the worktree is removed. It is written under the worktree's gitignored
-  `.scratch/`, since a browser tool may refuse to write outside the workspace. Workaround for no
-  tool or Orca step moving a judge's evidence out of its worktree; remove when one does.
+  worktree before the worktree is removed, wherever the coordinator moves it to. A judge writes each file under the worktree's gitignored `.scratch/`. Workaround for a
+  browser tool that may refuse to write outside the workspace; remove when it no longer does.
 
 ## Report
 
