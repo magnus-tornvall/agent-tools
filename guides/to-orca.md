@@ -43,9 +43,9 @@ do.
   Fixed: changing it is the owner's call.
 - **Nothing in the diff would stop a maintainer merging.** Fixed: changing it is the owner's call.
 - **Nothing on the branch would surprise the owner**, above all a one-way door decided without a
-  question. Whoever judges this holds only what the owner holds: the shape's outcome, non-goals,
-  touchpoints, decisions and the rulings. Fixed: changing it is the owner's call.
-- **Work is never judged by whoever made it.** Fixed: changing it is the owner's call.
+  question. Fixed: changing it is the owner's call.
+- **Each perspective is judged by a separate actor**, as the verification guide
+  (`mt get verification`) fixes it.
 - **The owner's attention goes only where it must:** one-way doors, surprises, what a maintainer
   would not merge, failed attempts, and whatever is left after one round of fixes. You answer
   everything else, by the door rule, and the answer is recorded.
@@ -63,8 +63,7 @@ do.
   from the workers' Toolbox lines, which the owner picks from; apply only the picked ones.
 
 You choose which perspectives judge a change, and may reach an objective without an assignment
-when the change is too small to need one. Surprise-review always runs and no work is judged by
-whoever made it.
+when the change is too small to need one. The surprise perspective always runs.
 Fixed: changing it is the owner's call.
 Workaround for workers deciding one-way doors without asking; remove when Runs show they no longer
 do, and the owner decides to remove it.
@@ -91,8 +90,8 @@ do, and the owner decides to remove it.
   worker-list`** let you peek at a worker that has gone quiet.
 - **Worktree placement** on `orca orchestration worker-start` puts a Task in the work's worktree or
   a new one cut from its branch.
-- **Assignments**, each a guide a worker loads with `mt get <name>`. What a worker is given is
-  all it gets.
+- **Assignments**, each a guide a worker loads with `mt get <name>`, and a judge also its
+  perspective's reference. What a worker is given is all it gets.
   - `oracle` writes the shape's oracles before anything else, and commits their files on the work
     branch. It runs the repo's code. Given the whole shape and the owner's rulings, and the path
     the shape with its oracles is written to.
@@ -100,25 +99,17 @@ do, and the owner decides to remove it.
     It runs the repo's code and commits. Given the shape's outcome, requirements, non-goals,
     constraints, touchpoints, decisions and oracles, the owner's rulings, and when fixing the
     findings with the reports that raised them and every earlier change report.
-  - `maintainer-review` judges whether a maintainer of the repo would merge the work branch. It
-    runs the repo's checks and edits nothing. Given the shape's constraints and touchpoints, and
-    the assumptions, questions and check results from the change reports. Not given the outcome,
-    requirements, non-goals, decisions or oracles, since a maintainer judges the diff on its own
-    merits. Fixed: changing it is the owner's call.
-  - `shape-coverage` judges whether the work branch does what the shape says. It runs the code and
-    edits nothing. Given the shape's outcome, requirements, non-goals, constraints, decisions,
-    oracles and unchecked keys, the owner's rulings and the change reports. Not the change
-    worker's reasoning beyond its report. Fixed: changing it is the owner's call.
-  - `surprise-review` finds what the owner would not expect on the work branch, above all one-way
-    doors decided without a question, and what a maintainer would not merge. It reads only and
-    runs none of the repo's code, so it can sit beside any Task. Given only the shape's outcome,
-    non-goals, touchpoints and decisions, the owner's rulings, and the assumptions and questions
-    from the change reports. Never given the requirements, constraints or oracles, since a worker
-    cannot unsee what anchors it. Fixed: changing it is the owner's call.
+  - `verification` judges the work branch from one perspective, each a reference loaded with
+    `mt get verification --ref <perspective>`, and edits nothing. `coverage` judges whether the
+    branch does what the shape says, and runs the code. `maintainer` judges whether a maintainer
+    of the repo would merge it, and runs the repo's checks. `surprise` finds what the owner would
+    not expect on it, above all one-way doors decided without a question, and what a maintainer
+    would not merge; it runs none of the repo's code, so it can sit beside any Task. What each
+    perspective is given and withholds is in its reference.
 
   Unless the owner picks otherwise, every Task runs on `claude` at high effort, with opus for
-  `oracle`, `change` making the shape's change and `surprise-review`, and sonnet for `change`
-  fixing findings and for the other judges.
+  `oracle`, `change` making the shape's change and the surprise perspective, and sonnet for
+  `change` fixing findings and for the other perspectives.
 - **The door rule** (`mt get door-rule`) decides what you answer and what goes to the owner.
 - **The orca-worker guide** (`mt get orca-worker`) is what every worker follows for questions,
   assumptions and the report.
@@ -132,8 +123,8 @@ do, and the owner decides to remove it.
   `oracles` block, so a worker given oracles gets that block in its spec as YAML and pipes it to
   `mt oracle run -`.
 - **`mt shape slice <file> --keys <key,...>`** gives a judge only the parts of the shape its
-  assignment above says it is given. Both `mt shape` commands read a file of `-` from stdin, and
-  only a whole YAML document.
+  perspective's reference says it is given. Both `mt shape` commands read a file of `-` from
+  stdin, and only a whole YAML document.
 - **The ask guide** (`mt get ask`) composes every question to the owner, and says which reach the
   owner through your own question tool (`AskUserQuestion` in Claude Code).
 

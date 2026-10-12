@@ -46,8 +46,8 @@ part. Only the owner changes a fixed rule.
   the diff would stop a maintainer merging; nothing surprises the owner. Which Tasks meet them is
   composed. Home: the to-orca guide (`mt get to-orca`).
 - **A separate actor per verification perspective**, each naming what it withholds, so work is
-  never judged by whoever made it. Home: the verification guide. Until that guide exists, the rule
-  lives in the to-orca guide, marked fixed there.
+  never judged by whoever made it. Home: the verification guide (`mt get verification`), and each
+  perspective's reference for what that perspective is given and withholds.
 - **One-way doors go to the owner.** A one-way door is asked of whoever owns the decision.
   Home: the door-rule guide (`mt get door-rule`).
 - **Surprise review always runs.** Home: the to-orca guide. A judge separate from the author is a
