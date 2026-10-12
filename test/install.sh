@@ -95,14 +95,28 @@ for tool in $tools; do
   [ "$(readlink "$H/.agents/skills/$tool")" = "$ROOT/skills/$tool" ] || fail "$tool is not linked to the clone"
 done
 check "every stub that has a guide is linked"
-[ -e "$H/.agents/skills/commit" ] && fail "commit is linked, but mt does not serve it"
-check "skills mt does not serve are not linked"
+assert_eq "commit is linked to the clone" "$ROOT/skills/commit" "$(readlink "$H/.agents/skills/commit")"
+out=$(MT_LOG=$TMP/usage.jsonl XDG_STATE_HOME=$TMP/state HOME=$H "$H/.local/bin/mt" get commit); rc=$?
+assert_eq "mt get commit exits 0" 0 "$rc"
+assert_eq "mt get commit prints the commit guide" "$(cat "$ROOT/guides/commit.md")" "$out"
 [ -L "$H/.agents/skills/orca-worker" ] && fail "orca-worker is linked, but it has no stub"
 check "guides without a stub are not linked"
 case $(cat "$TMP/out") in *"removed stale"*) fail "a fresh install removed links it made" ;; esac
 check "a fresh install removes nothing"
 assert_eq "settings allow every mt command" "Bash(mt:*)" "$(allow_list "$H/.claude/settings.json")"
 assert_eq "settings ask before mt dogfood" "Bash(mt dogfood:*)" "$(ask_list "$H/.claude/settings.json")"
+
+# a whole skill, one mt does not serve, is not linked
+C=$TMP/clone
+mkdir -p "$C/skills/whole" "$C/guides"
+cp "$ROOT/Makefile" "$C/Makefile"
+printf -- '---\nname: whole\n---\n\nThe whole skill.\n' >"$C/skills/whole/SKILL.md"
+H=$TMP/whole
+mkdir -p "$H"
+HOME=$H make -s -C "$C" skills </dev/null >"$TMP/out" 2>&1; rc=$?
+assert_eq "linking a clone with a whole skill exits 0" 0 "$rc"
+[ -e "$H/.agents/skills/whole" ] && fail "a whole skill is linked, but mt does not serve it"
+check "skills mt does not serve are not linked"
 
 # the rules are added only when the owner says so
 H=$TMP/declined

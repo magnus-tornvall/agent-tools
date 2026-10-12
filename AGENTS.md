@@ -25,9 +25,9 @@ agent composes better.
 | Toolbox | Bitter Lesson, earned existence |
 
 Each part declares its own domain, so the mapping lives in the parts rather than in a list that
-goes stale. A guide, each of its references and the commit skill begin the first paragraph after
-their title with `Domain: <domain>.` A stub skill that only loads a guide declares none; it is its
-guide's part. The code under `cli/` and `src/` is Tools. So are the shape format's two examples,
+goes stale. A guide and each of its references begin the first paragraph after their title with
+`Domain: <domain>.` A stub skill that only loads a guide declares none; it is its guide's part.
+The code under `cli/` and `src/` is Tools. So are the shape format's two examples,
 `mt get mvc --ref example` and `mt get oracle --ref example`, which carry no line and belong with
 the schema in `src/shape/`.
 
