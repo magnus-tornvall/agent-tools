@@ -9,14 +9,15 @@ different outcomes, since only then can the answer change what is done. It reads
 - **One given and when, a then per live reading.** A concrete context and event the person asked
   can check - a route, a payload, a caller, a value - and the outcome under each live reading. A
   further reading is a further then, never a second when. Readings that agree on this input mean
-  the example does not discriminate; find a sharper one.
+  the example does not discriminate, and more thens than the person asked can weigh at a glance
+  mean it is blunt or two questions; either way, find a sharper one.
 - **A given every reading shares.** The given and when hold under each reading. A given that
   presupposes one reading turns another reading's then into a contradiction, not a prediction.
 - **Observable thens.** Each is what an observer would see: a status, a value, a rendered state, a
   log line.
 - **Each outcome cites its reading.** A short parenthetical after it gives the source that makes
-  that reading live. An outcome nothing settled supports is invented; drop it. When only
-  one reading's outcome is supported, there is no example: ask a stance.
+  that reading live. An outcome nothing settled supports is invented; drop it. When the supported
+  outcomes leave nothing to compare, there is no example: ask a stance.
 - **The stance is a ranking.** It names the expected outcome with its reasoning and keeps Wrong
   if. Rules out says what each outcome costs: only what that outcome excludes under any mechanism.
   A mechanism the outcome does not force stays open.

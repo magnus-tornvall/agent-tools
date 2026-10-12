@@ -3,7 +3,7 @@
 Domain: Decision. A closed set of answers for a decision whose every possible answer can be listed:
 which of named branches, environments or channels, whether a gate opens. The person asked answers
 with a pick, and can see the list is whole. It rests on a closed question whose options are
-mutually exclusive and collectively exhaustive. It reads no config.
+collectively exhaustive. It reads no config.
 
 - **Every answer the set holds is an option.** A set the question tool cannot hold is not closed,
   or is two questions.
