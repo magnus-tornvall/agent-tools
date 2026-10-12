@@ -11,10 +11,9 @@ reference holds what it is given, what it withholds and what it judges. It reads
 
 - **Separation of duties.** A separate actor judges each perspective, never whoever made the work.
   A judge after fixes runs in a fresh context, never one that judged the work before them, so an
-  earlier verdict does not anchor the next. Fixed: changing it is the owner's call.
-- **Blinding.** What a judge is given anchors it, and it cannot unsee it. A judge works from what
-  its perspective is given and never seeks out what its perspective withholds, wherever that lies
-  in the repo or the Run.
+  earlier verdict does not anchor the next. What a judge is given anchors it and it cannot unsee
+  it, so it works from the parts of the shape and the reports its perspective is given and never
+  seeks out the parts it withholds. Fixed: changing it is the owner's call.
 - **Test oracle.** A verdict needs a source of the expected result that the work did not write:
   the shape, the repo's own checks and conventions, what running the change shows. A maker's
   report says what was claimed, never that it holds.

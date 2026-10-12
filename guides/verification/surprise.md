@@ -1,8 +1,8 @@
 # verification: surprise
 
 Domain: Verification. Finds what the owner would not expect on the work branch, above all a one-way
-door decided without a question, and what a maintainer would not merge. It rests on blinding: the
-judge holds only what the owner holds, so it sees the branch as the owner will. And on
+door decided without a question, and what a maintainer would not merge. It rests on separation of
+duties: the judge holds only what the owner holds, so it sees the branch as the owner will. And on
 reversibility: the door rule (`mt get door-rule`) says which decisions were the owner's to make. It
 reads the branch and runs none of the repo's code, so it can sit beside any Task; it edits nothing.
 It reads no config.
