@@ -187,6 +187,15 @@ describe("mt mentions", () => {
     expect(out).toContain("guides/ask.md:3: `mt get ask`: mt get exited 3: boom\n");
   });
 
+  test("names the line of AGENTS.md that mentions a guide or command that does not exist", () => {
+    write(join(FIX, "AGENTS.md"), "# Charter\n\nSee `mt get door-rule`.\n\nSee `mt get gone` and `mt frob`.\n");
+    const { status, out } = lint(NO_ORCA);
+    expect(status).toBe(1);
+    expect(out).toContain("AGENTS.md:5: `mt get gone`: mt get finds no such guide\n");
+    expect(out).toContain("AGENTS.md:5: `mt frob`: mt has no command 'mt frob' in its usage\n");
+    expect(out).not.toContain("AGENTS.md:3:");
+  });
+
   test("fails when the scan finds no guides", () => {
     rmSync(join(FIX, "guides"), { recursive: true });
     const { status, out } = lint(NO_ORCA);
