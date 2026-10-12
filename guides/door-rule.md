@@ -4,8 +4,8 @@ Domain: Decision. Sorts a decision by what it costs to undo, which says whether 
 decides it or asks whoever owns it. It rests on reversibility, one-way and two-way doors: the cost
 of undoing a decision, and who pays it, decides who makes it. And on value of information: asking
 costs the asked person's attention, and pays only when the answer could change what is done. That
-decides what is worth asking among what the asker may decide, never whether a one-way door is
-asked. It reads no config.
+is why a two-way door is decided by whoever holds it, not sent up; it never decides whether a
+one-way door is asked. It reads no config.
 
 ## Three kinds
 
