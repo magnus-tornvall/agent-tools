@@ -52,9 +52,9 @@ reads whether you are alive from your terminal. Workaround for Orca's preamble a
 for heartbeats; remove when it no longer asks, or a heartbeat no longer wakes the coordinator.
 
 Start anything that must outlive one command with your Bash tool's background option, never `&`,
-`nohup` or `disown`: releasing you stops what the harness started, and nothing else. Workaround for
-Orca's release stopping only what the agent's harness started; remove when release stops every
-process a Task started.
+`nohup` or `disown`: your terminal closing stops what the harness started, and nothing else.
+Workaround for closing an agent's terminal stopping only what the agent's harness started; remove
+when closing it stops every process a Task started.
 
 ## Report
 

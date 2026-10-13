@@ -107,10 +107,14 @@ do.
   hand-off names each Task worktree that holds commits the destination lacks. Workaround for Orca
   removing a worktree's branch with it, as the overlay records for `orca worktree rm` and not yet
   observed for the UI; remove when Orca keeps or names commits that only a removed worktree held.
+- **Every worker whose report you accept stays live**, whether it reports success or failure:
+  kept with `orca orchestration worker-retain` and never released, so its terminal closes only
+  when the owner deletes its worktree in Orca's UI. Orca's orchestration skill releases a settled
+  worker by default; keeping it live is the owner's standing wish.
 - **Every process a Task left running is named.** The hand-off names each one a Task started that
-  still runs after its release, and the owner decides whether it is stopped. Workaround for Orca's
-  release stopping only what the agent's harness started; remove when release stops every process
-  a Task started.
+  will still run once its worker's terminal closes, and the owner decides whether it is stopped.
+  Workaround for closing an agent's terminal stopping only what the agent's harness started;
+  remove when closing it stops every process a Task started.
 - **The hand-off.** The destination the owner approved: the branch, or a pull request. An
   account of every Task, attempt, dropped finding and question you answered, rebuilt from Orca's
   inbox and Task results, not from memory. Proposed edits to the guides, drawn from the workers'
