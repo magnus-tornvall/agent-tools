@@ -56,34 +56,28 @@ do.
   thing the owner approves is the plan. Given intent in any other form, you settle the shape with
   the owner as mvc does (`mt get mvc`), have mvc write the closed shape to its default location as
   `mvc-<slug>.yaml`, as it names a parked draft, and the owner approves it in its own ask, which
-  names that path, apart from the plan. The oracle and change Tasks are given that path; a judge
-  is given only its slice. A ruling leaves the shape as written and reaches every Task it bears
+  names that path, apart from the plan. The change Tasks are given that path; a judge is given
+  only its slice. A ruling leaves the shape as written and reaches every Task it bears
   on.
 - **The owner approves a plan they can trust to run unattended.** It names the first Tasks and
   the assignments expected next, each Task's agent, model and effort, the base branch, and the
   destination: the branch, or a pull request. Each model and effort is your judgment for that
-  Task. It names whether an oracle Task writes oracles first, which a shape that already has them
-  does not need. It names anything that would stop a worker at its first command or at a
-  permission prompt: `mt` or Bun missing from the PATH a worker launches with, and each `mt get`,
-  `mt shape`, `mt oracle`, repo check and `git commit` a worker's launch permissions would not
-  allow. When a requirement needs the app running, it names where the app under test actually
+  Task. It names anything that would stop a worker at its first command or at a permission
+  prompt: `mt` or Bun missing from the PATH a worker launches with, and each `mt get`,
+  `mt shape`, repo check and `git commit` a worker's launch permissions would not allow. When a requirement needs the app running, it names where the app under test actually
   sends its requests, read from the config it runs with, not from the docs. A changed plan is
   approved again.
-- **Oracles, when the plan has them, hold before the change starts.** The shape with its oracles
-  passes `mt shape check`, or the owner has ruled on each violation, `mt oracle run --base` passed
-  on the oracle commit, whose product code is still the base's, and the oracle files are committed
-  on the work branch before any Task builds the change. Each shape defect the oracle Task raises
-  goes to the owner first; a defect the owner settles by changing the shape means a new oracle Task
-  on the changed shape. A finding or ruling that an oracle is wrong goes to a new oracle Task, which
-  pins it again; no other Task changes an oracle file. A blocked oracle, before the change or after
-  it, goes to the owner with what it needs: they supply it and the oracle runs again, or rule its
-  key unverified for this Run, which the hand-off names.
+- **A shape's oracles are the owner's to write and run.** No Task writes an oracle or runs one,
+  through `mt oracle` or by its command, and no Task changes a file an oracle pins. When the shape
+  has oracles, the hand-off names each one with the keys it covers, and the `mt oracle run` command,
+  with the shape's path, that the owner runs on the final branch.
 - **The change exists on its own branch, made by workers.** The base branch is untouched.
 - **The repo's own checks pass on the branch.** Fixed: changing it is the owner's call.
 - **Every requirement has evidence at least as strong as the requirement.**
   Fixed: changing it is the owner's call.
-- **Every oracle passes on the final branch, and none is tampered.**
-  Fixed: changing it is the owner's call.
+- **No oracle is tampered on the final branch**: each file an oracle pins has the sha256 the shape
+  pins for it, compared without `mt oracle`, and the hand-off names each oracle that is tampered.
+  Whether the oracles pass is the owner's to check. Fixed: changing it is the owner's call.
 - **Nothing in the diff would stop a maintainer merging.** Fixed: changing it is the owner's call.
 - **Nothing on the branch would surprise the owner**, above all a one-way door decided without a
   question. Fixed: changing it is the owner's call.
@@ -150,9 +144,6 @@ do.
 - **The mvc guide** (`mt get mvc`) settles a shape with the owner, and owns where it is written.
 - **Assignments**, each a guide a worker loads with `mt get <name>`, and a judge also its
   perspective's reference. What a worker is given is all it gets.
-  - `oracle` writes the shape's oracles before anything else, and commits their files on the work
-    branch. It runs the repo's code. Given the whole shape and the owner's rulings, and the path
-    the shape with its oracles is written to.
   - `change` makes the shape's change on the work branch, or fixes findings judges handed over.
     It runs the repo's code and commits. Given the whole shape and the owner's rulings, and when
     fixing the findings with the reports that raised them and every earlier change report.
@@ -168,13 +159,8 @@ do.
   assumptions and the report.
 - **The overlay** (`mt get to-orca --ref overlay`) lists what is known about Orca that its own
   skill does not say.
-- **The shape format** is the schema `mt shape check <file>` checks against, the filled-in
-  example `mt get mvc --ref example`, and the same shape with its oracles, `mt get oracle --ref
-  example`.
-- **`mt oracle run <file>`** checks the oracles' pinned files and runs them;
-  with `--base`, it checks each does at the base commit what its `base` says. It needs only the
-  `oracles` block, so a worker given oracles gets that block in its spec as YAML and pipes it to
-  `mt oracle run -`.
+- **The shape format** is the schema `mt shape check <file>` checks against, and the filled-in
+  example `mt get mvc --ref example`.
 - **`mt shape slice <file> --keys <key,...>`** gives a judge only the parts of the shape its
   perspective's reference says it is given. Both `mt shape` commands read a file of `-` from
   stdin, and only a whole YAML document.

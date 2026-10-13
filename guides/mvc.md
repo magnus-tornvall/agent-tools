@@ -161,8 +161,8 @@ Re-invoked on a settled shape, mvc asks nothing and goes straight to the report,
   decision that says what accepting it costs.
 - **to-orca**, or any other consumer, starts from the closed shape as reported or written. A
   shape written to a file is the checked report verbatim, and the reply names where it went.
-- **The oracle tool** (`mt get oracle`) adds `oracles` and `unchecked` to the closed shape; mvc
-  writes neither. Oracles observe the outcome, requirements, boundary non-goals and constraints,
+- **Oracles** are the owner's: only the owner adds `oracles` and `unchecked` to a closed shape;
+  mvc writes neither. Oracles observe the outcome, requirements, boundary non-goals and constraints,
   so those are written to be observed.
 - **`mt shape check <file>`** runs on the shape before it is reported or written, and
   **`mt shape check --draft <file>`** on a draft before it is parked and when it is resumed. A file
