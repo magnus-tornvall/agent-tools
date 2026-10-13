@@ -58,8 +58,8 @@ who wrote or approved the shape it runs.
   exits 1. A usage error exits 2.
 - The rules are those `rules()` in `side-effects.ts` builds: `Bash(mt:*)` in `permissions.allow`,
   and in `permissions.ask` one `Bash(mt <command>:*)` per external command that no shorter
-  external command covers by prefix. Claude Code checks ask rules before allow rules. Today that is
-  `Bash(mt dogfood:*)`, covering `mt dogfood triage`.
+  external command covers by prefix. Claude Code checks ask rules before allow rules. Today no
+  command is external, so install writes no ask rule.
 - Side effects: local writes to `BIN_DIR`, `SKILLS_DIR` and `SETTINGS`; `bun install` fetches
   packages from the npm registry.
 

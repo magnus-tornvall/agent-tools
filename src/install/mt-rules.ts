@@ -98,7 +98,8 @@ function main(args: readonly string[]): number {
   if (mode === "remove" && !existsSync(file)) return 0;
   const settings = readSettings(file);
   if (typeof settings === "string") {
-    process.stderr.write(`mt-rules: ${file} is ${settings}; ${mode} ${ALLOW_RULES.join(", ")} in permissions.allow and ${ASK_RULES.join(", ")} in permissions.ask by hand\n`);
+    const asks = ASK_RULES.length > 0 ? ` and ${ASK_RULES.join(", ")} in permissions.ask` : "";
+    process.stderr.write(`mt-rules: ${file} is ${settings}; ${mode} ${ALLOW_RULES.join(", ")} in permissions.allow${asks} by hand\n`);
     return 1;
   }
   const permissions = settings.permissions ?? {};

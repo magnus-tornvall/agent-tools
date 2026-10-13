@@ -116,11 +116,9 @@ do.
   a Task started.
 - **The hand-off.** The destination the owner approved: the branch, or a pull request. An
   account of every Task, attempt, dropped finding and question you answered, rebuilt from Orca's
-  inbox and Task results, not from memory. What the Run learned, per area (Orca, the guides and
-  `mt`, any other), each line with the Orca version or commit it was seen on, filed with
-  `mt dogfood` and linked to the issue it printed, if any. Proposed edits to the guides, drawn
-  from the workers' Toolbox lines, which the owner picks from; apply only the picked ones, and
-  never on the work branch.
+  inbox and Task results, not from memory. Proposed edits to the guides, drawn from the workers'
+  Toolbox lines, which the owner picks from; apply only the picked ones, and never on the work
+  branch.
 
 ## Guardrails
 

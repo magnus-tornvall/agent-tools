@@ -38,7 +38,7 @@ function mt(args: string[], env: Record<string, string | undefined> = {}, stdin?
   return { code: result.exitCode, stdout: result.stdout.toString(), stderr: result.stderr.toString() };
 }
 
-const COMPLETE = 'agents = ["claude"]\nfix_rounds = 1\ntriage_confidence = 0.7\n';
+const COMPLETE = 'agents = ["claude"]\nfix_rounds = 1\n';
 
 describe("mt config", () => {
   test("R2: prints the file's path, then each key with binding or advisory and its value, and exits 0", () => {
@@ -51,14 +51,13 @@ describe("mt config", () => {
         CONFIG,
         'agents             binding   ["claude"]',
         "fix_rounds         binding   1",
-        "triage_confidence  advisory  0.7",
         "",
       ].join("\n"),
     );
   });
 
   test("R3: a missing binding key reads missing on its line, and mt config exits 1", () => {
-    config('agents = ["claude"]\ntriage_confidence = 0.7\n');
+    config('agents = ["claude"]\n');
     const { code, stdout } = mt(["config"]);
     expect(code).toBe(1);
     expect(stdout.split("\n")).toContain("fix_rounds         binding   missing");
@@ -69,24 +68,33 @@ describe("mt config", () => {
     const { code, stdout, stderr } = mt(["config"]);
     expect(stderr).toBe("");
     expect(code).toBe(1);
+    expect(stdout).toBe([CONFIG, "agents             binding   missing", "fix_rounds         binding   missing", ""].join("\n"));
+  });
+
+  test("a triage_confidence left in the file is a key mt does not know, and mt config exits 1", () => {
+    config(`${COMPLETE}triage_confidence = 0.7\n`);
+    const { code, stdout, stderr } = mt(["config"]);
+    expect(stderr).toBe("");
+    expect(code).toBe(1);
     expect(stdout).toBe(
-      [CONFIG, "agents             binding   missing", "fix_rounds         binding   missing", "triage_confidence  advisory  missing", ""].join(
-        "\n",
-      ),
+      [
+        CONFIG,
+        'agents             binding   ["claude"]',
+        "fix_rounds         binding   1",
+        "triage_confidence  unknown   mt has no such key",
+        "",
+      ].join("\n"),
     );
   });
 
-  test("a missing or invalid advisory key alone leaves mt config exiting 0", () => {
-    for (const toml of ['agents = ["claude"]\nfix_rounds = 0\n', 'agents = ["claude"]\nfix_rounds = 0\ntriage_confidence = -0.1\n']) {
-      config(toml);
-      const { code, stdout } = mt(["config"]);
-      expect(code).toBe(0);
-      expect(stdout).toMatch(/^triage_confidence {2}advisory {2}(missing|invalid: must be a number from 0 to 1, not -0\.1)$/m);
-    }
+  test("agents and fix_rounds read alone print their values and exit 0 with a triage_confidence left in the file", () => {
+    config(`${COMPLETE}triage_confidence = 0.7\n`);
+    expect(mt(["config", "agents"])).toEqual({ code: 0, stdout: "claude\n", stderr: "" });
+    expect(mt(["config", "fix_rounds"])).toEqual({ code: 0, stdout: "1\n", stderr: "" });
   });
 
   test("R4: mt config fix_rounds names fix_rounds and why \"two\" is invalid, and exits 1", () => {
-    config('agents = ["claude"]\nfix_rounds = "two"\ntriage_confidence = 0.7\n');
+    config('agents = ["claude"]\nfix_rounds = "two"\n');
     const { code, stdout, stderr } = mt(["config", "fix_rounds"]);
     expect(code).toBe(1);
     expect(stdout).toBe("");
@@ -102,8 +110,6 @@ describe("mt config", () => {
       ["agents = []", "agents", "must be a non-empty list of agent names, not []"],
       ['agents = "claude"', "agents", 'must be a non-empty list of agent names, not "claude"'],
       ['agents = ["claude", ""]', "agents", 'must be a non-empty list of agent names, not ["claude",""]'],
-      ["triage_confidence = 1.5", "triage_confidence", "must be a number from 0 to 1, not 1.5"],
-      ['triage_confidence = "high"', "triage_confidence", 'must be a number from 0 to 1, not "high"'],
     ] as const) {
       config(`${toml}\n`);
       const { code, stderr } = mt(["config", key]);
@@ -129,9 +135,8 @@ describe("mt config", () => {
   });
 
   test("R5: a key read alone ignores the others, even a missing binding key or an unknown key", () => {
-    config('agents = ["claude", "codex"]\ntriage_confidence = 0.85\ncolour = "red"\n');
+    config('agents = ["claude", "codex"]\ncolour = "red"\n');
     expect(mt(["config", "agents"])).toEqual({ code: 0, stdout: "claude\ncodex\n", stderr: "" });
-    expect(mt(["config", "triage_confidence"])).toEqual({ code: 0, stdout: "0.85\n", stderr: "" });
   });
 
   test("R6: mt config colour exits 2 naming colour as an unknown key, whatever the config", () => {
@@ -141,7 +146,7 @@ describe("mt config", () => {
       const { code, stdout, stderr } = mt(["config", "colour"]);
       expect(code).toBe(2);
       expect(stdout).toBe("");
-      expect(stderr).toStartWith("mt: unknown config key 'colour'; the keys are agents, fix_rounds, triage_confidence\nusage: mt config");
+      expect(stderr).toStartWith("mt: unknown config key 'colour'; the keys are agents, fix_rounds\nusage: mt config");
     }
   });
 
@@ -159,7 +164,7 @@ describe("mt config", () => {
     expect(code).toBe(1);
     const lines = stdout.split("\n");
     expect(lines[0]).toBe(CONFIG);
-    for (const line of lines.slice(1, 4)) expect(line).toMatch(/ invalid: the file is not TOML: \S/);
+    for (const line of lines.slice(1, 3)) expect(line).toMatch(/ invalid: the file is not TOML: \S/);
     const single = mt(["config", "fix_rounds"]);
     expect(single.code).toBe(1);
     expect(single.stderr).toStartWith(`mt: config: fix_rounds is invalid in ${CONFIG}: the file is not TOML: `);

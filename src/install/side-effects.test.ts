@@ -27,7 +27,7 @@ describe("side-effect classes", () => {
     expect(usageCommands()).toEqual(Object.keys(COMMANDS).sort());
   });
 
-  test("D9: get and oracle run are local writes, dogfood and its triage external, the rest read-only", () => {
+  test("D9: get and oracle run are local writes, the rest read-only", () => {
     expect(COMMANDS).toEqual({
       get: "local write",
       list: "read-only",
@@ -35,14 +35,12 @@ describe("side-effect classes", () => {
       "shape slice": "read-only",
       "oracle hash": "read-only",
       "oracle run": "local write",
-      dogfood: "external",
-      "dogfood triage": "external",
       config: "read-only",
     });
   });
 
-  test("C3: install allows Bash(mt:*) and asks only Bash(mt dogfood:*), which covers dogfood triage", () => {
-    expect(rules()).toEqual({ allow: ["Bash(mt:*)"], ask: ["Bash(mt dogfood:*)"] });
+  test("install allows Bash(mt:*) and asks nothing, as no command is external", () => {
+    expect(rules()).toEqual({ allow: ["Bash(mt:*)"], ask: [] });
   });
 
   test("D8: an external command gets its own ask rule unless a shorter external one covers it", () => {

@@ -4,7 +4,7 @@
  *
  *   read-only     reads files and prints; writes nothing
  *   local write   writes on this machine only, such as the usage log or the JUnit report `mt oracle run` deletes
- *   external      reaches a service off this machine, such as GitHub or jev
+ *   external      reaches a service off this machine, such as GitHub
  *
  * A class covers what mt itself does. `mt oracle run` runs a shape's commands, which may reach
  * further. It is allowed so a worker runs its oracles without a prompt, and nothing checks who
@@ -23,8 +23,6 @@ export const COMMANDS: Readonly<Record<string, SideEffect>> = {
   "shape slice": "read-only",
   "oracle hash": "read-only",
   "oracle run": "local write",
-  dogfood: "external",
-  "dogfood triage": "external",
   config: "read-only",
 };
 
@@ -35,8 +33,8 @@ export interface Rules {
 
 /**
  * `Bash(mt:*)` allowed, and one ask rule per external command that no shorter one covers: Claude
- * Code checks ask rules before allow rules, and `Bash(mt dogfood:*)` covers `mt dogfood triage` by
- * prefix.
+ * Code checks ask rules before allow rules, and `Bash(mt <command>:*)` covers `mt <command> <word>`
+ * by prefix.
  */
 export function rules(commands: Readonly<Record<string, SideEffect>> = COMMANDS): Rules {
   const external = Object.keys(commands).filter((command) => commands[command] === "external");
