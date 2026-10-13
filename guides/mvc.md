@@ -87,9 +87,11 @@ Re-invoked on a settled shape, mvc asks nothing and goes straight to the report,
 - **Nothing in the closed set is redundant.** Every shipping item still passes the deletion test
   given everything else that ships.
 - **The owner sees the closed shape as a digest.** Once the shape passes `mt shape check`, the
-  closing reply shows the outcome, each requirement and non-goal in one line, and each decision
-  decided by silence, and holds no YAML, also when the shape has been written, whose path it
-  names. Asked for the shape, the next message shows the whole checked YAML.
+  closing reply shows the outcome, each requirement, non-goal and constraint in one line, the
+  touchpoints, and each decision decided by silence, and holds no YAML, also when the shape has
+  been written, whose path it names. When it has not been written, the reply says so in one line
+  and offers the YAML or a file, and neither is shown or written unasked. Asked for the shape, the
+  next message shows the whole checked YAML.
 - **A grill parks on the owner's word, and only then.** The draft is the shape so far with its
   `draft` block, with its `commit`, `budget`, `rounds_spent` and `open` questions. Answers,
   assumptions, facts and exclusions are already decisions, their provenance and non-goals. Each
