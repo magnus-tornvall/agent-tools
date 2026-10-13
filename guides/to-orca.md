@@ -30,6 +30,18 @@ it, and how, with the tools named at the end, is yours to compose.
   shape held outside a file is the one at its reference: what is checked and sliced is read from
   there, piped to `mt shape` as `-`.
 - **The hand-off** is what the Run returns to the owner, as the objectives below describe it.
+- **The findings table** has one row per finding raised in the Run, by a report or by you. A
+  report's finding is keyed by the ID its report gave it, such as `T4/F1`, and one you raise by its
+  place as first raised plus a short title, a key that stays the same in every message even when
+  the branch moves that place. A row gives who raised it, a Task and its perspective or you, its
+  place, the input or state that shows it, the fix proposed and its door, each in full as it was
+  raised and never cut to a line, and what became of it: fixed, saying what the fix changed and
+  which Task made it; dropped, and why; the owner's decision; or still open, and who holds it: you,
+  a fix Task, or the owner.
+- **The findings table is rebuilt for each message** from Orca's inbox and Task results, and for a
+  finding you raised, or one dropped or ruled on with no Task to carry it, from the owner's own
+  answer or what you recorded of it; never from memory. Workaround for Orca keeping no state for a
+  Run's findings; remove when Orca or `mt` keeps each finding's state.
 - **Every worker** is an Orca Task whose spec follows the Task-spec contract of Orca's
   orchestration skill, carries the spec head, and loads its assignment's guide.
 
@@ -97,12 +109,21 @@ do.
 - **No worker sits stuck unnoticed for longer than one wait.** An empty wait is followed by a look
   at the live workers. Workaround for Orca sending no message for a worker parked on a prompt only
   a human can answer; remove when Orca reports such a worker to its coordinator.
-- **The evidence the hand-off cites outlives the Task worktrees.** Before the hand-off, every
-  evidence file a report names is copied to
-  `${XDG_STATE_HOME:-$HOME/.local/state}/mt/runs/<repo>/<run-id>/`, `<repo>` found as mvc finds
-  it and `<run-id>` the Orca Run's ID, with no copy overwriting another, and the hand-off cites
-  the copies. Workaround for Orca having no private store for a Run's evidence; remove when Orca
-  keeps a Run's evidence past the removal of its worktrees.
+- **The owner can judge every finding from what reaches them.** Once a report has raised a
+  finding, or you have, every message you send the owner carries the findings table so far,
+  beside any question rather than in it, and the hand-off carries the final table. The table
+  alone is no reason to message them.
+- **Nothing the owner must judge reaches them only as a reference.** A commit, file path, ID or
+  file on disk in a message to the owner comes with the content it names, as the ask guide holds
+  for every question.
+- **Evidence that is not text reaches the owner where they can check it.** Such evidence, a
+  screenshot for one, is described in the message and named by its path, and the hand-off names
+  each such file with the Task worktree that holds it, so the owner can check it before removing
+  that worktree. Workaround for Orca's messages carrying only text and keeping no file a Task
+  wrote; remove when a message to the owner can carry a file that outlives its worktree.
+- **A question about a finding can be decided from its own text.** It carries the finding as its
+  row gives it, each option written out with what it changes, and the constraint, ruling or
+  decision the finding conflicts with, quoted with its source.
 - **No commit a Task leaves behind goes unseen.** Teardown is the owner's, in Orca's UI, so the
   hand-off names each Task worktree that holds commits the destination lacks. Workaround for Orca
   removing a worktree's branch with it, as the overlay records for `orca worktree rm` and not yet
@@ -116,10 +137,10 @@ do.
   Workaround for closing an agent's terminal stopping only what the agent's harness started;
   remove when closing it stops every process a Task started.
 - **The hand-off.** The destination the owner approved: the branch, or a pull request. An
-  account of every Task, attempt, dropped finding and question you answered, rebuilt from Orca's
-  inbox and Task results, not from memory. Proposed edits to the guides, drawn from the workers'
-  Toolbox lines, which the owner picks from; apply only the picked ones, and never on the work
-  branch.
+  account of every Task, attempt and question you answered, rebuilt from Orca's inbox and Task
+  results, not from memory, and the final findings table. Proposed edits to the guides, drawn from
+  the workers' Toolbox lines, which the owner picks from; apply only the picked ones, and never on
+  the work branch.
 
 ## Guardrails
 
@@ -140,7 +161,8 @@ do.
 - **Orca's orchestration skill** (`orca skills get orchestration`) owns its verbs, the supervised
   loop, the Task lifecycle, and the Task-spec contract every spec follows: Target, Change,
   Constraints, Ownership, Observable acceptance.
-- **The inbox and Task results** are the Run's durable record; the hand-off is rebuilt from them.
+- **The inbox and Task results** are the Run's durable record; the hand-off is rebuilt from them,
+  and the findings table from them and the other sources the Contract names for it.
 - **Decision gates** hold a Task on an owner decision that blocks it.
 - **`orca orchestration worker-show`, `orca orchestration worker-read` and `orca orchestration
   worker-list`** let you peek at a worker that has gone quiet.

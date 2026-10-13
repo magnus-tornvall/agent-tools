@@ -35,12 +35,10 @@ and what the repo's own checks and builds write.
 - **Every finding can be acted on without asking.** It names its place, the input or state that
   shows it, the fix, and its door: two-way, or one-way and who pays to undo it
   (`mt get door-rule`).
-- **Every evidence file the report cites is named by its path**, so it can be copied out of the
-  worktree before the worktree is removed, wherever the coordinator copies it to. A judge writes
-  each file under the worktree's gitignored `.scratch/`. Workaround for a browser tool that may
-  refuse to write outside the workspace; remove when it no longer does.
+- **Evidence that is not text can be checked**, such as a screenshot: the report describes what it
+  shows and names it by its path. Evidence that is text is in the report's own text.
 
 ## Report
 
-Besides what orca-worker asks: the findings, or none, and the path of each evidence file the
-report cites. A perspective's reference says what else its report holds.
+Besides what orca-worker asks: the findings, or none. A perspective's reference says what else its
+report holds.
