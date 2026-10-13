@@ -24,9 +24,9 @@ who wrote or approved the shape it runs.
   not `mt`'s own and are not classed.
 - **Mechanism, not policy.** Install proposes the rules; the owner decides. Nothing is written to
   the settings without a yes, and with no answer and no terminal nothing is written.
-- **Ownership.** Uninstall removes only what install made: links that point into this clone, or
-  to a stub link in `SKILLS_DIR`, and the rules it adds, so a skill, an `mt` or a rule put there
-  some other way stays.
+- **Ownership** is by where a link points, not by who made it. Uninstall removes the links that
+  point into this clone, or to a stub link in `SKILLS_DIR`, and the rules install adds, so a skill
+  or an `mt` that points elsewhere, and any other rule, stays.
 - **Fail safe.** What install cannot change without harm, it leaves as it is and fails naming it:
   a real folder where a link would go, settings that are not JSON, or a permission list that is
   not a list of strings.
