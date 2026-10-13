@@ -44,11 +44,11 @@ describe("side-effect classes", () => {
   });
 
   test("D8: an external command gets its own ask rule unless a shorter external one covers it", () => {
-    expect(rules({ list: "read-only", publish: "external", "oracle run": "local write", "publish all": "external", dogfood: "external" })).toEqual({
+    expect(rules({ list: "read-only", publish: "external", "oracle run": "local write", "publish all": "external", sync: "external" })).toEqual({
       allow: ["Bash(mt:*)"],
-      ask: ["Bash(mt publish:*)", "Bash(mt dogfood:*)"],
+      ask: ["Bash(mt publish:*)", "Bash(mt sync:*)"],
     });
-    expect(rules({ dogfoodx: "external", dogfood: "external" }).ask).toEqual(["Bash(mt dogfoodx:*)", "Bash(mt dogfood:*)"]);
+    expect(rules({ syncx: "external", sync: "external" }).ask).toEqual(["Bash(mt syncx:*)", "Bash(mt sync:*)"]);
     expect(rules({ get: "local write", list: "read-only" })).toEqual({ allow: ["Bash(mt:*)"], ask: [] });
   });
 });
