@@ -51,7 +51,8 @@ on commas; remove when it takes each option as its own argument.
 - **Concrete.** Anchored in something the person asked can check: a route, a caller, an input, a
   number. "How important is latency?" invites "very"; "What is the largest tenant this search
   serves?" invites the fact the decision turns on.
-- **Answerable without opening anything else.**
+- **Answerable without opening anything else.** It carries the content of everything it rests
+  on: a commit, file path, ID or file on disk comes with what it names, never in its place.
 - **Cited.** Every claim in it carries its source: `file:line`, an earlier answer, or a primary
   source. General knowledge is not a source.
 - **Wrong if** - what would refute the position. It refutes this decision; it never opens a second.
