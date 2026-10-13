@@ -70,13 +70,12 @@ the attempt is still logged, with `found` false.
 ### Contracts
 
 Each command's contract: its purpose, what it takes, what it prints, how it exits, and its
-side-effect class. A class is one of read-only, which reads and prints and writes nothing; local
-write, which writes on this machine only; and external, which reaches a service off it. The classes
-are declared once in `src/install/side-effects.ts`, and install builds its permission rules from
-them: every class but external runs without a prompt, and each external command asks first (see
-Install). Every usage error prints `mt: <reason>` and a usage on stderr, nothing on stdout, and
-exits 2. Only `mt config` reads the owner's config (see Config); every other command behaves the
-same whatever the config holds.
+side-effect class. A class is either read-only, which reads and prints and writes nothing, or local
+write, which writes on this machine only. The classes are declared once in
+`src/install/side-effects.ts`, and install builds its permission rule from them: every class runs
+without a prompt (see Install). Every usage error prints `mt: <reason>` and a usage on stderr,
+nothing on stdout, and exits 2. Only `mt config` reads the owner's config (see Config); every other
+command behaves the same whatever the config holds.
 
 **`mt get <tool> [--ref <ref>]`**, local write. Prints a tool's guide, `guides/<tool>.md`, or one
 of its references, `guides/<tool>/<ref>.md`, on stdout and exits 0. A tool or ref with no such
@@ -260,11 +259,10 @@ is missing or stale. It:
 - links each stub skill that has a guide into `~/.agents/skills`, and removes links into this
   clone whose stub is gone;
 - asks whether to add `Bash(mt:*)` to `permissions.allow` in `~/.claude/settings.json`, so Claude
-  Code agents run every `mt` command without a prompt. An external command would also get an ask
-  rule in `permissions.ask`, so it asks first; none is external today. The rules follow from each
-  command's side-effect class (see Contracts). A file that still holds `Bash(mt get:*)`,
-  `Bash(mt list)` or `Bash(mt shape:*)` from an earlier install has them replaced.
-  A yes keeps everything else in the file; it is not asked again once the rules are there.
+  Code agents run every `mt` command without a prompt. The rule follows from each command's
+  side-effect class (see Contracts), and `permissions.ask` is left as it is. A file that still
+  holds `Bash(mt get:*)`, `Bash(mt list)` or `Bash(mt shape:*)` from an earlier install has them
+  replaced. A yes keeps everything else in the file; it is not asked again once the rules are there.
   `ADD_MT_RULES=yes` or `ADD_MT_RULES=no` answers without asking, and with no terminal to ask on
   nothing is written;
 - checks that a login shell started from your profile alone finds `mt` and Bun. Orca starts a
@@ -277,9 +275,9 @@ would write a stray link inside it. The whole mvc from before it became a guide 
 and so is a whole commit skill copied in before commit became one; the old and the new cannot both
 be installed under one name. To keep the old one for a later comparison, move it out of the skills
 folder rather than delete it. Settings that are not a JSON object, or whose `permissions` is not an
-object or whose `permissions.allow` or `permissions.ask` is not a list of strings, are left alone
-too, and the install fails saying which; it names the rules to add by hand only when the settings
-are not JSON or not an object.
+object or whose `permissions.allow` is not a list of strings, are left alone too, and the install
+fails saying which; it names the rule to add by hand only when the settings are not JSON or not an
+object.
 
 `make uninstall` takes it back out: the `mt` link and every link in the skills folder that points
 into this clone, so a skill or `mt` installed some other way stays. It asks before removing the

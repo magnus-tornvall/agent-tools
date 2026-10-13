@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { parseMtUsage } from "../guide-lint/lint.ts";
-import { COMMANDS, rules } from "./side-effects.ts";
+import { COMMANDS } from "./side-effects.ts";
 
 const MT = new URL("../../cli/mt", import.meta.url).pathname;
 
@@ -37,18 +37,5 @@ describe("side-effect classes", () => {
       "oracle run": "local write",
       config: "read-only",
     });
-  });
-
-  test("install allows Bash(mt:*) and asks nothing, as no command is external", () => {
-    expect(rules()).toEqual({ allow: ["Bash(mt:*)"], ask: [] });
-  });
-
-  test("D8: an external command gets its own ask rule unless a shorter external one covers it", () => {
-    expect(rules({ list: "read-only", publish: "external", "oracle run": "local write", "publish all": "external", sync: "external" })).toEqual({
-      allow: ["Bash(mt:*)"],
-      ask: ["Bash(mt publish:*)", "Bash(mt sync:*)"],
-    });
-    expect(rules({ syncx: "external", sync: "external" }).ask).toEqual(["Bash(mt syncx:*)", "Bash(mt sync:*)"]);
-    expect(rules({ get: "local write", list: "read-only" })).toEqual({ allow: ["Bash(mt:*)"], ask: [] });
   });
 });

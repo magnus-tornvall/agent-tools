@@ -9,9 +9,8 @@ declares each `mt` command's side-effect class. The README keeps the steps a hum
 ## Purpose
 
 An agent, or an Orca worker started in the owner's login shell, can run every `mt` command and
-load every stub, and is asked before an `mt` command whose own effect reaches a service off the
-machine. A class covers what `mt` itself does. `mt oracle run` runs the commands of a shape, which
-may reach further. It is allowed so a worker runs its oracles without a prompt, and nothing checks
+load every stub, and every `mt` command's own effect stays on the machine. A class covers what
+`mt` itself does. `mt oracle run` runs the commands of a shape, which may reach further. It is allowed so a worker runs its oracles without a prompt, and nothing checks
 who wrote or approved the shape it runs.
 
 ## Principles
@@ -19,16 +18,16 @@ who wrote or approved the shape it runs.
 - **Idempotence.** Every target converges on the desired state: it changes only what is missing or
   stale, so it is safe to run again after a pull or on a half-set-up machine.
 - **Least privilege**, as far as `mt`'s own effects go. A command's permission follows from its
-  side-effect class, declared once in code: read-only and local-write commands are allowed, and
-  each external command is asked before it runs. The commands `mt oracle run` runs for a shape are
-  not `mt`'s own and are not classed.
+  side-effect class, declared once in code. Every class, read-only or local write, stays on the
+  machine and is allowed. The commands `mt oracle run` runs for a shape are not `mt`'s own and are
+  not classed.
 - **Mechanism, not policy.** Install proposes the rules; the owner decides. Nothing is written to
   the settings without a yes, and with no answer and no terminal nothing is written.
 - **Ownership.** Uninstall removes only what install made: links that point into this clone and
   the rules it adds, so a skill, an `mt` or a rule put there some other way stays.
 - **Fail safe.** What install cannot change without harm, it leaves as it is and fails naming it:
-  a real folder where a link would go, settings that are not JSON, or a permission list that is
-  not a list of strings.
+  a real folder where a link would go, settings that are not JSON, or a `permissions.allow` that
+  is not a list of strings.
 - **Observable end state.** Install is done when a login shell started from the owner's profile
   alone finds `mt` and Bun, the PATH an Orca worker gets, and it checks exactly that.
 
@@ -53,13 +52,12 @@ who wrote or approved the shape it runs.
   keeping everything else in the file. `add` creates a missing file. It asks only when there is
   something to change, and exits 0 whether it changed the file, found nothing to change or was
   declined. A file that is not a JSON object, or whose `permissions` is not an object or whose
-  `permissions.allow` or `permissions.ask` is not a list of strings, is left as it is: one line on
-  stderr says which, naming the rules to add by hand when the file is not a JSON object, and it
-  exits 1. A usage error exits 2.
-- The rules are those `rules()` in `side-effects.ts` builds: `Bash(mt:*)` in `permissions.allow`,
-  and in `permissions.ask` one `Bash(mt <command>:*)` per external command that no shorter
-  external command covers by prefix. Claude Code checks ask rules before allow rules. Today no
-  command is external, so install writes no ask rule.
+  `permissions.allow` is not a list of strings, is left as it is: one line on stderr says which,
+  naming the rule to add by hand when the file is not a JSON object, and it exits 1. A usage error
+  exits 2.
+- The rule is `ALLOW_RULES` in `side-effects.ts`: `Bash(mt:*)` in `permissions.allow`, which
+  allows every command, as every class is allowed. Install writes no `permissions.ask` and leaves
+  one that is there as it is.
 - Side effects: local writes to `BIN_DIR`, `SKILLS_DIR` and `SETTINGS`; `bun install` fetches
   packages from the npm registry.
 

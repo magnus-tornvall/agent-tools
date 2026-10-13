@@ -33,16 +33,16 @@ new_home() { # dir: a HOME whose login shell puts its ~/.local/bin and bun on PA
   printf 'export PATH="%s/.local/bin:%s:$PATH"\n' "$1" "$BUN_DIR" >"$1/.bash_profile"
 }
 
-run_make() { # target home [make args...] -> runs make with that HOME in $CLONE, else this clone; output in $TMP/out
+run_make() { # target home [make args...] -> runs make with that HOME, output in $TMP/out
   local target=$1 home=$2
   shift 2
-  HOME=$home SHELL=/bin/bash make -s -C "${CLONE:-$ROOT}" "$target" "$@" </dev/null >"$TMP/out" 2>&1
+  HOME=$home SHELL=/bin/bash make -s -C "$ROOT" "$target" "$@" </dev/null >"$TMP/out" 2>&1
 }
 
 install() { run_make install "$@"; }
 uninstall() { run_make uninstall "$@"; }
 
-answering() { # target answer home -> make target on a terminal, typing answer at the prompt, as run_make does
+answering() { # target answer home -> make target on a terminal, typing answer at the prompt
   local target=$1 answer=$2 home=$3
   HOME=$home SHELL=/bin/bash python3 -I -c '
 import errno, os, pty, subprocess, sys
@@ -66,7 +66,7 @@ while chunk := read():
     out += chunk
 rc = proc.wait()
 sys.stdout.write(out.decode())
-sys.exit(rc)' "$answer" make -s -C "${CLONE:-$ROOT}" "$target" >"$TMP/out" 2>&1
+sys.exit(rc)' "$answer" make -s -C "$ROOT" "$target" >"$TMP/out" 2>&1
 }
 
 install_answering() { answering install "$@"; }
@@ -205,24 +205,6 @@ install_answering y "$H"
 assert_contains "the question names what is replaced" "$(cat "$TMP/out")" "remove Bash(mt get:*) from permissions.allow"
 assert_eq "one earlier rule is replaced too" "Bash(mt:*)" "$(allow_list "$H/.claude/settings.json")"
 
-# an ask list that is not a list of strings is left alone
-for bad in '"Bash(x)"' '[1]' '{}'; do
-  H=$TMP/bad-ask
-  rm -rf "$H"
-  new_home "$H"
-  mkdir -p "$H/.claude"
-  printf '{"permissions": {"ask": %s}}\n' "$bad" >"$H/.claude/settings.json"
-  cp "$H/.claude/settings.json" "$TMP/bad-ask.before"
-  install "$H" ADD_MT_RULES=yes; rc=$?
-  [ "$rc" -ne 0 ] || fail "install over permissions.ask $bad exits 0"
-  assert_contains "the failure names permissions.ask" "$(cat "$TMP/out")" "permissions.ask is not a list of strings"
-  cmp -s "$TMP/bad-ask.before" "$H/.claude/settings.json" || fail "settings with permissions.ask $bad were rewritten"
-  uninstall "$H" REMOVE_MT_RULES=yes; rc=$?
-  [ "$rc" -ne 0 ] || fail "uninstall over permissions.ask $bad exits 0"
-  cmp -s "$TMP/bad-ask.before" "$H/.claude/settings.json" || fail "uninstall rewrote settings with permissions.ask $bad"
-done
-check "a permissions.ask that is not a list of strings is left as it is"
-
 # settings that are not JSON are left alone
 H=$TMP/malformed
 new_home "$H"
@@ -234,8 +216,6 @@ install "$H"; rc=$?
 check "install over malformed settings fails"
 assert_contains "the failure names the settings file" "$(cat "$TMP/out")" "$H/.claude/settings.json is not JSON"
 assert_contains "the failure names the rule to add by hand" "$(cat "$TMP/out")" "add Bash(mt:*) in permissions.allow by hand"
-case $(cat "$TMP/out") in *"permissions.ask"*) fail "the failure names an ask rule, but there is none" ;; esac
-check "the failure names no ask rule"
 cmp -s "$TMP/malformed.before" "$H/.claude/settings.json" || fail "malformed settings were rewritten"
 check "malformed settings are left as they are"
 
@@ -327,41 +307,6 @@ uninstall "$H" REMOVE_MT_RULES=yes; rc=$?
 assert_eq "uninstall over the earlier rules exits 0" 0 "$rc"
 assert_eq "uninstall removes the earlier rules" "Bash(git status)" "$(allow_list "$H/.claude/settings.json")"
 assert_eq "uninstall keeps other asks" "Bash(git push:*)" "$(ask_list "$H/.claude/settings.json")"
-
-# an external command's ask rule is asked about, added and removed: no command is external, so a
-# stand-in clone classes a hypothetical mt publish external
-E=$TMP/external
-mkdir -p "$E/src/install"
-cp "$ROOT/Makefile" "$E/Makefile"
-cp "$ROOT/src/install/mt-rules.ts" "$E/src/install/"
-perl -pe 's/^(  config: "read-only",)$/$1\n  publish: "external",/' "$ROOT/src/install/side-effects.ts" >"$E/src/install/side-effects.ts"
-grep -q '^  publish: "external",$' "$E/src/install/side-effects.ts" || fail "the stand-in clone has no external command"
-H=$TMP/external-home
-mkdir -p "$H/.claude"
-printf '{"permissions": {"allow": ["Bash(mt:*)"]}}\n' >"$H/.claude/settings.json"
-CLONE=$E answering permissions n "$H"
-assert_eq "the missing ask rule alone is asked about" \
-  "In $H/.claude/settings.json, add Bash(mt publish:*) to permissions.ask? [y/N]" "$(grep -o 'In .*\[y/N\]' "$TMP/out")"
-has_ask "$H/.claude/settings.json" && fail "declining wrote the ask rule"
-check "declining leaves the ask list as it was"
-CLONE=$E run_make permissions "$H" ADD_MT_RULES=yes; rc=$?
-assert_eq "adding the ask rule where there is no ask list exits 0" 0 "$rc"
-assert_eq "the ask rule makes the ask list" "Bash(mt publish:*)" "$(ask_list "$H/.claude/settings.json")"
-printf '{"permissions": {"allow": ["Bash(mt:*)"], "ask": ["Bash(git push:*)"]}}\n' >"$H/.claude/settings.json"
-CLONE=$E run_make permissions "$H" ADD_MT_RULES=yes; rc=$?
-assert_eq "adding the ask rule exits 0" 0 "$rc"
-assert_eq "the ask rule joins the asks that are there" "$(printf 'Bash(git push:*)\nBash(mt publish:*)')" "$(ask_list "$H/.claude/settings.json")"
-CLONE=$E answering uninstall n "$H"
-assert_eq "the declined ask rule stays" "$(printf 'Bash(git push:*)\nBash(mt publish:*)')" "$(ask_list "$H/.claude/settings.json")"
-CLONE=$E run_make uninstall "$H" REMOVE_MT_RULES=yes; rc=$?
-assert_eq "uninstall with REMOVE_MT_RULES=yes exits 0" 0 "$rc"
-assert_eq "REMOVE_MT_RULES=yes removes the ask rule and keeps other asks" "Bash(git push:*)" "$(ask_list "$H/.claude/settings.json")"
-assert_eq "REMOVE_MT_RULES=yes removes the allow rule" "" "$(allow_list "$H/.claude/settings.json")"
-printf '{"permissions": {\n' >"$H/.claude/settings.json"
-CLONE=$E run_make permissions "$H"; rc=$?
-[ "$rc" -ne 0 ] || fail "adding the rules to malformed settings exits 0"
-assert_contains "the failure names the ask rule to add by hand" "$(cat "$TMP/out")" \
-  "add Bash(mt:*) in permissions.allow and Bash(mt publish:*) in permissions.ask by hand"
 
 # an mt that is not this clone's link stays
 H=$TMP/uninstall-foreign
