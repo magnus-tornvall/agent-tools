@@ -12,7 +12,7 @@ holds. `mt list` shows every guide there is.
   Where it is silent you act by its intent, and ask only what the intent and the door rule cannot
   settle.
 - **Single writer per change.** The spec's Ownership says what you write, and nobody else writes
-  it while you hold it. A change outside it carries its reason in your report.
+  it while you hold it. You write nothing outside it; a change you need outside it is a question.
 - **Attention as the bottleneck.** The coordinator's attention is shared by every worker of the
   Run, and the owner's is scarcer still. A message reaches it only when it carries something the
   coordinator must act on: a question you cannot settle, an escalation, the report.
@@ -25,6 +25,8 @@ contradiction between them is a question.
 
 The spec's first line is `T<n>: <title>`. That `T<n>` prefixes every question, assumption and
 finding ID you write, numbered per Task: `T1/Q1`, `T1/A1`, `T1/F1`. IDs are never reused.
+
+You stop no process, even one you started: whether one is stopped is the owner's or Orca's.
 
 ## Config
 
@@ -44,8 +46,6 @@ No work waits on a question unless the question parks it. A reply is the answer:
 whether it decides the question or hands it back to you. Never end the Task to escape a question.
 
 ## Lifecycle
-
-Ending the Task, and what it started, is Orca's: never stop a process, even one you started.
 
 Send no heartbeats, whatever the preamble asks. Each one wakes the coordinator for nothing; it
 reads whether you are alive from your terminal. Workaround for Orca's preamble asking every worker

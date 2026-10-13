@@ -15,7 +15,7 @@ it, and how, with the tools named at the end, is yours to compose.
   its own judgment. A worker acts where its spec is silent by the intent, and asks only what that
   cannot settle.
 - **Single writer per change.** One Task at a time writes the work branch, and its spec says what
-  it owns. A judge writes nothing on it, and you write no change yourself: the change is the
+  it owns. A judge writes nothing on it, and you write nothing on it yourself: the change is the
   workers'.
 - **Attention as the bottleneck.** The owner's attention is the Run's scarcest resource, and
   yours is next. The owner is asked only what the door rule sends up and what the fixed rules
@@ -54,9 +54,10 @@ do.
 - **The owner has approved the shape before any plan is shown.** Given a shape, `mt shape check`
   passes on it, or the owner has ruled on each violation it prints, and no grill runs: the next
   thing the owner approves is the plan. Given intent in any other form, you settle the shape with
-  the owner as mvc does (`mt get mvc`), write it where mvc writes by default, and the owner
-  approves the closed shape in its own ask, apart from the plan. A ruling leaves the shape as
-  written and reaches every Task it bears on.
+  the owner as mvc does (`mt get mvc`), have mvc write the closed shape to its default location as
+  `mvc-<slug>.yaml`, as it names a parked draft, and the owner approves it in its own ask, which
+  names that path, apart from the plan. Every Task that needs the shape is given that path. A
+  ruling leaves the shape as written and reaches every Task it bears on.
 - **The owner approves a plan they can trust to run unattended.** It names the first Tasks and
   the assignments expected next, each Task's agent, model and effort, the base branch, and the
   destination: the branch, or a pull request. Each model and effort is your judgment for that
@@ -101,8 +102,8 @@ do.
   keeps a Run's evidence past the removal of its worktrees.
 - **No commit a Task leaves behind goes unseen.** Teardown is the owner's, in Orca's UI, so the
   hand-off names each Task worktree that holds commits the destination lacks. Workaround for Orca
-  removing a worktree's branch with it; remove when Orca keeps or names commits that only a
-  removed worktree held.
+  removing a worktree's branch with it, as the overlay records for `orca worktree rm` and not yet
+  observed for the UI; remove when Orca keeps or names commits that only a removed worktree held.
 - **Every process a Task left running is named.** The hand-off names each one a Task started that
   still runs after its release, and the owner decides whether it is stopped. Workaround for Orca's
   release stopping only what the agent's harness started; remove when release stops every process
@@ -130,8 +131,7 @@ do, and the owner decides to remove it.
   it is gone. Absence is not proof.
 - Two Tasks that run the repo's code never run in one worktree at once. A judge that runs code can
   get its own worktree cut from the work branch.
-- A judge never runs in a worktree that holds more of the shape than its slice, such as yours with
-  the shape under `.scratch/`.
+- A judge is never pointed at, or placed where it would find, more of the shape than its slice.
 - A spec never changes. A change is a new Task.
 
 ## Tools
