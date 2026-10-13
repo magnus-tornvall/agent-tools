@@ -90,7 +90,8 @@ Re-invoked on a settled shape, mvc asks nothing and goes straight to the report,
   park replaces the last whole, and what is written still passes `mt shape check --draft` when read
   back. It goes where the owner's instructions put parked work; with none, to `mvc-<slug>.yaml` at
   the default location, the slug safe as a file name, the same for every park of the grill and
-  taken by no other file there. The reply names where it went.
+  taken by no other file there. The reply names where it went. Workaround for no tool keeping a
+  grill's drafts; remove when `mt` or Orca parks and lists them.
 - **The default location** is `${XDG_STATE_HOME:-$HOME/.local/state}/mt/mvc/<repo>/`, where
   `<repo>` is the name of the directory `git rev-parse --path-format=absolute --git-common-dir`
   prints, or of its parent when it is named `.git`, so every worktree of the clone finds the same
@@ -143,7 +144,8 @@ Re-invoked on a settled shape, mvc asks nothing and goes straight to the report,
   the schema behind `mt shape check` owns their format, and the example (`mt get mvc --ref
   example`) shows them filled in. Whatever the schema enforces is left to it; what follows is the
   intent no check can see. A scalar containing ` #` is quoted, since YAML otherwise reads the rest
-  as a comment and truncates it, which `mt shape check` does not notice.
+  as a comment and truncates it. Workaround for `mt shape check` not noticing a truncated
+  scalar; remove when it does.
 - `outcome`, `requirements` and `non_goals` are what the change does; `constraints`,
   `touchpoints` and `decisions` are how. A file, symbol, technology or value is how, never a
   requirement. A mechanism the change must use is a decision, with what it rejected; one it need

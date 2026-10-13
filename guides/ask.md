@@ -36,6 +36,10 @@ Lines the tool has no field for go in the text just before it. Workaround for qu
 lacking a field for a line, such as a position or an option's description; remove when the asker's
 question tool carries one.
 
+`orca orchestration ask --options` takes the options as one comma-separated string, so a label
+holding a comma splits in two; there each label has none. Workaround for Orca splitting the options
+on commas; remove when it takes each option as its own argument.
+
 ## Every question
 
 - **One decision.** A position that needs "and", or a Rules out that covers half of it, is two

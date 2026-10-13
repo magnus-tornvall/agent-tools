@@ -51,7 +51,8 @@ shape. It never patches a requirement, decides an interface or adds scope.
 - **Oracles are the repo's own tests**: its test runner, conventions and test folders, so they ship
   with the change and run in its checks. Each writes a JUnit report when the runner can, named in
   `junit`, so a failure is told apart from an error. A script follows automake's exit codes, as
-  `mt oracle run` reads them: 0 passes, 77 is blocked, 99 is broken, anything else fails.
+  `mt oracle run` reads them: 0 passes, 77 is blocked, 99 is broken, as are 126 and 127 (the
+  command did not start) and 128 and up (a signal ended it); anything else fails.
 - **Blocked is not failed.** A check that needs what the change does not own, such as an external
   service or a credential, skips or exits 77 when it is missing, and the report names what it
   blocks.
@@ -66,7 +67,8 @@ shape. It never patches a requirement, decides an interface or adds scope.
 - **Your runs never write to the owner's `mt` usage log.** Every manual run of `mt`, and every run
   of a script or test that may call it, sets `MT_LOG` and `XDG_STATE_HOME` to scratch locations on
   its own command line. Loading your guides with the installed `mt get` is not such a run; it
-  stays logged.
+  stays logged. Workaround for `mt` logging every run to the owner's usage log, with no way to tell
+  a development or test run from a use; remove when `mt` keeps such runs out of that log itself.
 
 ## Tools
 

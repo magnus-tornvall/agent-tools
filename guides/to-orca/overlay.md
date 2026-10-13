@@ -1,10 +1,11 @@
 # to-orca overlay
 
-Domain: Coordination. What is known about Orca that its orchestration skill does not say, each with
-the Orca version it was seen on, so that a coordinator does not learn it again mid-Run. What a Run
-learns goes in its hand-off, with the version or commit it was seen on, and is filed with
-`mt dogfood`. It reads no config. Workaround for Orca's orchestration skill not saying these; remove
-each line when the skill says it or Orca no longer behaves so.
+Domain: Coordination. What is known about Orca, and about `mt` as Orca workers run it, that Orca's
+orchestration skill does not say, each with the version or commit it was seen on, so that a
+coordinator does not learn it again mid-Run. What a Run learns goes in its hand-off, with the
+version or commit it was seen on, and is filed with `mt dogfood`. It reads no config. Workaround
+for Orca's orchestration skill not saying these; remove each line when the skill says it or the
+tool no longer behaves so.
 
 - `orca orchestration worker-start` has no permission flag. A `claude` worker launches with Orca's
   default arguments for that agent, the worktree's committed `.claude/settings.json` and the
@@ -18,8 +19,8 @@ each line when the skill says it or Orca no longer behaves so.
 - `orca orchestration run-create` moves the terminal off a Run it already coordinates without a
   word, even one with unsettled work. Check `orca orchestration run-current` and that Run's workers
   first. (1.4.222)
-- `orca orchestration ask` waits at most 30 minutes per call. A reply to a worker that has ended is
-  refused with `dispatch_inactive`. (1.4.220)
+- A reply through `orca orchestration ask` to a worker that has ended is refused with
+  `dispatch_inactive`. (1.4.220)
 - `orca orchestration worker-release` can return `state: retained`, `reason: user_takeover`, and
   leave the agent's terminal live: after the owner answered a prompt in it (1.4.223), and once for
   a Run's first worker started with `--worktree current` (1.4.224).
@@ -32,3 +33,4 @@ each line when the skill says it or Orca no longer behaves so.
   cut, and its branch, in place, and its receipt does not name them. (1.4.224)
 - A spec that names a guide the work branch renames or removes still resolves mid-Run only because
   the installed `mt` serves the main clone's guides; once the change reaches main it fails.
+  (`mt` 1b0dd76)
