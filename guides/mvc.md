@@ -58,12 +58,14 @@ Re-invoked on a settled shape, mvc asks nothing and goes straight to the report,
   larger or smaller than mvc would choose, and mvc asks up to it. With none stated, mvc chooses
   one that fits the change and states it with the first questions. A round is spent when asked,
   however many answers come back; unspent rounds are not owed. Corrections the owner volunteers,
-  and clarifying a question, cost nothing.
-- **The owner sees the record without hunting for it.** With the first questions, a map keyed by
-  ID, one line each: what is asked, pointing to its question; the assumptions, uncertain first;
-  what is ruled out; how many facts. After that a reply opens with its questions, then only what
-  changed. Each question a round could not hold is listed in one line until the owner promotes or
-  closes it. Sources are shown when the owner asks for them.
+  clarifying a question, and answering what the owner asks about the record, cost nothing.
+- **The owner sees the record without hunting for it.** A round opens with its questions, each
+  complete in one block as the ask guide composes it. The map follows them, keyed by ID, one line
+  each: what is asked, pointing to its question; the assumptions, uncertain first; what is ruled
+  out; and the facts as a count with their IDs, never their content. After the first round the
+  map holds only what changed. Each question a round could not hold is listed in one line until
+  the owner promotes or closes it. A fact's content and every source are the owner's on request,
+  as the brief guide says.
 - **A skipped question is not an accepted one.** Its cause is known: unclear is clarified and
   asked again within the round, premature stays open, don't-care lets the stance stand. A question
   is withdrawn, with its cause, or stands; it is never quietly replaced.
@@ -84,6 +86,12 @@ Re-invoked on a settled shape, mvc asks nothing and goes straight to the report,
   shaped on its own.
 - **Nothing in the closed set is redundant.** Every shipping item still passes the deletion test
   given everything else that ships.
+- **The owner sees the closed shape as a digest.** Once the shape passes `mt shape check`, or is
+  marked unchecked without it, the closing reply shows the outcome, each requirement, non-goal
+  and constraint in one line, the touchpoints, and each decision decided by silence, and holds no
+  YAML, also when the shape has been written, whose path it names. When it has not been written,
+  the reply says so in one line and offers the YAML or a file, and neither is shown or written
+  unasked. Asked for the shape, the next message shows the whole checked YAML.
 - **A grill parks on the owner's word, and only then.** The draft is the shape so far with its
   `draft` block, with its `commit`, `budget`, `rounds_spent` and `open` questions. Answers,
   assumptions, facts and exclusions are already decisions, their provenance and non-goals. Each
@@ -175,6 +183,8 @@ Re-invoked on a settled shape, mvc asks nothing and goes straight to the report,
   and who pays to undo it.
 - **The ask guide** (`mt get ask`) composes every question: its form, its channel and what each
   carries.
+- **The brief guide** (`mt get brief`) lays out every message to the owner: what it shows first,
+  what it leaves until asked, and how the owner asks for it.
 
 ## Config
 
@@ -182,5 +192,5 @@ mvc reads no config. A round budget is a limit for one grill, so it lives in tha
 
 ## Report
 
-The closed shape, as one YAML document, or, when the shape cannot close, the decomposition and no
-shape.
+The closed shape, as one YAML document a consumer starts from, shown to the owner as the digest
+the objectives describe; or, when the shape cannot close, the decomposition and no shape.

@@ -6,7 +6,8 @@ all; this guide says how, and what an answer means. It rests on value of informa
 costs the asked person's attention, so it asks for the fact the decision turns on, the one whose
 answer could change what is done. And on falsifiability: a position says what would refute it. It
 takes a decision and its live readings and returns the question to put, in a form and channel,
-with a position; the answer comes back to the asker, and Answers says what it means. It reads no
+with a position; the answer comes back to the asker, and Answers says what it means. A question
+to the owner sits in its message as the brief guide (`mt get brief`) lays it out. It reads no
 config.
 
 ## Forms
@@ -32,9 +33,12 @@ position's pick first. In gwt, the tool's free answer is **Neither**, or **Eithe
 in plain text, never a picker, so "you are asking the wrong thing" is as easy to type as an
 answer.
 
-Lines the tool has no field for go in the text just before it. Workaround for question tools
-lacking a field for a line, such as a position or an option's description; remove when the asker's
-question tool carries one.
+When a message holds more than the tool's questions, such as a line the tool has no field for or
+a grill's map, each question the tool carries is written out complete in the text, with its lines,
+in the order the questions are asked and before anything else the message holds; the tool only
+repeats the question and its options. Workaround for question tools showing after the message's
+text and lacking a field for a line, such as a position or an option's description; remove when
+the asker's question tool shows first and carries every line.
 
 `orca orchestration ask --options` takes the options as one comma-separated string, so a label
 holding a comma splits in two; there each label has none. Workaround for Orca splitting the options
@@ -45,15 +49,19 @@ on commas; remove when it takes each option as its own argument.
 - **One decision.** A position that needs "and", or a Rules out that covers half of it, is two
   questions.
 - **The question comes first**, after its ID, with no label or marker before it.
+- **Complete in one block.** The question, its position, and its Wrong if, Rules out and any Risk
+  or One-way door lines stand together, with nothing from another question between them.
 - **Neutral.** It reads as answerable either way without the position. Context in it is fact; the
   argument lives only in the position. It presupposes only what is settled, and when it rests on
   an assumption it restates the few words it needs, with the assumption's ID.
 - **Concrete.** Anchored in something the person asked can check: a route, a caller, an input, a
   number. "How important is latency?" invites "very"; "What is the largest tenant this search
   serves?" invites the fact the decision turns on.
-- **Answerable without opening anything else.** It carries the content of everything it rests
-  on: a commit, file path, ID or file on disk comes with what it names, never in its place.
-  What cannot be carried as text, such as a screenshot, is described and also named by its path.
+- **Answerable without opening anything else.** It carries what it needs of everything it rests
+  on: a fact from the repo comes with its `file:line` and only the clause of it the question needs,
+  and a commit, file path, ID or file on disk with what of it the question needs, never in its
+  place. What cannot be carried as text, such as a screenshot, is described and also named by its
+  path.
 - **Cited.** Every claim in it carries its source: `file:line`, an earlier answer, or a primary
   source. General knowledge is not a source.
 - **Wrong if** - what would refute the position. It refutes this decision; it never opens a second.
