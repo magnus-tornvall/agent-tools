@@ -1,10 +1,10 @@
 # change
 
 Domain: Change. Make the shape's change in this worktree, or fix the findings handed over, so that
-each requirement holds by evidence and nothing else moves. It takes the shape's outcome,
-requirements, non-goals, constraints, touchpoints, decisions and oracles, the owner's rulings, and
-when fixing the findings with the reports that raised them; it returns commits on the work branch
-and a report. It reads no config.
+each requirement holds by evidence and nothing else moves. It takes the whole shape and the
+owner's rulings, and when fixing the findings with the reports that raised them; it returns commits
+on the work branch and a report. Where the shape is silent, its `purpose` says which way to lean.
+It reads no config.
 
 ## Principles
 
@@ -36,8 +36,8 @@ and a report. It reads no config.
   A finding you judge wrong is not fixed, and the report says why.
 - **The repo's own checks pass before you claim success.** Find them in its manifests and agent
   instructions; never invent them. A failing check is not success.
-- **Commits stay on the work branch, unpushed.** The branch is this Task's destination: never
-  push or merge it. The commit guide (`mt get commit`) defers to that destination.
+- **Commits stay on the work branch, unpushed.** Never push or merge it. The commit guide
+  (`mt get commit`) defers to the Task's spec for that.
 - **Your runs never write to the owner's `mt` usage log.** Every manual run of `mt`, and every run
   of a script, test or mutant that may call it, sets `MT_LOG` and `XDG_STATE_HOME` to scratch
   locations on its own command line. Loading your guides with the installed `mt get` is not such a

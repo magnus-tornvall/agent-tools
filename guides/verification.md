@@ -27,16 +27,18 @@ reference holds what it is given, what it withholds and what it judges. It reads
 
 A judge takes the work branch, its perspective and what its reference says it is given, and
 returns a report. It commits nothing and edits no tracked file: the fix is acted on by whoever
-reads the report.
+reads the report. What it owns, in its spec's Ownership, is its worktree's gitignored `.scratch/`
+and what the repo's own checks and builds write.
 
 ## Objectives
 
 - **Every finding can be acted on without asking.** It names its place, the input or state that
   shows it, the fix, and its door: two-way, or one-way and who pays to undo it
   (`mt get door-rule`).
-- **Every evidence file the report cites is named by its path**, so it can be moved out of the
-  worktree before the worktree is removed, wherever the coordinator moves it to. A judge writes each file under the worktree's gitignored `.scratch/`. Workaround for a
-  browser tool that may refuse to write outside the workspace; remove when it no longer does.
+- **Every evidence file the report cites is named by its path**, so it can be copied out of the
+  worktree before the worktree is removed, wherever the coordinator copies it to. A judge writes
+  each file under the worktree's gitignored `.scratch/`. Workaround for a browser tool that may
+  refuse to write outside the workspace; remove when it no longer does.
 
 ## Report
 

@@ -53,8 +53,9 @@ part. Only the owner changes a fixed rule.
   (`mt get verification --ref <perspective>`).
 - **One-way doors go to the owner.** A one-way door is asked of whoever owns the decision.
   Home: the door-rule guide (`mt get door-rule`).
-- **Surprise review always runs.** Home: the to-orca guide. A judge separate from the author is a
-  principle (separation of duties); "always runs" is a workaround: workers decide one-way doors
+- **Surprise review always runs**, on the final branch. Home: the to-orca guide. A judge separate
+  from the author is a principle (separation of duties); "always runs" is a workaround: workers
+  decide one-way doors
   without asking, and the judge holding the least found the most (`docs/guides-behaviour.md`).
   Remove when Runs show workers no longer deciding one-way doors without asking, and the owner
   decides to remove it. A Run without such a door is not evidence.

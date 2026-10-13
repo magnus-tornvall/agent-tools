@@ -2,11 +2,11 @@
 
 Domain: Change. Turn the changes in a working tree into commits a reader can trust: each one a
 single change they can explain, with a message that says what changed and why, pushed only where
-the session's destination allows. It supplements the built-in commit behaviour, whose safety
+the session allows a push. It supplements the built-in commit behaviour, whose safety
 defaults stay: no destructive operations, no skipped hooks. This guide owns what is staged, the
 message format and whether to push. It takes a working tree, the session's instructions and
-request, and its destination; it returns commits on the current branch, pushed or not, and a
-report. It reads no config.
+request, and what they allow pushed; it returns commits on the current branch, pushed or not, and
+a report. It reads no config.
 
 ## Principles
 
@@ -78,14 +78,14 @@ in bash 3.2.
 
 ## Push
 
-Push authority comes from the session's destination.
+Push authority comes from the session.
 
 - **In an interactive session** the owner's instructions and the request decide. When either allows
   pushing the current branch, it is pushed, with an upstream set when it has none. When neither
   does, nothing is pushed and the report names the branch as unpushed.
-- **In an Orca Task** the destination is the Task's, the branch its spec names. Its spec and
-  assignment guide decide; the change assignment leaves its commits unpushed on the work branch.
-  Whether the coordinator pushes it at hand-off is the to-orca guide's (`mt get to-orca`).
+- **In an Orca Task** the Task's spec and assignment guide decide; the change assignment leaves
+  its commits unpushed on the work branch. Whether the coordinator pushes it at hand-off is the
+  to-orca guide's (`mt get to-orca`).
 - **A rejected push is reported, not forced.** A non-fast-forward rejection means the upstream
   moved. `--force` and `--force-with-lease` are used only when the owner asks for them by name.
 

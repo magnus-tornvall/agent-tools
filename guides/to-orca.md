@@ -56,8 +56,9 @@ do.
   thing the owner approves is the plan. Given intent in any other form, you settle the shape with
   the owner as mvc does (`mt get mvc`), have mvc write the closed shape to its default location as
   `mvc-<slug>.yaml`, as it names a parked draft, and the owner approves it in its own ask, which
-  names that path, apart from the plan. Every Task that needs the shape is given that path. A
-  ruling leaves the shape as written and reaches every Task it bears on.
+  names that path, apart from the plan. The oracle and change Tasks are given that path; a judge
+  is given only its slice. A ruling leaves the shape as written and reaches every Task it bears
+  on.
 - **The owner approves a plan they can trust to run unattended.** It names the first Tasks and
   the assignments expected next, each Task's agent, model and effort, the base branch, and the
   destination: the branch, or a pull request. Each model and effort is your judgment for that
@@ -87,7 +88,12 @@ do.
 - **Nothing on the branch would surprise the owner**, above all a one-way door decided without a
   question. Fixed: changing it is the owner's call.
 - **The work is judged from each perspective by a separate actor**, never by whoever made it, as
-  the verification guide (`mt get verification`) fixes it.
+  the verification guide (`mt get verification`) fixes it. You choose which perspectives judge a
+  change, and may reach an objective without an assignment when the change is too small to need
+  one.
+- **The surprise perspective judges the final branch.** Fixed: changing it is the owner's call.
+  Workaround for workers deciding one-way doors without asking; remove when Runs show they no
+  longer do, and the owner decides to remove it.
 - **The owner's attention goes only where it must:** one-way doors, surprises, what a maintainer
   would not merge, failed attempts, and every finding still open once the fix rounds `fix_rounds`
   allows are spent. You answer everything else, by the door rule, and the answer is recorded.
@@ -113,13 +119,8 @@ do.
   inbox and Task results, not from memory. What the Run learned, per area (Orca, the guides and
   `mt`, any other), each line with the Orca version or commit it was seen on, filed with
   `mt dogfood` and linked to the issue it printed, if any. Proposed edits to the guides, drawn
-  from the workers' Toolbox lines, which the owner picks from; apply only the picked ones.
-
-You choose which perspectives judge a change, and may reach an objective without an assignment
-when the change is too small to need one. The surprise perspective always runs.
-Fixed: changing it is the owner's call.
-Workaround for workers deciding one-way doors without asking; remove when Runs show they no longer
-do, and the owner decides to remove it.
+  from the workers' Toolbox lines, which the owner picks from; apply only the picked ones, and
+  never on the work branch.
 
 ## Guardrails
 
@@ -153,9 +154,8 @@ do, and the owner decides to remove it.
     branch. It runs the repo's code. Given the whole shape and the owner's rulings, and the path
     the shape with its oracles is written to.
   - `change` makes the shape's change on the work branch, or fixes findings judges handed over.
-    It runs the repo's code and commits. Given the shape's outcome, requirements, non-goals,
-    constraints, touchpoints, decisions and oracles, the owner's rulings, and when fixing the
-    findings with the reports that raised them and every earlier change report.
+    It runs the repo's code and commits. Given the whole shape and the owner's rulings, and when
+    fixing the findings with the reports that raised them and every earlier change report.
   - `verification` judges the work branch from one perspective, each a reference loaded with
     `mt get verification --ref <perspective>`, and edits nothing. `coverage` judges whether the
     branch does what the shape says, and runs the code. `maintainer` judges whether a maintainer
