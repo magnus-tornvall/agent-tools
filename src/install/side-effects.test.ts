@@ -3,7 +3,7 @@ import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { parseMtUsage } from "../guide-lint/lint.ts";
-import { COMMANDS, DENY_RULES, OWNER_ONLY } from "./side-effects.ts";
+import { ASK_RULES, COMMANDS, DENY_RULES, OWNER_ONLY } from "./side-effects.ts";
 
 const MT = new URL("../../cli/mt", import.meta.url).pathname;
 const GUIDES = new URL("../../guides/", import.meta.url).pathname;
@@ -28,7 +28,7 @@ describe("side-effect classes", () => {
     expect(usageCommands()).toEqual(Object.keys(COMMANDS).sort());
   });
 
-  test("D9: get and oracle run are local writes, the rest read-only", () => {
+  test("D9, D5: get and oracle run are local writes, update network, the rest read-only", () => {
     expect(COMMANDS).toEqual({
       get: "local write",
       list: "read-only",
@@ -37,7 +37,12 @@ describe("side-effect classes", () => {
       "oracle hash": "read-only",
       "oracle run": "local write",
       config: "read-only",
+      update: "network",
     });
+  });
+
+  test("D3: install asks before an agent runs mt update, the one network command", () => {
+    expect(ASK_RULES).toEqual(["Bash(mt update:*)"]);
   });
 
   test("R1: install denies agents every mt oracle command and the oracle guide", () => {

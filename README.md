@@ -1,7 +1,12 @@
 # agent-tools
 
 Skills for agents working in Orca, and `mt`, which loads them on demand, checks and slices shapes
-and drafts, runs a shape's oracles, and prints the owner's config.
+and drafts, runs a shape's oracles, prints the owner's config, and updates its own clone. Install it
+with one line (see Install):
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/magnus-tornvall/agent-tools/main/install.sh | bash
+```
 
 ## The shape
 
@@ -61,6 +66,8 @@ mt oracle run [--base] [--timeout <seconds>] <shape>
                               check each oracle's pinned files and run it from the repo root;
                               --base checks each does what its base says; - reads stdin
 mt config [<key>]             print the owner's config, or one key's value
+mt update                     move this clone forward along the channel it has checked out,
+                              and run make install
 mt --help                     print the usage
 ```
 
@@ -71,12 +78,12 @@ the attempt is still logged, with `found` false.
 ### Contracts
 
 Each command's contract: its purpose, what it takes, what it prints, how it exits, and its
-side-effect class. A class is either read-only, which reads and prints and writes nothing, or local
-write, which writes on this machine only. The classes are declared once in
-`src/install/side-effects.ts`. Every class stays on the machine, so the one allow rule `Bash(mt:*)`
-covers every command and runs without a prompt (see Install); a class that leaves the machine would
-have to bring install's handling with it. `mt oracle` and `mt get oracle` are denied to agents
-whatever their class (see Install). Every usage error prints `mt: <reason>` and a usage on stderr,
+side-effect class. A class is read-only, which reads and prints and writes nothing; local write,
+which writes on this machine only; or network, which reaches off this machine. The classes are
+declared once in `src/install/side-effects.ts`. The one allow rule `Bash(mt:*)` covers every
+command, and an ask rule per network command, `Bash(mt update:*)`, makes Claude Code ask before an
+agent runs it (see Install). `mt oracle` and `mt get oracle` are denied to agents whatever their
+class (see Install). Every usage error prints `mt: <reason>` and a usage on stderr,
 nothing on stdout, and exits 2. Only `mt config` reads the owner's config (see Config); every other
 command behaves the same whatever the config holds.
 
@@ -120,6 +127,21 @@ to agents, so the owner runs it; nothing checks who wrote or approved the shape.
 
 **`mt config [<key>]`**, read-only. Prints the owner's config: the file's path, then one line per
 key. With a key, prints that key's value alone. Exits 0, 1 or 2 as Config says.
+
+**`mt update`**, network. Moves the clone `mt` runs from forward along the channel it has checked
+out, then runs `make install` from it. With a release tag checked out, it lists origin's tags and
+checks out the newest release, the highest `vMAJOR.MINOR.PATCH`, other tags ignored, when it is
+newer, printing the release it leaves and the one it moves to; at the newest it says the clone is
+already there. With `main` checked out, it fetches origin's `main` and fast-forwards to it; at
+origin's `main` it says the clone is already there. It runs `make install` whether or not the clone
+moved, its input from `mt update`'s, and exits 0. When `make install` fails, it exits 1 saying to
+run `make install` again, and keeps the move. It refuses, exiting 1 with one line on stderr and the
+clone's `HEAD`, branch and files as they were, when tracked files have local changes, naming them;
+when the clone is on a branch other than `main`, naming it; when it has neither `main` nor a
+release checked out; when its release is newer than origin's newest, or its `main` is ahead of or
+has diverged from origin's `main`, so it cannot move forward; when origin has no release; when git
+or make is not on PATH; and when a fetch from origin fails, naming it. An argument exits 2. Agents
+are asked before they run it (see Install).
 
 **`mt`, `mt help`, `mt -h` and `mt --help`**, read-only. Print the usage on stdout and exit 0.
 The usage lists every command, and names the usage log's path and the config file's path.
@@ -245,15 +267,31 @@ workers launch with, not only on your interactive shell's, or every `mt` command
 fails. Use Bun 1.2.23 or later: `Bun.YAML.parse` arrived in 1.2.21, `Bun.YAML.stringify` in
 1.2.22, and from 1.2.23 `Bun.YAML.parse` throws a `SyntaxError` on invalid input, which `mt
 shape` relies on ([release notes](https://bun.com/blog/release-notes/bun-v1.2.23)). It is
-tested on 1.3.14. `mt config` reads its file with `Bun.TOML.parse`, which is older. Install Bun,
-then run this from the clone:
+tested on 1.3.14. `mt config` reads its file with `Bun.TOML.parse`, which is older. Install git,
+make and Bun, then run:
 
 ```sh
-make install
+curl -fsSL https://raw.githubusercontent.com/magnus-tornvall/agent-tools/main/install.sh | bash
 ```
 
-It is safe to run again, after a pull or on a machine that is half set up; it changes only what
-is missing or stale. It:
+`install.sh` clones this repo into `${XDG_DATA_HOME:-$HOME/.local/share}/agent-tools` with the
+newest release checked out, the highest `vMAJOR.MINOR.PATCH` tag, and runs `make install` there,
+asking its question on your terminal. It installs none of git, make and Bun: one missing, it says
+which and clones nothing. A folder already in the clone's place that is not a clone of this repo is
+left as it is, and it fails naming it; a clone whose origin spells this repo's GitHub URL another
+way, over ssh or without `.git`, is a clone of it. While `~/.local/bin/mt` links into another
+clone, such as one you ran `make install` from, it fails naming that clone and clones and links
+nothing: run `make uninstall` there first. Run again over the clone, it runs the clone's
+`mt update`. `AGENT_TOOLS_URL` clones another repo instead, as the tests do with a local one.
+
+The clone follows the channel it has checked out, with no config: a release tag follows releases,
+and `main` follows `main`. `mt update` moves it forward along that channel and runs `make install`
+again (see Contracts); check out `main` in the clone to follow it. A clone on another branch, with
+local changes or ahead of origin is left as it is. When `make install` fails after a move, the move
+stays and `mt update` says to run `make install` again.
+
+To work on `mt`, run `make install` from your own clone instead. It is safe to run again, after a
+pull or on a machine that is half set up; it changes only what is missing or stale. It:
 
 - checks Bun's version and runs `bun install --frozen-lockfile`, since `mt shape` needs zod;
 - links `cli/mt` as `~/.local/bin/mt`. `mt` finds the guides through the link, so the clone
@@ -262,13 +300,14 @@ is missing or stale. It:
   `~/.claude/skills` as a link to `~/.agents/skills/<tool>`, so Claude Code finds it. With no
   `~/.agents/skills` folder it links the stubs straight into `~/.claude/skills` and does not create
   `~/.agents`. It removes the links to a stub that is gone;
-- asks whether to add `Bash(mt:*)` to `permissions.allow`, and `Bash(mt oracle:*)` and
-  `Bash(mt get oracle:*)` to `permissions.deny`, in `~/.claude/settings.json`, so Claude Code
-  agents run every `mt` command without a prompt and are refused `mt oracle` and the oracle guide,
-  which are the owner's. Every side-effect class stays on the machine (see Contracts), so that one allow rule
-  covers every command, and `permissions.ask` is left as it is. Claude Code checks deny rules first,
-  so the deny rules beat `Bash(mt:*)`; they match the command as written, so `mt` by its path or
-  inside `sh -c` still runs, and an agent that does not read these settings is not refused. A file
+- asks whether to add `Bash(mt:*)` to `permissions.allow`, `Bash(mt update:*)` to
+  `permissions.ask`, and `Bash(mt oracle:*)` and `Bash(mt get oracle:*)` to `permissions.deny`, in
+  `~/.claude/settings.json`, so Claude Code agents run every `mt` command without a prompt but
+  `mt update`, which reaches off the machine (see Contracts) and is asked first, and are refused
+  `mt oracle` and the oracle guide, which are the owner's. Claude Code checks deny rules first, then
+  ask rules, then allow rules, so the deny and ask rules beat `Bash(mt:*)`, and an ask rule prompts
+  even in auto mode; they match the command as written, so `mt` by its path or inside `sh -c` still
+  runs, and an agent that does not read these settings is not refused or asked. A file
   that still holds `Bash(mt get:*)`, `Bash(mt list)` or `Bash(mt shape:*)` from an earlier install
   has them replaced. A yes keeps everything else in the file; it is not asked again once the rules
   are there. `ADD_MT_RULES=yes` or `ADD_MT_RULES=no` answers without asking, and with no terminal to
@@ -285,28 +324,42 @@ fails, naming it: linking over it would write a stray link inside the folder, or
 The whole mvc from before it became a guide is such a folder, and so is a whole commit skill copied
 in before commit became one; the old and the new cannot both be installed under one name. To keep
 the old one for a later comparison, move it out of the skills folder rather than delete it. Settings
-that are not a JSON object, or whose `permissions` is not an object or whose `permissions.allow` or
-`permissions.deny` is not a list of strings, are left alone too, and the install fails saying which;
-it names the rules to add by hand only when the settings are not JSON or not an object.
+that are not a JSON object, or whose `permissions` is not an object or whose `permissions.allow`,
+`permissions.ask` or `permissions.deny` is not a list of strings, are left alone too, and the
+install fails saying which; it names the rules to add by hand only when the settings are not JSON
+or not an object.
 
 `make uninstall` takes it back out: the `mt` link, every link in either skills folder that points
 into this clone, and every link in `~/.claude/skills` to such a link in `~/.agents/skills`, however
 it spells the path and even one made by hand, so a skill or `mt` installed some other way stays.
 With `~/.agents/skills` gone, it also removes the links in `~/.claude/skills` to it. It asks before
-removing the rule, and any of the three earlier ones, from the settings; `REMOVE_MT_RULES=yes`
-or `=no` answers without asking. It leaves Bun, the clone and its `node_modules`, your shell profile
-and the usage log. Pass the same `BIN_DIR`, `SKILLS_DIR`, `CLAUDE_SKILLS_DIR` and `SETTINGS` you
-installed with.
+removing the rules, and any of the three earlier ones, from the settings, keeping every other rule;
+`REMOVE_MT_RULES=yes` or `=no` answers without asking. It leaves Bun, the clone and its
+`node_modules`, your shell profile and the usage log. Pass the same `BIN_DIR`, `SKILLS_DIR`,
+`CLAUDE_SKILLS_DIR` and `SETTINGS` you installed with.
 
 A skill already linked from a clone becomes a stub when that clone pulls this layout, and the
 stub runs `mt get`. Run `make install` with the pull, or every agent that loads the skill fails on
 its first command.
+
+### Release
+
+A release is a tag `vMAJOR.MINOR.PATCH` on this repo, and the newest is the highest version; other
+tags are ignored. Cut one by running the tests on the commit, then pushing its tag:
+
+```sh
+git tag v0.2.0
+git push origin v0.2.0
+```
+
+`install.sh` and `mt update` read origin's tags, so the tag is the release.
 
 ### Test
 
 ```sh
 bash test/mt.sh
 bash test/install.sh
+bash test/update.sh
 bash test/guides.sh
 bun test
 bun run typecheck
@@ -314,7 +367,10 @@ bun run typecheck
 
 `test/mt.sh` checks `mt get` and `mt list`, and needs `python3` on PATH to parse the log's JSON
 lines; `mt` itself needs only Bun. `test/install.sh` runs `make install` and `make uninstall`
-against throwaway home folders, and needs `python3` too.
+against throwaway home folders, and needs `python3` too. `test/update.sh` runs `install.sh` and
+`mt update` against a local origin, made from this worktree's files, and throwaway home folders, and
+needs `python3` and Bun's package cache to hold this repo's dependencies: it reaches no network, so
+`bun install` fails on a package the cache lacks.
 `src/install/PART.md` and `src/guide-lint/PART.md` hold the contracts of install and guide-lint.
 `test/guides.sh` is guide-lint, whose code is `src/guide-lint/`. It fails, one ``file:line:
 `mention`: reason`` line each, when a guide, stub skill or `AGENTS.md` mentions in backticks an `mt
@@ -345,6 +401,8 @@ cannot read `cli/mt`, which has no extension.
 AGENTS.md the charter: each part's domain, what a part contains, the fixed rules, the config rule;
           CLAUDE.md imports it
 cli/      mt
+install.sh
+          the curl line's installer: clones the newest release and runs make install
 Makefile  make install and make uninstall
 src/      shape/, the shape schema and mt shape; oracle/, mt oracle; config/, the owner's config
           and mt config; install/, the side-effect classes and the settings rules; guide-lint/,
@@ -354,6 +412,7 @@ guides/   one guide per tool, <name>.md, with its references in <name>/<ref>.md
 skills/   a stub skill per guide an agent or the owner picks, <name>/SKILL.md, mvc and ask
           among them
 test/     mt.sh, which checks mt get and mt list; install.sh, which checks make install and
-          uninstall; guides.sh, which checks that what guides and AGENTS.md mention still exists
+          uninstall; update.sh, which checks install.sh and mt update; guides.sh, which checks
+          that what guides and AGENTS.md mention still exists
 docs/     known Orca and guide behaviour, research
 ```

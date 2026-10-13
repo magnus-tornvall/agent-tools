@@ -1,8 +1,8 @@
 #!/usr/bin/env bun
 // mt: load the know-how of the owner's tools on demand, record every load, check and slice shapes
-// and drafts, run a shape's oracles, and print the owner's config. get and list need nothing beyond
-// this file; shape, oracle and config load src/shape/, src/oracle/ and src/config/ only when they
-// are called.
+// and drafts, run a shape's oracles, print the owner's config, and update the clone it runs from.
+// get, list and update need nothing beyond this file; shape, oracle and config load src/shape/,
+// src/oracle/ and src/config/ only when they are called.
 
 import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, statSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
@@ -23,6 +23,8 @@ const USAGE = `usage: mt get <tool> [--ref <ref>]   print the guide for a tool, 
                                      passes; - reads stdin
        mt config [<key>]             print the config file's path and each key, binding or
                                      advisory, with its value; or one key's value alone
+       mt update                     move this clone to origin's newest release, or with main
+                                     checked out to origin's main, and run make install
        mt --help                     show this usage
 
 Every \`get\` is appended to $MT_LOG, or \${XDG_STATE_HOME:-$HOME/.local/state}/mt/usage.jsonl.
@@ -192,6 +194,109 @@ async function cmdConfig(args: string[]): Promise<number> {
   return runConfig(args);
 }
 
+class UpdateError extends Error {}
+
+/** A release tag, vMAJOR.MINOR.PATCH, as its three numbers; null for any other tag. */
+function releaseVersion(tag: string): number[] | null {
+  const match = /^v(\d+)\.(\d+)\.(\d+)$/.exec(tag);
+  return match ? match.slice(1).map(Number) : null;
+}
+
+function compareReleases(a: string, b: string): number {
+  const [x, y] = [releaseVersion(a) ?? [], releaseVersion(b) ?? []];
+  for (let i = 0; i < 3; i++) if (x[i] !== y[i]) return (x[i] ?? 0) - (y[i] ?? 0);
+  return 0;
+}
+
+/** The highest release among tags, other tags ignored; null when there is none. */
+function newestRelease(tags: string[]): string | null {
+  const releases = tags.filter((tag) => releaseVersion(tag) !== null).sort(compareReleases);
+  return releases.at(-1) ?? null;
+}
+
+/** Runs git in the clone, its output trimmed; throws UpdateError with `what` and git's stderr when it fails. */
+function gitIn(what: string, args: string[]): string {
+  const result = Bun.spawnSync(["git", "-C", ROOT, ...args]);
+  if (!result.success) throw new UpdateError(`${what} failed: ${result.stderr.toString().trim()}`);
+  return result.stdout.toString().trim();
+}
+
+function shortCommit(rev: string): string {
+  return gitIn(`reading ${rev}`, ["rev-parse", "--short", rev]);
+}
+
+/** Whether commit a is an ancestor of commit b; throws UpdateError when git cannot say. */
+function isAncestor(a: string, b: string): boolean {
+  const result = Bun.spawnSync(["git", "-C", ROOT, "merge-base", "--is-ancestor", a, b]);
+  if (result.exitCode === 0 || result.exitCode === 1) return result.exitCode === 0;
+  throw new UpdateError(`comparing ${a} with ${b} failed: ${result.stderr.toString().trim()}`);
+}
+
+/**
+ * Fast-forwards main to origin's main; returns what it says of the move. Refuses a main that is
+ * ahead of or has diverged from origin's main, since it cannot move forward to it.
+ */
+function updateMain(): string {
+  const before = shortCommit("HEAD");
+  gitIn("fetching main from origin", ["fetch", "--quiet", "origin", "main"]);
+  const after = shortCommit("FETCH_HEAD");
+  if (after === before) return `${ROOT} is already at origin's main, ${after}`;
+  if (!isAncestor("HEAD", "FETCH_HEAD")) {
+    const how = isAncestor("FETCH_HEAD", "HEAD") ? "is ahead of" : "has diverged from";
+    throw new UpdateError(`${ROOT}'s main ${how} origin's main, so it cannot move forward to ${after}`);
+  }
+  gitIn(`fast-forwarding main from ${before} to origin's ${after}`, ["merge", "--quiet", "--ff-only", "FETCH_HEAD"]);
+  return `moved ${ROOT} on main from ${before} to ${after}`;
+}
+
+/** Checks out origin's newest release when it is newer; returns what it says of the move. */
+function updateRelease(): string {
+  const current = newestRelease(gitIn("reading the tags at HEAD", ["tag", "--points-at", "HEAD"]).split("\n"));
+  if (current === null) {
+    throw new UpdateError(`${ROOT} has neither main nor a release tag vMAJOR.MINOR.PATCH checked out; check out one and run mt update again`);
+  }
+  const refs = gitIn("fetching the tags from origin", ["ls-remote", "--tags", "--refs", "origin"]);
+  const newest = newestRelease(refs.split("\n").map((line) => line.replace(/^.*\trefs\/tags\//, "")));
+  if (newest === null) throw new UpdateError("origin has no release tag vMAJOR.MINOR.PATCH");
+  const order = compareReleases(current, newest);
+  if (order === 0) return `${ROOT} is already at ${current}, origin's newest release`;
+  if (order > 0) throw new UpdateError(`${ROOT} has ${current} checked out, so it cannot move forward to ${newest}, origin's newest release`);
+  gitIn(`fetching ${newest} from origin`, ["fetch", "--quiet", "--no-tags", "origin", `refs/tags/${newest}:refs/tags/${newest}`]);
+  gitIn(`checking out ${newest}`, ["-c", "advice.detachedHead=false", "checkout", "--quiet", "--detach", `refs/tags/${newest}`]);
+  return `moved ${ROOT} from ${current} to ${newest}`;
+}
+
+/**
+ * Moves the clone forward along the channel it has checked out, main or a release tag, then runs
+ * make install from it. Refused or failed before make install, it leaves HEAD, the branch and the
+ * files as they were. When make install fails after the move, it keeps the move, exits 1 and says
+ * to run make install again.
+ */
+function cmdUpdate(args: string[]): number {
+  if (args.length > 0) throw new UsageError(`unexpected argument '${args[0]}'`);
+  try {
+    for (const tool of ["git", "make"]) if (Bun.which(tool) === null) throw new UpdateError(`${tool} is not on PATH`);
+    const changes = gitIn("reading the clone's status", ["status", "--porcelain", "--untracked-files=no"]);
+    if (changes !== "") {
+      throw new UpdateError(`${ROOT} has local changes to tracked files; commit or discard them and run mt update again:\n${changes}`);
+    }
+    const branch = Bun.spawnSync(["git", "-C", ROOT, "symbolic-ref", "--quiet", "--short", "HEAD"]);
+    const name = branch.stdout.toString().trim();
+    if (branch.success && name !== "main") {
+      throw new UpdateError(`${ROOT} is on branch ${name}; mt update follows main or a release tag, so check out one and run it again`);
+    }
+    process.stdout.write(`${branch.success ? updateMain() : updateRelease()}\n`);
+  } catch (error) {
+    if (!(error instanceof UpdateError)) throw error;
+    process.stderr.write(`mt: update: ${error.message}\n`);
+    return 1;
+  }
+  const install = Bun.spawnSync(["make", "-C", ROOT, "install"], { stdio: ["inherit", "inherit", "inherit"] });
+  if (install.success) return 0;
+  process.stderr.write(`mt: update: make install failed in ${ROOT}; fix what it names and run make install there again\n`);
+  return 1;
+}
+
 async function main(args: string[]): Promise<number> {
   const [command = "", ...rest] = args;
   switch (command) {
@@ -205,6 +310,8 @@ async function main(args: string[]): Promise<number> {
       return cmdOracle(rest);
     case "config":
       return cmdConfig(rest);
+    case "update":
+      return cmdUpdate(rest);
     case "":
     case "-h":
     case "--help":
