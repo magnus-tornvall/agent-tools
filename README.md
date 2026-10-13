@@ -337,8 +337,10 @@ is missing or stale. It:
   the SDK is installed;
 - links `cli/mt` as `~/.local/bin/mt`. `mt` finds the guides through the link, so the clone
   stays where it is;
-- links each stub skill that has a guide into `~/.agents/skills`, and removes links into this
-  clone whose stub is gone;
+- links each stub skill that has a guide into `~/.agents/skills`, and links each into
+  `~/.claude/skills` as a link to `~/.agents/skills/<tool>`, so Claude Code finds it. With no
+  `~/.agents/skills` folder it links the stubs straight into `~/.claude/skills` and does not create
+  `~/.agents`. It removes the links to a stub that is gone;
 - asks whether to add `Bash(mt:*)` to `permissions.allow` and `Bash(mt dogfood:*)` to
   `permissions.ask` in `~/.claude/settings.json`, so Claude Code agents run every `mt` command
   without a prompt except an external one, `mt dogfood`, which asks before each filing and each
@@ -351,7 +353,7 @@ is missing or stale. It:
 - checks that a login shell started from your profile alone finds `mt` and Bun. Orca starts a
   worker in a terminal running your shell, so this is the PATH workers get.
 
-Set `BIN_DIR`, `SKILLS_DIR` or `SETTINGS` to use other places, for example
+Set `BIN_DIR`, `SKILLS_DIR`, `CLAUDE_SKILLS_DIR` or `SETTINGS` to use other places, for example
 `make install SKILLS_DIR=~/.claude/skills` to link the stubs straight into Claude Code's folder. A skill
 installed as a real folder is left alone and the install fails, naming it: linking over it
 would write a stray link inside it. The whole mvc from before it became a guide is such a folder,
@@ -362,11 +364,12 @@ object or whose `permissions.allow` or `permissions.ask` is not a list of string
 too, and the install fails saying which; it names the rules to add by hand only when the settings
 are not JSON or not an object.
 
-`make uninstall` takes it back out: the `mt` link and every link in the skills folder that points
-into this clone, so a skill or `mt` installed some other way stays. It asks before removing the
+`make uninstall` takes it back out: the `mt` link, every link in either skills folder that points
+into this clone, and every link in `~/.claude/skills` to such a link in `~/.agents/skills`, even
+one made by hand, so a skill or `mt` installed some other way stays. It asks before removing the
 two rules, and any of the three earlier ones, from the settings; `REMOVE_MT_RULES=yes` or `=no` answers without asking. It leaves
 Bun, the clone and its `node_modules`, your shell profile and the usage log. Pass the same
-`BIN_DIR`, `SKILLS_DIR` and `SETTINGS` you installed with.
+`BIN_DIR`, `SKILLS_DIR`, `CLAUDE_SKILLS_DIR` and `SETTINGS` you installed with.
 
 A skill already linked from a clone becomes a stub when that clone pulls this layout, and the
 stub runs `mt get`. Run `make install` with the pull, or every agent that loads the skill fails on
