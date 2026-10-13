@@ -20,7 +20,8 @@ It reads no config.
 
 - **Every requirement holds**, shown by a test written from it. A requirement with no observable
   form gets a test you pick, recorded as an assumption. The shape's oracles are the owner's to
-  run: none is your evidence, and you run none, through `mt oracle` or by its command.
+  run: none is your evidence, and you run none through `mt oracle` or by its own command. An
+  oracle the repo's checks pick up runs with them, as any test does, and the checks pass with it.
 - **Files an oracle pins are never changed**: each keeps the sha256 the shape pins for it. An
   oracle you judge wrong is a question with the contradiction and its source, never an edit.
   Changing what an oracle runs through but does not pin, such as its runner's config, a shared

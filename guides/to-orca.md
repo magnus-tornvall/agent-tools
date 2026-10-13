@@ -57,20 +57,23 @@ do.
   the owner as mvc does (`mt get mvc`), have mvc write the closed shape to its default location as
   `mvc-<slug>.yaml`, as it names a parked draft, and the owner approves it in its own ask, which
   names that path, apart from the plan. The change Tasks are given that path; a judge is given
-  only its slice. A ruling leaves the shape as written and reaches every Task it bears
-  on.
+  only its slice. A ruling leaves the shape as written and reaches every Task it bears on.
 - **The owner approves a plan they can trust to run unattended.** It names the first Tasks and
   the assignments expected next, each Task's agent, model and effort, the base branch, and the
   destination: the branch, or a pull request. Each model and effort is your judgment for that
-  Task. It names anything that would stop a worker at its first command or at a permission
-  prompt: `mt` or Bun missing from the PATH a worker launches with, and each `mt get`,
-  `mt shape`, repo check and `git commit` a worker's launch permissions would not allow. When a requirement needs the app running, it names where the app under test actually
-  sends its requests, read from the config it runs with, not from the docs. A changed plan is
-  approved again.
-- **A shape's oracles are the owner's to write and run.** No Task writes an oracle or runs one,
-  through `mt oracle` or by its command, and no Task changes a file an oracle pins. When the shape
-  has oracles, the hand-off names each one with the keys it covers, and the `mt oracle run` command,
-  with the shape's path, that the owner runs on the final branch.
+  Task. When the shape has oracles, it names the commit that holds their files, and the work
+  branch is cut from a base that includes it; when no commit does, it says so. It names anything
+  that would stop a worker at its first command or at a permission prompt: `mt` or Bun missing
+  from the PATH a worker launches with, and each `mt get`, `mt shape`, repo check and
+  `git commit` a worker's launch permissions would not allow. When a requirement needs the app
+  running, it names where the app under test actually sends its requests, read from the config it
+  runs with, not from the docs. A changed plan is approved again.
+- **A shape's oracles are the owner's to write and run.** No Task writes an oracle, or runs one
+  through `mt oracle` or by its own command. An oracle the repo's checks pick up runs with them,
+  as any test does, and the checks pass with it. No Task changes a file an oracle pins. When the
+  shape has oracles, the hand-off names each one with the keys it covers, and the `mt oracle run`
+  command, with the shape's path, that the owner runs on the final branch. When no commit holds
+  their files, the hand-off reports those oracles absent, not tampered.
 - **The change exists on its own branch, made by workers.** The base branch is untouched.
 - **The repo's own checks pass on the branch.** Fixed: changing it is the owner's call.
 - **Every requirement has evidence at least as strong as the requirement.**

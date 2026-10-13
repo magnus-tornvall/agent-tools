@@ -18,12 +18,13 @@ Fixed: changing it is the owner's call.
 ## Objectives
 
 - **Every requirement has evidence**: a test that asserts it, or your own observation from running
-  it. The shape's oracles are the owner's to run, so you run none, through `mt oracle` or by its
-  command. A requirement reported done without evidence is a finding, and so is evidence weaker
-  than the requirement.
+  it. The shape's oracles are the owner's to run, so you run none through `mt oracle` or by its
+  own command; one the repo's checks pick up runs with them, as any test does. A requirement
+  reported done without evidence is a finding, and so is evidence weaker than the requirement.
 - **No oracle is tampered**: each file an oracle pins has on the branch the sha256 the shape pins
   for it. A tampered oracle is a finding, and so is an edit no ruling allowed to what an oracle
-  runs through but does not pin, such as its runner's config or shared setup.
+  runs through but does not pin, such as its runner's config or shared setup. A pinned file no
+  commit on the branch ever held is reported absent, not tampered.
 - **Each oracle checks what its key says.** One that passes by construction, asserts less than its
   key, or mocks what it judges is a finding.
 - **No non-goal is built.**
@@ -32,4 +33,5 @@ Fixed: changing it is the owner's call.
 ## Report
 
 Besides what the verification guide asks: each requirement, whether it holds and its evidence, and,
-when the shape has oracles, each pinned file whose sha256 differs from the one the shape pins.
+when the shape has oracles, each pinned file whose sha256 differs from the one the shape pins, and
+each one that is absent.
