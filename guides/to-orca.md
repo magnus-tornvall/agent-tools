@@ -107,10 +107,14 @@ do.
   hand-off names each Task worktree that holds commits the destination lacks. Workaround for Orca
   removing a worktree's branch with it, as the overlay records for `orca worktree rm` and not yet
   observed for the UI; remove when Orca keeps or names commits that only a removed worktree held.
+- **Every worker whose report you accept stays live**, whether it reports success or failure:
+  kept with `orca orchestration worker-retain` and never released, so its terminal closes only
+  when the owner deletes its worktree in Orca's UI.
 - **Every process a Task left running is named.** The hand-off names each one a Task started that
-  still runs after its release, and the owner decides whether it is stopped. Workaround for Orca's
-  release stopping only what the agent's harness started; remove when release stops every process
-  a Task started.
+  still runs at the hand-off, and says for each whether deleting its worktree stops it; the owner
+  decides whether it is stopped.
+  Workaround for closing an agent's terminal stopping only what the agent's harness started;
+  remove when closing it stops every process a Task started.
 - **The hand-off.** The destination the owner approved: the branch, or a pull request. An
   account of every Task, attempt, dropped finding and question you answered, rebuilt from Orca's
   inbox and Task results, not from memory. Proposed edits to the guides, drawn from the workers'
@@ -125,8 +129,9 @@ do.
 - Never remove a worktree or a branch.
 - Never retry, stop or abandon a worker without the owner's choice or Orca's positive proof that
   it is gone. Absence is not proof.
-- Two Tasks that run the repo's code never run in one worktree at once. A judge that runs code can
-  get its own worktree cut from the work branch.
+- Two Tasks that run the repo's code never run in one worktree at once. A retained worker whose
+  harness still runs a process it started is still running the repo's code. A judge that runs code
+  can get its own worktree cut from the work branch.
 - A judge is never pointed at, or placed where it would find, more of the shape than its slice.
 - A spec never changes. A change is a new Task.
 
