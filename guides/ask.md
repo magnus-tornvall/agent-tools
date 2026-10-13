@@ -33,9 +33,12 @@ position's pick first. In gwt, the tool's free answer is **Neither**, or **Eithe
 in plain text, never a picker, so "you are asking the wrong thing" is as easy to type as an
 answer.
 
-Lines the tool has no field for go in the text just before it. Workaround for question tools
-lacking a field for a line, such as a position or an option's description; remove when the asker's
-question tool carries one.
+When a message holds more than the tool's questions, such as a line the tool has no field for or
+a grill's map, each question the tool carries is written out complete in the text, with its lines,
+in the order the questions are asked and before anything else the message holds; the tool only
+repeats the question and its options. Workaround for question tools showing after the message's
+text and lacking a field for a line, such as a position or an option's description; remove when
+the asker's question tool shows first and carries every line.
 
 `orca orchestration ask --options` takes the options as one comma-separated string, so a label
 holding a comma splits in two; there each label has none. Workaround for Orca splitting the options
