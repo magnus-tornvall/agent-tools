@@ -207,6 +207,8 @@ install_answering n "$H"
 assert_contains "the missing ask rule alone is asked about" "$(cat "$TMP/out")" "add Bash(mt dogfood:*) to permissions.ask"
 [ -z "$(ask_list "$H/.claude/settings.json")" ] || fail "declining wrote the ask rule"
 check "declining leaves the ask list as it was"
+assert_contains "declining the ask rule says agents run mt dogfood unasked" "$(cat "$TMP/out")" \
+  "agents run mt dogfood without asking"
 printf '{"permissions": {"allow": ["Bash(mt:*)"], "ask": ["Bash(mt dogfood:*)"]}}\n' >"$H/.claude/settings.json"
 cp "$H/.claude/settings.json" "$TMP/settings.before"
 install_answering n "$H"
@@ -214,6 +216,10 @@ assert_contains "the missing deny rules alone are asked about" "$(cat "$TMP/out"
   "add Bash(mt oracle:*), Bash(mt get oracle:*) to permissions.deny?"
 cmp -s "$TMP/settings.before" "$H/.claude/settings.json" || fail "declining wrote the deny rules"
 check "declining leaves the settings without the deny rules"
+assert_contains "declining the deny rules says agents are not refused oracle" "$(cat "$TMP/out")" \
+  "agents are not refused mt oracle, mt get oracle"
+case $(cat "$TMP/out") in *"agents will ask"*) fail "declining the deny rules says agents will ask" ;; esac
+check "declining the deny rules does not say agents will ask"
 
 # an ask or deny list that is not a list of strings is left alone
 for list in ask deny; do
@@ -332,6 +338,8 @@ assert_eq "declining rule removal still uninstalls" 0 "$rc"
 assert_eq "declined rules stay" "Bash(mt:*)" "$(allow_list "$H/.claude/settings.json")"
 assert_eq "the declined ask rule stays" "Bash(mt dogfood:*)" "$(ask_list "$H/.claude/settings.json")"
 assert_eq "the declined deny rules stay" "$(printf 'Bash(mt oracle:*)\nBash(mt get oracle:*)')" "$(deny_list "$H/.claude/settings.json")"
+assert_contains "declining rule removal names the rules kept" "$(cat "$TMP/out")" \
+  "kept in permissions.allow: Bash(mt:*); kept in permissions.ask: Bash(mt dogfood:*); kept in permissions.deny: Bash(mt oracle:*), Bash(mt get oracle:*)"
 uninstall "$H"; rc=$?
 assert_eq "uninstall with no terminal to ask on exits 0" 0 "$rc"
 assert_contains "with no terminal it says how to answer" "$(cat "$TMP/out")" "REMOVE_MT_RULES=yes"

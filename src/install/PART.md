@@ -54,10 +54,11 @@ or approved the shape it runs.
 - `bun src/install/mt-rules.ts add|remove <settings.json> [yes|no]` adds or removes the rules,
   keeping everything else in the file. `add` creates a missing file. It asks only when there is
   something to change, and exits 0 whether it changed the file, found nothing to change or was
-  declined. A file that is not a JSON object, or whose `permissions` is not an object or whose
-  `permissions.allow`, `permissions.ask` or `permissions.deny` is not a list of strings, is left
-  as it is: one line on stderr says which, naming the rules to add by hand when the file is not a
-  JSON object, and it exits 1. A usage error exits 2.
+  declined; declined, it prints one line naming what it left as it is. A file that is not a JSON
+  object, or whose `permissions` is not an object or whose `permissions.allow`, `permissions.ask`
+  or `permissions.deny` is not a list of strings, is left as it is: one line on stderr says which,
+  naming the rules to add by hand when the file is not a JSON object, and it exits 1. A usage
+  error exits 2.
 - The rules are those `rules()` in `side-effects.ts` builds: `Bash(mt:*)` in `permissions.allow`,
   and in `permissions.ask` one `Bash(mt <command>:*)` per external command that no shorter
   external command covers by prefix, and in `permissions.deny` one `Bash(mt <prefix>:*)` per

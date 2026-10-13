@@ -19,10 +19,7 @@ type Mode = "add" | "remove";
 type Edit = { add: string[]; remove: string[] };
 type Edits = { allow: Edit; ask: Edit; deny: Edit };
 
-const WORDING: Record<Mode, { variable: string; declined: string }> = {
-  add: { variable: "ADD_MT_RULES", declined: "agents will ask before each mt command" },
-  remove: { variable: "REMOVE_MT_RULES", declined: "the mt rules stay allowed" },
-};
+const VARIABLE: Record<Mode, string> = { add: "ADD_MT_RULES", remove: "REMOVE_MT_RULES" };
 
 function isObject(value: unknown): value is Json {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -75,6 +72,24 @@ function describe(edits: Edits): string {
   return parts.join("; ");
 }
 
+/** The command a `Bash(<command>:*)` rule matches, such as `mt oracle`. */
+function command(rule: string): string {
+  return rule.replace(/^Bash\((.*):\*\)$/, "$1");
+}
+
+/** What declining the edits leaves as it is, for the owner who declined them. */
+function declined(edits: Edits): string {
+  const parts: string[] = [];
+  if (edits.allow.add.length > 0) parts.push("agents will ask before each mt command");
+  else if (edits.ask.add.length > 0) parts.push(`agents run ${edits.ask.add.map(command).join(", ")} without asking`);
+  if (edits.deny.add.length > 0) parts.push(`agents are not refused ${edits.deny.add.map(command).join(", ")}`);
+  for (const list of ["allow", "ask", "deny"] as const) {
+    const { remove } = edits[list];
+    if (remove.length > 0) parts.push(`kept in permissions.${list}: ${remove.join(", ")}`);
+  }
+  return parts.join("; ");
+}
+
 function applyEdit(list: readonly string[], { add, remove }: Edit): string[] {
   return [...list.filter((rule) => !remove.includes(rule)), ...add];
 }
@@ -82,7 +97,7 @@ function applyEdit(list: readonly string[], { add, remove }: Edit): string[] {
 function approved(mode: Mode, answer: string, file: string, edits: Edits): boolean {
   if (answer === "yes") return true;
   if (answer === "no") return false;
-  const { variable } = WORDING[mode];
+  const variable = VARIABLE[mode];
   if (!process.stdin.isTTY) {
     process.stdout.write(`left ${file} as it is: no terminal to ask on; run again with ${variable}=yes or ${variable}=no\n`);
     return false;
@@ -127,7 +142,7 @@ function main(args: readonly string[]): number {
   const description = describe(edits);
   if (description === "") return 0;
   if (!approved(mode, answer, file, edits)) {
-    process.stdout.write(`${WORDING[mode].declined}\n`);
+    process.stdout.write(`${declined(edits)}\n`);
     return 0;
   }
   const next: Json = { ...permissions, allow: applyEdit(allow, edits.allow) };
