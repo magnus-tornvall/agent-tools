@@ -2,10 +2,9 @@
 
 Domain: Coordination. What is known about Orca, and about `mt` as Orca workers run it, that Orca's
 orchestration skill does not say, each with the version or commit it was seen on, so that a
-coordinator does not learn it again mid-Run. What a Run learns goes in its hand-off, with the
-version or commit it was seen on, and is filed with `mt dogfood`. It reads no config. Workaround
-for Orca's orchestration skill not saying these; remove each line when the skill says it or the
-tool no longer behaves so.
+coordinator does not learn it again mid-Run. It reads no config. Workaround for Orca's
+orchestration skill not saying these; remove each line when the skill says it or the tool no
+longer behaves so.
 
 - `orca orchestration worker-start` has no permission flag. A `claude` worker launches with Orca's
   default arguments for that agent, the worktree's committed `.claude/settings.json` and the
