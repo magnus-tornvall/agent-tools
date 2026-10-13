@@ -1,5 +1,5 @@
 import { afterAll, beforeEach, describe, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, copyFileSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
@@ -23,8 +23,8 @@ function config(toml: string, file = CONFIG): void {
   writeFileSync(file, toml);
 }
 
-function mt(args: string[], env: Record<string, string | undefined> = {}, stdin?: string) {
-  const result = Bun.spawnSync([MT, ...args], {
+function mt(args: string[], env: Record<string, string | undefined> = {}, stdin?: string, bin = MT) {
+  const result = Bun.spawnSync([bin, ...args], {
     env: {
       PATH: process.env.PATH,
       HOME,
@@ -36,6 +36,29 @@ function mt(args: string[], env: Record<string, string | undefined> = {}, stdin?
     stdin: stdin === undefined ? "ignore" : Buffer.from(stdin),
   });
   return { code: result.exitCode, stdout: result.stdout.toString(), stderr: result.stderr.toString() };
+}
+
+/**
+ * A copy of cli/mt whose config.ts declares one more key, the advisory `advice`, as no key mt
+ * reads is advisory. Returns the copy's mt.
+ */
+function advisoryStandIn(): string {
+  const root = join(TMP, "advisory");
+  const source = readFileSync(new URL("./config.ts", import.meta.url).pathname, "utf8");
+  const patched = source
+    .replace(/^ {2}fix_rounds: \{ kind: "binding".*\},$/m, '$&\n  advice: { kind: "advisory", rule: "a number from 0 to 1", schema: z.number().min(0).max(1) },')
+    .replace('const KEYS: readonly Key[] = ["agents", "fix_rounds"];', 'const KEYS: readonly Key[] = ["agents", "fix_rounds", "advice"];');
+  if (!patched.includes('advice: { kind: "advisory"') || !patched.includes('"fix_rounds", "advice"]')) {
+    throw new Error("config.ts no longer has the lines the advisory stand-in adds advice after");
+  }
+  rmSync(root, { recursive: true, force: true });
+  mkdirSync(join(root, "cli"), { recursive: true });
+  mkdirSync(join(root, "src", "config"), { recursive: true });
+  copyFileSync(MT, join(root, "cli", "mt"));
+  chmodSync(join(root, "cli", "mt"), 0o755);
+  writeFileSync(join(root, "src", "config", "config.ts"), patched);
+  symlinkSync(new URL("../../node_modules", import.meta.url).pathname, join(root, "node_modules"));
+  return join(root, "cli", "mt");
 }
 
 const COMPLETE = 'agents = ["claude"]\nfix_rounds = 1\n';
@@ -69,6 +92,24 @@ describe("mt config", () => {
     expect(stderr).toBe("");
     expect(code).toBe(1);
     expect(stdout).toBe([CONFIG, "agents             binding   missing", "fix_rounds         binding   missing", ""].join("\n"));
+  });
+
+  test("a missing or invalid advisory key alone leaves mt config exiting 0", () => {
+    const standIn = advisoryStandIn();
+    for (const [toml, line] of [
+      [COMPLETE, "advice             advisory  missing"],
+      [`${COMPLETE}advice = -0.1\n`, "advice             advisory  invalid: must be a number from 0 to 1, not -0.1"],
+    ] as const) {
+      config(toml);
+      const { code, stdout, stderr } = mt(["config"], {}, undefined, standIn);
+      expect(stderr).toBe("");
+      expect(stdout.split("\n")).toContain(line);
+      expect(code).toBe(0);
+    }
+    config('agents = ["claude"]\nadvice = 0.5\n');
+    const { code, stdout } = mt(["config"], {}, undefined, standIn);
+    expect(stdout.split("\n")).toContain("advice             advisory  0.5");
+    expect(code).toBe(1);
   });
 
   test("a triage_confidence left in the file is a key mt does not know, and mt config exits 1", () => {
