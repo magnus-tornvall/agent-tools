@@ -30,6 +30,9 @@ longer behaves so.
   the same. (1.4.224)
 - `orca orchestration worker-release` leaves a worktree that `worker-start --worktree new-child`
   cut, and its branch, in place, and its receipt does not name them. (1.4.224)
+- `orca orchestration worker-start --worktree new-child` requires `--name`, and cuts the new
+  worktree from main, not from the work branch the coordinator's worktree has checked out, so a
+  judge placed there sees main until it checks out the work branch's commit. (1.4.224)
 - A spec that names a guide the work branch renames or removes still resolves mid-Run only because
   the installed `mt` serves the main clone's guides; once the change reaches main it fails.
   (`mt` 1b0dd76)
