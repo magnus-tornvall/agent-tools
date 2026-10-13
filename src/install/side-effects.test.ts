@@ -1,11 +1,12 @@
 import { describe, expect, test } from "bun:test";
-import { mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { parseMtUsage } from "../guide-lint/lint.ts";
-import { COMMANDS } from "./side-effects.ts";
+import { COMMANDS, DENY_RULES, OWNER_ONLY } from "./side-effects.ts";
 
 const MT = new URL("../../cli/mt", import.meta.url).pathname;
+const GUIDES = new URL("../../guides/", import.meta.url).pathname;
 
 /** The command of each `mt …` line of mt's usage, as guide-lint reads them. */
 function usageCommands(): string[] {
@@ -37,5 +38,19 @@ describe("side-effect classes", () => {
       "oracle run": "local write",
       config: "read-only",
     });
+  });
+
+  test("R1: install denies agents every mt oracle command and the oracle guide", () => {
+    expect(DENY_RULES).toEqual(["Bash(mt oracle:*)", "Bash(mt get oracle:*)"]);
+  });
+
+  test("every owner-only prefix covers a command mt's usage lists, or names a guide get serves", () => {
+    const commands = usageCommands();
+    for (const prefix of OWNER_ONLY) {
+      const [first, guide] = prefix.split(" ");
+      const served = first === "get" && guide !== undefined && existsSync(join(GUIDES, `${guide}.md`));
+      const listed = commands.some((command) => command === prefix || command.startsWith(`${prefix} `));
+      expect({ prefix, found: served || listed }).toEqual({ prefix, found: true });
+    }
   });
 });

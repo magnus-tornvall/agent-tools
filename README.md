@@ -36,14 +36,15 @@ Every stub has a guide. A guide that only a spec or another guide loads has no s
 orca-worker and the assignments change and verification, whose references are its judging
 perspectives coverage, maintainer and surprise.
 No agent chooses them, so a skill-list entry would only cost the sessions that never use them;
-`mt get` serves them like any other guide. Stubs remain for what an agent or the owner picks:
-mvc, which settles a shape with the owner, oracle, which writes a closed shape's oracles before
-it is built, to-orca, which runs a change through Orca from a shape, an issue or prose, ask,
-which composes a question for whoever owns a decision, door-rule, which says whether a decision
-is asked at all, debugging, which finds the root cause of an unexpected failure before it is
-fixed, commit, which stages, writes and pushes commits as the session's destination allows, and
-research, which answers the owner's question from trusted outside sources; only the owner starts
-it, by typing `/research`. `mt list` shows every guide.
+`mt get` serves them like any other guide. The oracle guide has no stub either: oracles are the
+owner's, and install denies agents `mt oracle` and `mt get oracle` (see Install). Stubs remain for
+what an agent or the owner picks: mvc, which settles a shape with the owner, to-orca, which runs a
+change through Orca from a shape, an issue or prose, ask, which composes a question for whoever owns
+a decision, door-rule, which says whether a decision is asked at all, debugging, which finds the
+root cause of an unexpected failure before it is fixed, commit, which stages, writes and pushes
+commits as the session's destination allows, and research, which answers the owner's question from
+trusted outside sources; only the owner starts it, by typing `/research`. `mt list` shows every
+guide.
 
 ```
 mt list                       every guide, once, with its stub's description, or the
@@ -74,9 +75,10 @@ side-effect class. A class is either read-only, which reads and prints and write
 write, which writes on this machine only. The classes are declared once in
 `src/install/side-effects.ts`. Every class stays on the machine, so the one allow rule `Bash(mt:*)`
 covers every command and runs without a prompt (see Install); a class that leaves the machine would
-have to bring install's handling with it. Every usage error prints `mt: <reason>` and a usage on
-stderr, nothing on stdout, and exits 2. Only `mt config` reads the owner's config (see Config);
-every other command behaves the same whatever the config holds.
+have to bring install's handling with it. `mt oracle` and `mt get oracle` are denied to agents
+whatever their class (see Install). Every usage error prints `mt: <reason>` and a usage on stderr,
+nothing on stdout, and exits 2. Only `mt config` reads the owner's config (see Config); every other
+command behaves the same whatever the config holds.
 
 **`mt get <tool> [--ref <ref>]`**, local write. Prints a tool's guide, `guides/<tool>.md`, or one
 of its references, `guides/<tool>/<ref>.md`, on stdout and exits 0. A tool or ref with no such
@@ -113,9 +115,8 @@ every oracle passes, or with `--base` when each does what its `base` says, and 1
 the shape cannot be read, its `oracles` block is not sound or it runs outside a git repo. No shape,
 two shapes, an unknown option or a `--timeout` that is not a whole number above 0 exits 2. It
 deletes the JUnit report each oracle names before running it, and runs each command as written,
-whatever that command does. It is classed local write by what it does itself, and runs without a
-prompt so a worker can run its oracles; nothing checks who wrote or approved the shape. See
-Oracles.
+whatever that command does. It is classed local write by what it does itself, and install denies it
+to agents, so the owner runs it; nothing checks who wrote or approved the shape. See Oracles.
 
 **`mt config [<key>]`**, read-only. Prints the owner's config: the file's path, then one line per
 key. With a key, prints that key's value alone. Exits 0, 1 or 2 as Config says.
@@ -261,13 +262,17 @@ is missing or stale. It:
   `~/.claude/skills` as a link to `~/.agents/skills/<tool>`, so Claude Code finds it. With no
   `~/.agents/skills` folder it links the stubs straight into `~/.claude/skills` and does not create
   `~/.agents`. It removes the links to a stub that is gone;
-- asks whether to add `Bash(mt:*)` to `permissions.allow` in `~/.claude/settings.json`, so Claude
-  Code agents run every `mt` command without a prompt. Every side-effect class stays on the
-  machine (see Contracts), so that one rule covers every command, and `permissions.ask` is left as
-  it is. A file that still holds `Bash(mt get:*)`, `Bash(mt list)` or `Bash(mt shape:*)` from an
-  earlier install has them replaced. A yes keeps everything else in the file; it is not asked again
-  once the rule is there. `ADD_MT_RULES=yes` or `ADD_MT_RULES=no` answers without asking, and with
-  no terminal to ask on nothing is written;
+- asks whether to add `Bash(mt:*)` to `permissions.allow`, and `Bash(mt oracle:*)` and
+  `Bash(mt get oracle:*)` to `permissions.deny`, in `~/.claude/settings.json`, so Claude Code
+  agents run every `mt` command without a prompt and are refused `mt oracle` and the oracle guide,
+  which are the owner's. Every side-effect class stays on the machine (see Contracts), so that one allow rule
+  covers every command, and `permissions.ask` is left as it is. Claude Code checks deny rules first,
+  so the deny rules beat `Bash(mt:*)`; they match the command as written, so `mt` by its path or
+  inside `sh -c` still runs, and an agent that does not read these settings is not refused. A file
+  that still holds `Bash(mt get:*)`, `Bash(mt list)` or `Bash(mt shape:*)` from an earlier install
+  has them replaced. A yes keeps everything else in the file; it is not asked again once the rules
+  are there. `ADD_MT_RULES=yes` or `ADD_MT_RULES=no` answers without asking, and with no terminal to
+  ask on nothing is written;
 - checks that a login shell started from your profile alone finds `mt` and Bun. Orca starts a
   worker in a terminal running your shell, so this is the PATH workers get.
 
@@ -280,9 +285,9 @@ fails, naming it: linking over it would write a stray link inside the folder, or
 The whole mvc from before it became a guide is such a folder, and so is a whole commit skill copied
 in before commit became one; the old and the new cannot both be installed under one name. To keep
 the old one for a later comparison, move it out of the skills folder rather than delete it. Settings
-that are not a JSON object, or whose `permissions` is not an object or whose `permissions.allow` is
-not a list of strings, are left alone too, and the install fails saying which; it names the rule to
-add by hand only when the settings are not JSON or not an object.
+that are not a JSON object, or whose `permissions` is not an object or whose `permissions.allow` or
+`permissions.deny` is not a list of strings, are left alone too, and the install fails saying which;
+it names the rules to add by hand only when the settings are not JSON or not an object.
 
 `make uninstall` takes it back out: the `mt` link, every link in either skills folder that points
 into this clone, and every link in `~/.claude/skills` to such a link in `~/.agents/skills`, however

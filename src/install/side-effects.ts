@@ -6,10 +6,10 @@
  *   local write   writes on this machine only, such as the usage log or the JUnit report `mt oracle run` deletes
  *
  * A class covers what mt itself does. `mt oracle run` runs a shape's commands, which may reach
- * further. It is allowed so a worker runs its oracles without a prompt, and nothing checks who
- * wrote or approved the shape it runs.
+ * further, and nothing checks who wrote or approved the shape it runs.
  *
- * Every class stays on this machine, so every command is allowed.
+ * Every class stays on this machine, so every command is allowed. What only the owner runs is
+ * denied to agents, whatever its class.
  */
 
 export type SideEffect = "read-only" | "local write";
@@ -27,3 +27,12 @@ export const COMMANDS: Readonly<Record<string, SideEffect>> = {
 
 /** `Bash(mt:*)`, which allows every command, as every class is allowed. */
 export const ALLOW_RULES: readonly string[] = ["Bash(mt:*)"];
+
+/**
+ * What agents are refused, as its words after `mt`: oracles are the owner's to write and run, so
+ * an agent neither runs `mt oracle` nor loads the oracle guide.
+ */
+export const OWNER_ONLY: readonly string[] = ["oracle", "get oracle"];
+
+/** One deny rule per owner-only prefix: Claude Code checks deny rules before allow rules. */
+export const DENY_RULES: readonly string[] = OWNER_ONLY.map((prefix) => `Bash(mt ${prefix}:*)`);

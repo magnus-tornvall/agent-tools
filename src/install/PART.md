@@ -8,11 +8,11 @@ declares each `mt` command's side-effect class. The README keeps the steps a hum
 
 ## Purpose
 
-An agent, or an Orca worker started in the owner's login shell, can run every `mt` command and
-load every stub, and every `mt` command's own effect stays on the machine. A class covers what
-`mt` itself does. `mt oracle run` runs the commands of a shape, which may reach further. It is
-allowed so a worker runs its oracles without a prompt, and nothing checks who wrote or approved the
-shape it runs.
+An agent, or an Orca worker started in the owner's login shell, can run every `mt` command the owner
+does not keep and load every stub, and every `mt` command's own effect stays on the machine. Oracles
+are the owner's to write and run, so an agent in Claude Code is refused `mt oracle` and
+`mt get oracle`. A class covers what `mt` itself does. `mt oracle run` runs the commands of a shape,
+which may reach further, and nothing checks who wrote or approved the shape it runs.
 
 ## Principles
 
@@ -21,7 +21,8 @@ shape it runs.
 - **Least privilege**, as far as `mt`'s own effects go. A command's class is declared once in code.
   Every class, read-only or local write, stays on the machine, so the one allow rule `Bash(mt:*)`
   covers every command; a class that leaves the machine would have to bring install's handling with
-  it. The commands `mt oracle run` runs for a shape are not `mt`'s own and are not classed.
+  it. What only the owner runs is denied to agents, whatever its class. The commands `mt oracle run`
+  runs for a shape are not `mt`'s own and are not classed.
 - **Mechanism, not policy.** Install proposes the rules; the owner decides. Nothing is written to
   the settings without a yes, and with no answer and no terminal nothing is written.
 - **Ownership** is by where a link points, not by who made it. Uninstall removes the links that
@@ -61,13 +62,16 @@ needs Bun 1.2.23 or later on PATH.
 - `bun src/install/mt-rules.ts add|remove <settings.json> [yes|no]` adds or removes the rules,
   keeping everything else in the file. `add` creates a missing file. It asks only when there is
   something to change, and exits 0 whether it changed the file, found nothing to change or was
-  declined. A file that is not a JSON object, or whose `permissions` is not an object or whose
-  `permissions.allow` is not a list of strings, is left as it is: one line on stderr says which,
-  naming the rule to add by hand when the file is not a JSON object, and it exits 1. A usage error
-  exits 2.
-- The rule is `ALLOW_RULES` in `side-effects.ts`: `Bash(mt:*)` in `permissions.allow`, which
-  allows every command, as every class is allowed. Install writes no `permissions.ask` and leaves
-  one that is there as it is.
+  declined; declined, it prints one line naming what it left as it is. A file that is not a JSON
+  object, or whose `permissions` is not an object or whose `permissions.allow` or `permissions.deny`
+  is not a list of strings, is left as it is: one line on stderr says which, naming the rules to add
+  by hand when the file is not a JSON object, and it exits 1. A usage error exits 2.
+- The rules are `ALLOW_RULES` and `DENY_RULES` in `side-effects.ts`: `Bash(mt:*)` in
+  `permissions.allow`, which allows every command, as every class is allowed, and in
+  `permissions.deny` one `Bash(mt <prefix>:*)` per owner-only prefix, `Bash(mt oracle:*)` and
+  `Bash(mt get oracle:*)`. Claude Code checks deny rules before allow rules. A deny rule matches the
+  command as an agent writes it, so `mt` by its path or inside `sh -c` is not refused. Install
+  writes no `permissions.ask` and leaves one that is there as it is.
 - Side effects: local writes to `BIN_DIR`, `SKILLS_DIR`, `CLAUDE_SKILLS_DIR` when `SKILLS_DIR` is
   not given, and `SETTINGS`;
   `bun install` fetches packages from the npm registry.

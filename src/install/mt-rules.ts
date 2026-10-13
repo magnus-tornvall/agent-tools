@@ -6,7 +6,7 @@
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
-import { ALLOW_RULES } from "./side-effects.ts";
+import { ALLOW_RULES, DENY_RULES } from "./side-effects.ts";
 
 /** Workaround for settings an install before Bash(mt:*) wrote; remove when no such install is left. */
 const EARLIER_ALLOW_RULES = ["Bash(mt get:*)", "Bash(mt list)", "Bash(mt shape:*)"];
@@ -16,11 +16,9 @@ const USAGE = "usage: bun src/install/mt-rules.ts add|remove <settings.json> [ye
 type Json = Record<string, unknown>;
 type Mode = "add" | "remove";
 type Edit = { add: string[]; remove: string[] };
+type Edits = { allow: Edit; deny: Edit };
 
-const WORDING: Record<Mode, { variable: string; declined: string }> = {
-  add: { variable: "ADD_MT_RULES", declined: "agents will ask before each mt command" },
-  remove: { variable: "REMOVE_MT_RULES", declined: "the mt rules stay allowed" },
-};
+const VARIABLE: Record<Mode, string> = { add: "ADD_MT_RULES", remove: "REMOVE_MT_RULES" };
 
 function isObject(value: unknown): value is Json {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -45,20 +43,46 @@ function readSettings(file: string): Json | string {
   return isObject(parsed) ? parsed : "not a JSON object";
 }
 
-function planEdit(mode: Mode, allow: readonly string[]): Edit {
+function planEdits(mode: Mode, allow: readonly string[], deny: readonly string[]): Edits {
   if (mode === "add") {
     return {
-      add: ALLOW_RULES.filter((rule) => !allow.includes(rule)),
-      remove: EARLIER_ALLOW_RULES.filter((rule) => allow.includes(rule)),
+      allow: {
+        add: ALLOW_RULES.filter((rule) => !allow.includes(rule)),
+        remove: EARLIER_ALLOW_RULES.filter((rule) => allow.includes(rule)),
+      },
+      deny: { add: DENY_RULES.filter((rule) => !deny.includes(rule)), remove: [] },
     };
   }
-  return { add: [], remove: [...ALLOW_RULES, ...EARLIER_ALLOW_RULES].filter((rule) => allow.includes(rule)) };
+  return {
+    allow: { add: [], remove: [...ALLOW_RULES, ...EARLIER_ALLOW_RULES].filter((rule) => allow.includes(rule)) },
+    deny: { add: [], remove: DENY_RULES.filter((rule) => deny.includes(rule)) },
+  };
 }
 
-function describe({ add, remove }: Edit): string {
+function describe(edits: Edits): string {
   const parts: string[] = [];
-  if (add.length > 0) parts.push(`add ${add.join(", ")} to permissions.allow`);
-  if (remove.length > 0) parts.push(`remove ${remove.join(", ")} from permissions.allow`);
+  for (const list of ["allow", "deny"] as const) {
+    const { add, remove } = edits[list];
+    if (add.length > 0) parts.push(`add ${add.join(", ")} to permissions.${list}`);
+    if (remove.length > 0) parts.push(`remove ${remove.join(", ")} from permissions.${list}`);
+  }
+  return parts.join("; ");
+}
+
+/** The command a `Bash(<command>:*)` rule matches, such as `mt oracle`. */
+function command(rule: string): string {
+  return rule.replace(/^Bash\((.*):\*\)$/, "$1");
+}
+
+/** What declining the edits leaves as it is, for the owner who declined them. */
+function declined(edits: Edits): string {
+  const parts: string[] = [];
+  if (edits.allow.add.length > 0) parts.push("agents will ask before each mt command");
+  if (edits.deny.add.length > 0) parts.push(`agents are not refused ${edits.deny.add.map(command).join(", ")}`);
+  for (const list of ["allow", "deny"] as const) {
+    const { remove } = edits[list];
+    if (remove.length > 0) parts.push(`kept in permissions.${list}: ${remove.join(", ")}`);
+  }
   return parts.join("; ");
 }
 
@@ -66,15 +90,15 @@ function applyEdit(list: readonly string[], { add, remove }: Edit): string[] {
   return [...list.filter((rule) => !remove.includes(rule)), ...add];
 }
 
-function approved(mode: Mode, answer: string, file: string, edit: Edit): boolean {
+function approved(mode: Mode, answer: string, file: string, edits: Edits): boolean {
   if (answer === "yes") return true;
   if (answer === "no") return false;
-  const { variable } = WORDING[mode];
+  const variable = VARIABLE[mode];
   if (!process.stdin.isTTY) {
     process.stdout.write(`left ${file} as it is: no terminal to ask on; run again with ${variable}=yes or ${variable}=no\n`);
     return false;
   }
-  const reply = prompt(`In ${file}, ${describe(edit)}? [y/N]`);
+  const reply = prompt(`In ${file}, ${describe(edits)}? [y/N]`);
   return reply !== null && /^y(es)?$/i.test(reply.trim());
 }
 
@@ -87,7 +111,7 @@ function main(args: readonly string[]): number {
   if (mode === "remove" && !existsSync(file)) return 0;
   const settings = readSettings(file);
   if (typeof settings === "string") {
-    process.stderr.write(`mt-rules: ${file} is ${settings}; ${mode} ${ALLOW_RULES.join(", ")} in permissions.allow by hand\n`);
+    process.stderr.write(`mt-rules: ${file} is ${settings}; ${mode} ${ALLOW_RULES.join(", ")} in permissions.allow and ${DENY_RULES.join(", ")} in permissions.deny by hand\n`);
     return 1;
   }
   const permissions = settings.permissions ?? {};
@@ -100,14 +124,21 @@ function main(args: readonly string[]): number {
     process.stderr.write(`mt-rules: ${file}: permissions.allow is not a list of strings\n`);
     return 1;
   }
-  const edit = planEdit(mode, allow);
-  const description = describe(edit);
+  const deny = permissions.deny ?? [];
+  if (!isStringList(deny)) {
+    process.stderr.write(`mt-rules: ${file}: permissions.deny is not a list of strings\n`);
+    return 1;
+  }
+  const edits = planEdits(mode, allow, deny);
+  const description = describe(edits);
   if (description === "") return 0;
-  if (!approved(mode, answer, file, edit)) {
-    process.stdout.write(`${WORDING[mode].declined}\n`);
+  if (!approved(mode, answer, file, edits)) {
+    process.stdout.write(`${declined(edits)}\n`);
     return 0;
   }
-  settings.permissions = { ...permissions, allow: applyEdit(allow, edit) };
+  const next: Json = { ...permissions, allow: applyEdit(allow, edits.allow) };
+  if (permissions.deny !== undefined || edits.deny.add.length > 0) next.deny = applyEdit(deny, edits.deny);
+  settings.permissions = next;
   mkdirSync(dirname(file), { recursive: true });
   writeFileSync(file, `${JSON.stringify(settings, null, 2)}\n`);
   process.stdout.write(`${mode === "add" ? "added" : "removed"} in ${file}: ${description}\n`);
