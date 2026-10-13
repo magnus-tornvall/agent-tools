@@ -34,10 +34,11 @@ it, and how, with the tools named at the end, is yours to compose.
   report's finding is keyed by the ID its report gave it, such as `T4/F1`, and one you raise by its
   place as first raised plus a short title, a key that stays the same in every message even when
   the branch moves that place. A row gives who raised it, a Task and its perspective or you, its
-  place, the input or state that shows it, the fix proposed and its door, each in full as it was
-  raised and never cut to a line, and what became of it: fixed, saying what the fix changed and
-  which Task made it; dropped, and why; the owner's decision; or still open, and who holds it: you,
-  a fix Task, or the owner.
+  place, the input or state that shows it, the fix proposed and its door, each as it was raised,
+  and what became of it: fixed, saying what the fix changed and which Task made it; dropped, and
+  why; the owner's decision; or still open, and who holds it: you, a fix Task, or the owner. In a
+  message to the owner, each finding the owner must rule on comes first, its row in full; every
+  other finding is one line, its key and what became of it, and its full row when the owner asks.
 - **The findings table is rebuilt for each message** from Orca's inbox and Task results, and for a
   finding you raised, or one dropped or ruled on with no Task to carry it, from the owner's own
   answer or what you recorded of it; never from memory. Workaround for Orca keeping no state for a
@@ -79,7 +80,9 @@ do.
   from the PATH a worker launches with, and each `mt get`, `mt shape`, repo check and
   `git commit` a worker's launch permissions would not allow. When a requirement needs the app
   running, it names where the app under test actually sends its requests, read from the config it
-  runs with, not from the docs. A changed plan is approved again.
+  runs with, not from the docs. The message opens with the approval question and anything that
+  would stop a worker or cost money, before the per-Task details. A changed plan is approved
+  again.
 - **A shape's oracles are the owner's to write and run.** No Task writes an oracle, or runs one
   through `mt oracle` or by its own command. An oracle the repo's checks pick up runs with them,
   as any test does, and the checks pass with it. No Task changes a file an oracle pins. When the
@@ -110,12 +113,12 @@ do.
   at the live workers. Workaround for Orca sending no message for a worker parked on a prompt only
   a human can answer; remove when Orca reports such a worker to its coordinator.
 - **The owner can judge every finding from what reaches them.** Once a report has raised a
-  finding, or you have, every message you send the owner carries the findings table so far,
-  beside any question rather than in it, and the hand-off carries the final table. The table
-  alone is no reason to message them.
+  finding, or you have, every message you send the owner carries the findings table so far, laid
+  out as the Contract says, after any question rather than in it, and the hand-off carries the
+  final table. The table alone is no reason to message them.
 - **Nothing the owner must judge reaches them only as a reference.** A commit, file path, ID or
-  file on disk in a message to the owner comes with the content it names, as the ask guide holds
-  for every question.
+  file on disk that the owner must judge comes with what of it they need, as the ask guide holds
+  for every question; one named only for the record is named by its ID, its content on request.
 - **Evidence that is not text reaches the owner where they can check it.** Such evidence, a
   screenshot for one, is described in the message and named by its path, and the hand-off names
   each such file with the Task worktree that holds it, so the owner can check it before removing
@@ -136,11 +139,14 @@ do.
   decides whether it is stopped.
   Workaround for closing an agent's terminal stopping only what the agent's harness started;
   remove when closing it stops every process a Task started.
-- **The hand-off.** The destination the owner approved: the branch, or a pull request. An
-  account of every Task, attempt and question you answered, rebuilt from Orca's inbox and Task
-  results, not from memory, and the final findings table. Proposed edits to the guides, drawn from
-  the workers' Toolbox lines, which the owner picks from; apply only the picked ones, and never on
-  the work branch.
+- **The hand-off.** It opens with the rulings the owner must make, each finding still open for
+  them in full. Then the destination the owner approved: the branch, or a pull request. One line
+  each for every other finding in the final table, dropped or fixed, and for every failed attempt,
+  requirement without evidence, departure from the approved plan and uncertain assumption. Each
+  Task, commit and question you answered named by its ID, without its account, which the owner
+  gets on request. All of it rebuilt from Orca's inbox and Task results, and the table as the
+  Contract says, not from memory. Proposed edits to the guides, drawn from the workers' Toolbox
+  lines, which the owner picks from; apply only the picked ones, and never on the work branch.
 
 ## Guardrails
 
@@ -194,6 +200,8 @@ do.
   stdin, and only a whole YAML document.
 - **The ask guide** (`mt get ask`) composes every question to the owner, and says which reach the
   owner through your own question tool (`AskUserQuestion` in Claude Code).
+- **The brief guide** (`mt get brief`) lays out every message to the owner: what it shows first,
+  what it leaves until asked, and how the owner asks for it.
 
 Every spec carries what `mt get to-orca --ref spec-head` prints, run afresh for each Task: a copy
 from memory goes stale when a guide changes mid-Run. `T<n>` is numbered in the order you create
