@@ -205,6 +205,26 @@ install_answering y "$H"
 assert_contains "the question names what is replaced" "$(cat "$TMP/out")" "remove Bash(mt get:*) from permissions.allow"
 assert_eq "one earlier rule is replaced too" "Bash(mt:*)" "$(allow_list "$H/.claude/settings.json")"
 
+# a permissions.ask that is not a list of strings is kept as it is, and the allow rule is handled as usual
+H=$TMP/bad-ask
+new_home "$H"
+mkdir -p "$H/.claude"
+for bad in '"Bash(x)"' '[1]' '{}'; do
+  printf '{"permissions": {"allow": ["Bash(mt get:*)"], "ask": %s}}\n' "$bad" >"$H/.claude/settings.json"
+  install "$H" ADD_MT_RULES=yes; rc=$?
+  assert_eq "install over an ask of $bad exits 0" 0 "$rc"
+  assert_eq "install over an ask of $bad adds the allow rule" "Bash(mt:*)" "$(allow_list "$H/.claude/settings.json")"
+  assert_eq "install leaves an ask of $bad as it was" "$bad" "$(python3 -I -c '
+import json, sys
+print(json.dumps(json.load(open(sys.argv[1]))["permissions"]["ask"]))' "$H/.claude/settings.json")"
+  uninstall "$H" REMOVE_MT_RULES=yes; rc=$?
+  assert_eq "uninstall over an ask of $bad exits 0" 0 "$rc"
+  assert_eq "uninstall over an ask of $bad removes the allow rule" "" "$(allow_list "$H/.claude/settings.json")"
+  assert_eq "uninstall leaves an ask of $bad as it was" "$bad" "$(python3 -I -c '
+import json, sys
+print(json.dumps(json.load(open(sys.argv[1]))["permissions"]["ask"]))' "$H/.claude/settings.json")"
+done
+
 # settings that are not JSON are left alone
 H=$TMP/malformed
 new_home "$H"
