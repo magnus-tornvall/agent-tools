@@ -354,7 +354,9 @@ is missing or stale. It:
   worker in a terminal running your shell, so this is the PATH workers get.
 
 Set `BIN_DIR`, `SKILLS_DIR`, `CLAUDE_SKILLS_DIR` or `SETTINGS` to use other places, for example
-`make install SKILLS_DIR=~/.claude/skills` to link the stubs straight into Claude Code's folder. A skill
+`make install SKILLS_DIR=~/.claude/skills` to link the stubs straight into Claude Code's folder.
+A `SKILLS_DIR` override also points the links in `~/.claude/skills` at that folder; set
+`CLAUDE_SKILLS_DIR` to the same folder to leave `~/.claude/skills` alone. A skill
 installed as a real folder is left alone and the install fails, naming it: linking over it
 would write a stray link inside it. The whole mvc from before it became a guide is such a folder,
 and so is a whole commit skill copied in before commit became one; the old and the new cannot both

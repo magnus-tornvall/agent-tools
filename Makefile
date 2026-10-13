@@ -3,6 +3,8 @@
 # Claude Code's folder links to them there; with no ~/.agents/skills they go straight into Claude
 # Code's folder. Override the folders for another agent or a test, e.g.
 #   make install SKILLS_DIR=~/.claude/skills
+# A SKILLS_DIR override also points Claude Code's links at that folder; set CLAUDE_SKILLS_DIR to
+# the same folder to leave Claude Code's folder alone.
 # Adding the mt rules to Claude Code's settings, or removing them, is asked first;
 # ADD_MT_RULES=yes|no and REMOVE_MT_RULES=yes|no answer without asking. src/install/PART.md is
 # install's contract.
