@@ -117,8 +117,9 @@ every oracle passes, or with `--base` when each does what its `base` says, and 1
 the shape cannot be read, its `oracles` block is not sound or it runs outside a git repo. No shape,
 two shapes, an unknown option or a `--timeout` that is not a whole number above 0 exits 2. It
 deletes the JUnit report each oracle names before running it, and runs each command as written,
-whatever that command does; it is classed local write and runs without a prompt because it runs
-the commands of a shape the owner approved. See Oracles.
+whatever that command does. It is classed local write by what it does itself, and runs without a
+prompt so a worker can run its oracles; nothing checks who wrote or approved the shape. See
+Oracles.
 
 **`mt dogfood <title> [--body-file <file>]`**, external. Files a finding as an issue labelled
 `dogfooding` on this repo's public GitHub, through `gh`; `--body-file -` reads the body from stdin.

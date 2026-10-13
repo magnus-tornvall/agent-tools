@@ -7,7 +7,8 @@
  *   external      reaches a service off this machine, such as GitHub or jev
  *
  * A class covers what mt itself does. `mt oracle run` runs a shape's commands, which may reach
- * further, and is allowed because the owner approved the shape.
+ * further. It is allowed so a worker runs its oracles without a prompt, and nothing checks who
+ * wrote or approved the shape it runs.
  *
  * Every class but external is allowed; each external command is asked before it runs.
  */
