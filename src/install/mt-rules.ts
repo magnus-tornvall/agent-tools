@@ -6,7 +6,7 @@
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
-import { ALLOW_RULES, DENY_RULES } from "./side-effects.ts";
+import { ALLOW_RULES, ASK_RULES, DENY_RULES } from "./side-effects.ts";
 
 /** Workaround for settings an install before Bash(mt:*) wrote; remove when no such install is left. */
 const EARLIER_ALLOW_RULES = ["Bash(mt get:*)", "Bash(mt list)", "Bash(mt shape:*)"];
@@ -16,7 +16,9 @@ const USAGE = "usage: bun src/install/mt-rules.ts add|remove <settings.json> [ye
 type Json = Record<string, unknown>;
 type Mode = "add" | "remove";
 type Edit = { add: string[]; remove: string[] };
-type Edits = { allow: Edit; deny: Edit };
+type Edits = { allow: Edit; ask: Edit; deny: Edit };
+
+const LISTS = ["allow", "ask", "deny"] as const;
 
 const VARIABLE: Record<Mode, string> = { add: "ADD_MT_RULES", remove: "REMOVE_MT_RULES" };
 
@@ -43,25 +45,27 @@ function readSettings(file: string): Json | string {
   return isObject(parsed) ? parsed : "not a JSON object";
 }
 
-function planEdits(mode: Mode, allow: readonly string[], deny: readonly string[]): Edits {
+function planEdits(mode: Mode, allow: readonly string[], ask: readonly string[], deny: readonly string[]): Edits {
   if (mode === "add") {
     return {
       allow: {
         add: ALLOW_RULES.filter((rule) => !allow.includes(rule)),
         remove: EARLIER_ALLOW_RULES.filter((rule) => allow.includes(rule)),
       },
+      ask: { add: ASK_RULES.filter((rule) => !ask.includes(rule)), remove: [] },
       deny: { add: DENY_RULES.filter((rule) => !deny.includes(rule)), remove: [] },
     };
   }
   return {
     allow: { add: [], remove: [...ALLOW_RULES, ...EARLIER_ALLOW_RULES].filter((rule) => allow.includes(rule)) },
+    ask: { add: [], remove: ASK_RULES.filter((rule) => ask.includes(rule)) },
     deny: { add: [], remove: DENY_RULES.filter((rule) => deny.includes(rule)) },
   };
 }
 
 function describe(edits: Edits): string {
   const parts: string[] = [];
-  for (const list of ["allow", "deny"] as const) {
+  for (const list of LISTS) {
     const { add, remove } = edits[list];
     if (add.length > 0) parts.push(`add ${add.join(", ")} to permissions.${list}`);
     if (remove.length > 0) parts.push(`remove ${remove.join(", ")} from permissions.${list}`);
@@ -78,8 +82,9 @@ function command(rule: string): string {
 function declined(edits: Edits): string {
   const parts: string[] = [];
   if (edits.allow.add.length > 0) parts.push("agents will ask before each mt command");
+  else if (edits.ask.add.length > 0) parts.push(`agents run ${edits.ask.add.map(command).join(", ")} without being asked`);
   if (edits.deny.add.length > 0) parts.push(`agents are not refused ${edits.deny.add.map(command).join(", ")}`);
-  for (const list of ["allow", "deny"] as const) {
+  for (const list of LISTS) {
     const { remove } = edits[list];
     if (remove.length > 0) parts.push(`kept in permissions.${list}: ${remove.join(", ")}`);
   }
@@ -111,7 +116,9 @@ function main(args: readonly string[]): number {
   if (mode === "remove" && !existsSync(file)) return 0;
   const settings = readSettings(file);
   if (typeof settings === "string") {
-    process.stderr.write(`mt-rules: ${file} is ${settings}; ${mode} ${ALLOW_RULES.join(", ")} in permissions.allow and ${DENY_RULES.join(", ")} in permissions.deny by hand\n`);
+    process.stderr.write(
+      `mt-rules: ${file} is ${settings}; ${mode} ${ALLOW_RULES.join(", ")} in permissions.allow, ${ASK_RULES.join(", ")} in permissions.ask and ${DENY_RULES.join(", ")} in permissions.deny by hand\n`,
+    );
     return 1;
   }
   const permissions = settings.permissions ?? {};
@@ -119,17 +126,17 @@ function main(args: readonly string[]): number {
     process.stderr.write(`mt-rules: ${file}: permissions is not an object\n`);
     return 1;
   }
-  const allow = permissions.allow ?? [];
-  if (!isStringList(allow)) {
-    process.stderr.write(`mt-rules: ${file}: permissions.allow is not a list of strings\n`);
-    return 1;
+  const lists: Record<string, string[]> = {};
+  for (const list of LISTS) {
+    const rules = permissions[list] ?? [];
+    if (!isStringList(rules)) {
+      process.stderr.write(`mt-rules: ${file}: permissions.${list} is not a list of strings\n`);
+      return 1;
+    }
+    lists[list] = rules;
   }
-  const deny = permissions.deny ?? [];
-  if (!isStringList(deny)) {
-    process.stderr.write(`mt-rules: ${file}: permissions.deny is not a list of strings\n`);
-    return 1;
-  }
-  const edits = planEdits(mode, allow, deny);
+  const { allow = [], ask = [], deny = [] } = lists;
+  const edits = planEdits(mode, allow, ask, deny);
   const description = describe(edits);
   if (description === "") return 0;
   if (!approved(mode, answer, file, edits)) {
@@ -137,6 +144,7 @@ function main(args: readonly string[]): number {
     return 0;
   }
   const next: Json = { ...permissions, allow: applyEdit(allow, edits.allow) };
+  if (permissions.ask !== undefined || edits.ask.add.length > 0) next.ask = applyEdit(ask, edits.ask);
   if (permissions.deny !== undefined || edits.deny.add.length > 0) next.deny = applyEdit(deny, edits.deny);
   settings.permissions = next;
   mkdirSync(dirname(file), { recursive: true });

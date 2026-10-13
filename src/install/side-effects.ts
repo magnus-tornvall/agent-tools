@@ -4,15 +4,16 @@
  *
  *   read-only     reads files and prints; writes nothing
  *   local write   writes on this machine only, such as the usage log or the JUnit report `mt oracle run` deletes
+ *   network       reaches off this machine, such as `mt update` fetching from the clone's origin
  *
  * A class covers what mt itself does. `mt oracle run` runs a shape's commands, which may reach
  * further, and nothing checks who wrote or approved the shape it runs.
  *
- * Every class stays on this machine, so every command is allowed. What only the owner runs is
- * denied to agents, whatever its class.
+ * Every command is allowed, and Claude Code asks before an agent runs one that reaches off this
+ * machine. What only the owner runs is denied to agents, whatever its class.
  */
 
-export type SideEffect = "read-only" | "local write";
+export type SideEffect = "read-only" | "local write" | "network";
 
 /** Each command as its words after `mt`, the way its usage line names it. */
 export const COMMANDS: Readonly<Record<string, SideEffect>> = {
@@ -23,10 +24,16 @@ export const COMMANDS: Readonly<Record<string, SideEffect>> = {
   "oracle hash": "read-only",
   "oracle run": "local write",
   config: "read-only",
+  update: "network",
 };
 
-/** `Bash(mt:*)`, which allows every command, as every class is allowed. */
+/** `Bash(mt:*)`, which allows every command; the ask rules still prompt before a network command. */
 export const ALLOW_RULES: readonly string[] = ["Bash(mt:*)"];
+
+/** One ask rule per network command: Claude Code checks ask rules before allow rules. */
+export const ASK_RULES: readonly string[] = Object.entries(COMMANDS)
+  .filter(([, effect]) => effect === "network")
+  .map(([command]) => `Bash(mt ${command}:*)`);
 
 /**
  * What agents are refused, as its words after `mt`: oracles are the owner's to write and run, so
