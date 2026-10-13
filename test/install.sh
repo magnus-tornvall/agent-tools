@@ -89,6 +89,10 @@ for folder in sys.argv[1:]:
         print(path, os.readlink(path) if os.path.islink(path) else "-", os.lstat(path).st_ino)' "$@"
 }
 
+relative() { # path from-folder -> path spelled relative to from-folder
+  python3 -I -c 'import os, sys; print(os.path.relpath(sys.argv[1], sys.argv[2]))' "$1" "$2"
+}
+
 tools=$(for dir in "$ROOT"/skills/*/; do
   tool=$(basename "$dir")
   [ -f "$ROOT/guides/$tool.md" ] && echo "$tool"
@@ -220,6 +224,35 @@ for tool in $tools; do
 done
 check "with SKILLS_DIR=~/.claude/skills, every stub is linked straight to the clone"
 
+# a SKILLS_DIR override, for another agent, leaves Claude Code's folder as it is
+H=$TMP/other-agent
+new_home "$H"
+mkdir -p "$H/.agents/skills"
+install "$H" || fail "install before installing for another agent"
+links "$H/.agents/skills" "$H/.claude/skills" >"$TMP/links.before"
+install "$H" SKILLS_DIR="$H/.codex/skills"; rc=$?
+assert_eq "install with SKILLS_DIR for another agent exits 0" 0 "$rc"
+for tool in $tools; do
+  [ "$(readlink "$H/.codex/skills/$tool")" = "$ROOT/skills/$tool" ] || fail "$tool is not linked to the clone in the other agent's folder"
+done
+check "with a SKILLS_DIR override, every stub is linked into that folder"
+links "$H/.agents/skills" "$H/.claude/skills" >"$TMP/links.after"
+cmp -s "$TMP/links.before" "$TMP/links.after" || fail "install for another agent changed ~/.claude/skills or ~/.agents/skills"
+check "install for another agent leaves ~/.claude/skills and ~/.agents/skills as they are"
+uninstall "$H" SKILLS_DIR="$H/.codex/skills"; rc=$?
+assert_eq "uninstall with SKILLS_DIR for another agent exits 0" 0 "$rc"
+[ -z "$(ls "$H/.codex/skills")" ] || fail "uninstall for another agent left links in its folder: $(ls "$H/.codex/skills")"
+check "uninstall for another agent removes the stubs from its folder"
+links "$H/.agents/skills" "$H/.claude/skills" >"$TMP/links.after"
+cmp -s "$TMP/links.before" "$TMP/links.after" || fail "uninstall for another agent changed ~/.claude/skills or ~/.agents/skills"
+check "uninstall for another agent leaves ~/.claude/skills and ~/.agents/skills as they are"
+H=$TMP/other-agent-only
+new_home "$H"
+install "$H" SKILLS_DIR="$H/.codex/skills"; rc=$?
+assert_eq "install for another agent on a fresh machine exits 0" 0 "$rc"
+[ -e "$H/.claude/skills" ] && fail "install for another agent created ~/.claude/skills"
+check "install for another agent does not create ~/.claude/skills"
+
 # existing settings keep everything else, and no rule is added twice
 H=$TMP/settings
 new_home "$H"
@@ -329,7 +362,26 @@ install "$H"; rc=$?
 check "install over a real skill folder in ~/.claude/skills fails"
 assert_contains "the failure names the folder in ~/.claude/skills" "$(cat "$TMP/out")" "$H/.claude/skills/mvc is a real folder"
 assert_eq "the folder in ~/.claude/skills holds only what it held" "SKILL.md" "$(ls "$H/.claude/skills/mvc")"
-assert_eq "the other stubs are linked in ~/.claude/skills" "$H/.agents/skills/to-orca" "$(readlink "$H/.claude/skills/to-orca")"
+for tool in $tools; do
+  [ "$tool" = mvc ] && continue
+  [ "$(readlink "$H/.claude/skills/$tool")" = "$H/.agents/skills/$tool" ] || fail "$tool in ~/.claude/skills is not linked to ~/.agents/skills"
+done
+check "the other stubs are linked in ~/.claude/skills"
+
+# a file where a stub goes is left alone, in either folder
+H=$TMP/file
+new_home "$H"
+mkdir -p "$H/.agents/skills" "$H/.claude/skills"
+printf 'a file\n' >"$H/.agents/skills/mvc"
+printf 'a file\n' >"$H/.claude/skills/commit"
+install "$H"; rc=$?
+[ "$rc" -ne 0 ] || fail "install over a file where a stub goes exits 0"
+check "install over a file where a stub goes fails"
+assert_contains "the failure names the file in ~/.agents/skills" "$(cat "$TMP/out")" "$H/.agents/skills/mvc is a real file"
+assert_contains "the failure names the file in ~/.claude/skills" "$(cat "$TMP/out")" "$H/.claude/skills/commit is a real file"
+[ ! -L "$H/.agents/skills/mvc" ] && [ "$(cat "$H/.agents/skills/mvc")" = "a file" ] || fail "the file in ~/.agents/skills was changed"
+[ ! -L "$H/.claude/skills/commit" ] && [ "$(cat "$H/.claude/skills/commit")" = "a file" ] || fail "the file in ~/.claude/skills was changed"
+check "a file where a stub goes is left as it is"
 
 # a login shell that cannot find mt fails the install
 H=$TMP/nopath
@@ -350,6 +402,7 @@ install "$H" ADD_MT_RULES=yes >/dev/null || fail "install before uninstall"
 rm "$H/.claude/skills/commit"
 ln -s ../../.agents/skills/commit "$H/.claude/skills/commit"
 ln -s "$ROOT/skills/to-orca" "$H/.claude/skills/to-orca-by-hand"
+ln -s "$(relative "$ROOT/skills/to-orca" "$H/.claude/skills")" "$H/.claude/skills/to-orca-relative"
 uninstall_answering y "$H"; rc=$?
 assert_eq "uninstall exits 0" 0 "$rc"
 [ -e "$H/.local/bin/mt" ] && fail "uninstall left the mt link"
@@ -365,6 +418,8 @@ for link in "$H/.claude/skills"/* "$H/.agents/skills"/*; do
   esac
 done
 check "uninstall leaves no link in either skills folder to the clone or to a stub"
+[ -L "$H/.claude/skills/to-orca-relative" ] && fail "uninstall left a relative link into the clone in ~/.claude/skills"
+check "uninstall removes a relative link into the clone in ~/.claude/skills"
 [ -L "$H/.agents/skills/someone-elses" ] && [ -d "$H/.agents/skills/caveman" ] || fail "uninstall removed a skill it did not install"
 [ -L "$H/.claude/skills/someone-elses" ] && [ -d "$H/.claude/skills/caveman" ] || fail "uninstall removed a skill in ~/.claude/skills it did not install"
 check "uninstall keeps skills it did not install"
@@ -380,6 +435,40 @@ case $(cat "$TMP/out") in *"[y/N]"*) fail "second uninstall asked about rules th
 check "second uninstall asks nothing"
 cmp -s "$TMP/settings.before" "$H/.claude/settings.json" || fail "second uninstall rewrote the settings"
 check "second uninstall leaves the settings as they are"
+
+# a relative link into the clone in ~/.agents/skills, and Claude Code's link to it, are uninstalled
+H=$TMP/uninstall-relative
+new_home "$H"
+mkdir -p "$H/.agents/skills"
+ln -s "$(relative "$ROOT/skills/commit" "$H/.agents/skills")" "$H/.agents/skills/commit"
+install "$H" || fail "install over a relative link into the clone"
+uninstall "$H"; rc=$?
+assert_eq "uninstall after a relative link into the clone exits 0" 0 "$rc"
+[ -L "$H/.agents/skills/commit" ] && fail "uninstall left a relative link into the clone in ~/.agents/skills"
+check "uninstall removes a relative link into the clone in ~/.agents/skills"
+[ -L "$H/.claude/skills/commit" ] && fail "uninstall left the ~/.claude/skills link to a relative stub link"
+check "uninstall removes the ~/.claude/skills link to a relative stub link"
+
+# with ~/.agents/skills gone, uninstall removes Claude Code's links to it
+H=$TMP/uninstall-agents-gone
+new_home "$H"
+mkdir -p "$H/.agents/skills" "$H/.claude/skills"
+ln -s "$TMP/nowhere" "$H/.claude/skills/someone-elses"
+install "$H" || fail "install before removing ~/.agents"
+rm "$H/.claude/skills/commit"
+ln -s ../../.agents/skills/commit "$H/.claude/skills/commit"
+rm -rf "$H/.agents"
+uninstall "$H"; rc=$?
+assert_eq "uninstall with ~/.agents gone exits 0" 0 "$rc"
+for link in "$H/.claude/skills"/*; do
+  [ -L "$link" ] || continue
+  case $(readlink "$link") in
+    "$H/.agents/skills/"* | ../../.agents/skills/*) fail "uninstall left $link, linking to $(readlink "$link")" ;;
+  esac
+done
+check "with ~/.agents gone, uninstall leaves no link in ~/.claude/skills to it"
+[ -L "$H/.claude/skills/someone-elses" ] || fail "uninstall with ~/.agents gone removed a broken link elsewhere"
+check "with ~/.agents gone, uninstall keeps a broken link elsewhere"
 
 # the rules stay unless the owner says so
 H=$TMP/uninstall-keep

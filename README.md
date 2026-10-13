@@ -355,23 +355,25 @@ is missing or stale. It:
 
 Set `BIN_DIR`, `SKILLS_DIR`, `CLAUDE_SKILLS_DIR` or `SETTINGS` to use other places, for example
 `make install SKILLS_DIR=~/.claude/skills` to link the stubs straight into Claude Code's folder.
-A `SKILLS_DIR` override also points the links in `~/.claude/skills` at that folder; set
-`CLAUDE_SKILLS_DIR` to the same folder to leave `~/.claude/skills` alone. A skill
-installed as a real folder is left alone and the install fails, naming it: linking over it
-would write a stray link inside it. The whole mvc from before it became a guide is such a folder,
-and so is a whole commit skill copied in before commit became one; the old and the new cannot both
-be installed under one name. To keep the old one for a later comparison, move it out of the skills
-folder rather than delete it. Settings that are not a JSON object, or whose `permissions` is not an
-object or whose `permissions.allow` or `permissions.ask` is not a list of strings, are left alone
-too, and the install fails saying which; it names the rules to add by hand only when the settings
-are not JSON or not an object.
+A `SKILLS_DIR` override, for another agent, links the stubs into that folder alone and leaves
+`~/.claude/skills` as it is; `CLAUDE_SKILLS_DIR` moves Claude Code's folder when `SKILLS_DIR` is not
+set. A skill installed as a real folder, or a file where a stub goes, is left alone and the install
+fails, naming it: linking over it would write a stray link inside the folder, or replace the file.
+The whole mvc from before it became a guide is such a folder, and so is a whole commit skill copied
+in before commit became one; the old and the new cannot both be installed under one name. To keep
+the old one for a later comparison, move it out of the skills folder rather than delete it. Settings
+that are not a JSON object, or whose `permissions` is not an object or whose `permissions.allow` or
+`permissions.ask` is not a list of strings, are left alone too, and the install fails saying which;
+it names the rules to add by hand only when the settings are not JSON or not an object.
 
 `make uninstall` takes it back out: the `mt` link, every link in either skills folder that points
-into this clone, and every link in `~/.claude/skills` to such a link in `~/.agents/skills`, even
-one made by hand, so a skill or `mt` installed some other way stays. It asks before removing the
-two rules, and any of the three earlier ones, from the settings; `REMOVE_MT_RULES=yes` or `=no` answers without asking. It leaves
-Bun, the clone and its `node_modules`, your shell profile and the usage log. Pass the same
-`BIN_DIR`, `SKILLS_DIR`, `CLAUDE_SKILLS_DIR` and `SETTINGS` you installed with.
+into this clone, and every link in `~/.claude/skills` to such a link in `~/.agents/skills`, however
+it spells the path and even one made by hand, so a skill or `mt` installed some other way stays.
+With `~/.agents/skills` gone, it also removes the links in `~/.claude/skills` to it. It asks before
+removing the two rules, and any of the three earlier ones, from the settings; `REMOVE_MT_RULES=yes`
+or `=no` answers without asking. It leaves Bun, the clone and its `node_modules`, your shell profile
+and the usage log. Pass the same `BIN_DIR`, `SKILLS_DIR`, `CLAUDE_SKILLS_DIR` and `SETTINGS` you
+installed with.
 
 A skill already linked from a clone becomes a stub when that clone pulls this layout, and the
 stub runs `mt get`. Run `make install` with the pull, or every agent that loads the skill fails on
