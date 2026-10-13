@@ -143,6 +143,20 @@ describe("mt shape check", () => {
     ]);
   });
 
+  test("fails a shape whose purpose is empty, on one line at purpose", () => {
+    const result = check({ ...example(), purpose: "" });
+
+    expect(result.code).toBe(1);
+    expect(stderrLines(result.stderr)).toEqual(["purpose: must not be empty"]);
+  });
+
+  test("fails a shape whose purpose is not a string, on one line at purpose", () => {
+    const result = check({ ...example(), purpose: ["why"] });
+
+    expect(result.code).toBe(1);
+    expect(stderrLines(result.stderr)).toEqual([expect.stringMatching(/^purpose: /)]);
+  });
+
   test("fails a shape with a top-level draft key, naming the key", () => {
     const result = check({ ...example(), draft: { budget: 3, rounds_spent: 0, open: [] } });
 
@@ -161,6 +175,18 @@ describe("mt shape check", () => {
 describe("mt shape check --draft", () => {
   test("prints nothing and exits 0 on a draft with an open question and no requirements", () => {
     expect(mt("shape", "check", "--draft", file(Bun.YAML.stringify(draft(), null, 2)))).toEqual({ code: 0, stdout: "", stderr: "" });
+  });
+
+  test("prints nothing and exits 0 on a draft with a purpose", () => {
+    const document = { ...draft(), purpose: "Finance reconciles cancelled orders by hand." };
+
+    expect(mt("shape", "check", "--draft", file(Bun.YAML.stringify(document, null, 2)))).toEqual({ code: 0, stdout: "", stderr: "" });
+  });
+
+  test("prints nothing and exits 0 on a draft without a purpose, as drafts were written before it", () => {
+    const { purpose: _purpose, ...document } = draft();
+
+    expect(mt("shape", "check", "--draft", file(Bun.YAML.stringify(document, null, 2)))).toEqual({ code: 0, stdout: "", stderr: "" });
   });
 
   test("takes --draft after the file, and the draft from stdin", () => {

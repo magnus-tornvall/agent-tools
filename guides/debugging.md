@@ -1,37 +1,49 @@
 # debugging
 
-Find why something fails, with evidence, before changing anything to make it pass. It is for a
-failure nobody expected: a test that should pass fails, a build or command breaks, code does what
-it was not written to do. A test written to fail before it passes is not one; it is doing its job.
+Domain: Change. Find why something fails, with evidence, before changing anything to make it pass.
+It is for a failure nobody expected: a test that should pass fails, a build or command breaks, code
+does what it was not written to do. A test written to fail before it passes is not one; it is doing
+its job. It takes the failure, and the request that reports it or asks why; it returns the root
+cause with its evidence and, unless only a diagnosis was asked for, one fix proven against the
+failure, with a report. It reads no config.
+
+## Principles
+
+- **Root cause by the scientific method.** A cause is a hypothesis until an experiment rules it in:
+  stated, tested by the smallest probe that could refute it, and kept or dropped on the result.
+- **Falsifiability.** A hypothesis says what result would rule it out; one no probe could refute
+  explains nothing.
+- **Minimal change.** The fix is made where the wrong value or state first appears, not where it is
+  noticed, and nothing rides along with it.
+- **Evidence hierarchy**, from the Evidence domain. What was run and what it showed outranks what
+  the code is remembered or expected to do, so a claim about the cause rests on the run.
 
 ## Objectives
 
-- **The failure is reproduced before it is explained.** Read the whole error first: the message,
-  the stack trace, each file and line, the exit code. Then trigger it on demand, with the exact
-  command or input, and note whether it fails every time. A failure that will not reproduce is not
-  guessed at: gather evidence on what differs between the runs that fail and those that pass.
-- **The root cause is found before any fix.** The cause is where the wrong value or state first
-  appears, not where it is noticed. Trace a bad value back through whatever passed it to where it
-  originates, and fix it there. A guard, a retry, a longer timeout or a skipped test at the point
-  of failure leaves the cause to fail somewhere else.
-- **Every claim about the cause rests on evidence**: what was run and what it showed. Look at what
-  changed, in the history, the diff, dependencies, config and environment; at working code nearby
-  that does the same thing, and every way it differs; and, when the failure crosses components, at
-  what enters and leaves each boundary and which config and environment reach it.
-- **One hypothesis at a time.** Each is stated as "X causes this, because Y", tested with the
-  smallest change or probe that can rule it in or out, and recorded with its result. A probe that
-  changes several things at once rules nothing out. A hypothesis the evidence rules out is undone,
-  not built on.
+- **The failure is reproduced before it is explained**: triggered on demand by the exact command or
+  input, with whether it fails every time, and its whole error read: the message, the stack trace,
+  each file and line, the exit code. A failure that will not reproduce is not guessed at: the
+  evidence is what differs between the runs that fail and those that pass.
+- **The root cause is found before any fix.** A bad value is traced back through whatever passed it
+  to where it originates, and fixed there. A guard, a retry, a longer timeout or a skipped test at
+  the point of failure leaves the cause to fail somewhere else.
+- **Every claim about the cause rests on evidence.** What changed, in the history, the diff,
+  dependencies, config and environment; working code nearby that does the same thing, and every
+  way it differs; and, when the failure crosses components, what enters and leaves each boundary
+  and which config and environment reach it.
+- **One hypothesis at a time.** Each is stated as "X causes this, because Y", tested with a probe
+  that changes one thing, and recorded with its result. A probe that changes several things at
+  once rules nothing out. A hypothesis the evidence rules out is undone, not built on.
 - **The fix is one change at the root cause, proven by reproducing the failure.** When the cause is
   in the repo's source code, a regression test reproduces it, and is seen failing before the fix
   and passing after it. When it is anywhere else (config in the repo, such as CI YAML or a
   Dockerfile; the environment; an external service), the command that reproduces the failure is
   seen failing before the fix and passing after it, and no automated test is added. The rest of
-  the repo's checks still pass, and nothing rides along with the fix.
-- **After three fixes that each failed, a fourth is asked, not tried.** The question goes to
-  whoever owns the decision, naming what each attempt ruled out. Fixes that each surface a new
-  problem somewhere else point at the design, not at one more patch. A fix that changes
-  architecture is asked whatever the count.
+  the repo's checks still pass.
+- **When failed fixes stop narrowing the cause, the next one is asked, not tried.** The question
+  goes to whoever owns the decision, naming what each attempt ruled out. Fixes that each surface a
+  new problem somewhere else point at the design, not at one more patch. A fix that changes
+  architecture is asked however few came before it.
 - **A diagnosis changes nothing.** When the request asks only why, the work ends at the root cause
   and its evidence; no fix is made. Otherwise the work carries through the fix.
 - **Diagnostics leave with the investigation.** Logging, prints, probes and scratch scripts added
@@ -53,8 +65,8 @@ it was not written to do. A test written to fail before it passes is not one; it
 
 - **The door rule** (`mt get door-rule`) says when a fix is a one-way door: one that changes
   architecture, a test contract or anything else it lists is asked before it is made.
-- **The ask guide** (`mt get ask`) composes the question after three failed fixes, and for a fix
-  the door rule says to ask.
+- **The ask guide** (`mt get ask`) composes the question when failed fixes stop narrowing the
+  cause, and for a fix the door rule says to ask.
 - **History**: `git log`, `git diff` and `git bisect` find the change that brought the failure in.
 
 ## Report

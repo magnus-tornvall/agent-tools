@@ -1,21 +1,15 @@
 /**
- * Adds or removes the rules that let agents run mt without a prompt in a Claude Code settings
- * file, keeping everything else in it: `Bash(mt:*)` in permissions.allow, and `Bash(mt dogfood:*)`
- * in permissions.ask so a dogfood filing still prompts. `add` also replaces the narrower allow
- * rules an earlier install wrote, and `remove` takes those out too. Asks first, and only when
- * there is something to change; `add` creates a missing file.
+ * Adds or removes, in a Claude Code settings file, the rules side-effects.ts builds from each mt
+ * command's class; src/install/PART.md is its contract.
  *
  *   bun src/install/mt-rules.ts add|remove <settings.json> [yes|no]
- *
- * `yes` or `no` answers without asking. With no answer and no terminal to ask on, nothing is
- * written. A file that is not a JSON object, or whose `permissions.allow` or `permissions.ask`
- * is not a list of strings, is left as it is and exits 1.
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
+import { rules } from "./side-effects.ts";
 
-const ALLOW_RULE = "Bash(mt:*)";
-const ASK_RULE = "Bash(mt dogfood:*)";
+const { allow: ALLOW_RULES, ask: ASK_RULES } = rules();
+/** Workaround for settings an install before Bash(mt:*) wrote; remove when no such install is left. */
 const EARLIER_ALLOW_RULES = ["Bash(mt get:*)", "Bash(mt list)", "Bash(mt shape:*)"];
 
 const USAGE = "usage: bun src/install/mt-rules.ts add|remove <settings.json> [yes|no]\n";
@@ -57,15 +51,15 @@ function planEdits(mode: Mode, allow: readonly string[], ask: readonly string[])
   if (mode === "add") {
     return {
       allow: {
-        add: allow.includes(ALLOW_RULE) ? [] : [ALLOW_RULE],
+        add: ALLOW_RULES.filter((rule) => !allow.includes(rule)),
         remove: EARLIER_ALLOW_RULES.filter((rule) => allow.includes(rule)),
       },
-      ask: { add: ask.includes(ASK_RULE) ? [] : [ASK_RULE], remove: [] },
+      ask: { add: ASK_RULES.filter((rule) => !ask.includes(rule)), remove: [] },
     };
   }
   return {
-    allow: { add: [], remove: [ALLOW_RULE, ...EARLIER_ALLOW_RULES].filter((rule) => allow.includes(rule)) },
-    ask: { add: [], remove: ask.includes(ASK_RULE) ? [ASK_RULE] : [] },
+    allow: { add: [], remove: [...ALLOW_RULES, ...EARLIER_ALLOW_RULES].filter((rule) => allow.includes(rule)) },
+    ask: { add: [], remove: ASK_RULES.filter((rule) => ask.includes(rule)) },
   };
 }
 
@@ -104,7 +98,7 @@ function main(args: readonly string[]): number {
   if (mode === "remove" && !existsSync(file)) return 0;
   const settings = readSettings(file);
   if (typeof settings === "string") {
-    process.stderr.write(`mt-rules: ${file} is ${settings}; ${mode} ${ALLOW_RULE} in permissions.allow and ${ASK_RULE} in permissions.ask by hand\n`);
+    process.stderr.write(`mt-rules: ${file} is ${settings}; ${mode} ${ALLOW_RULES.join(", ")} in permissions.allow and ${ASK_RULES.join(", ")} in permissions.ask by hand\n`);
     return 1;
   }
   const permissions = settings.permissions ?? {};

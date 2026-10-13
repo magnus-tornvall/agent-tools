@@ -1,4 +1,5 @@
 outcome: A cancelled order carries the reason it was cancelled, and the nightly export ships it to finance.
+purpose: Finance reconciles every cancelled order by hand, asking support why it was cancelled.
 requirements:
   R1:
     given: order 812 is open
