@@ -36,9 +36,9 @@ Every stub has a guide. A guide that only a spec or another guide loads has no s
 orca-worker and the assignments change and verification, whose references are its judging
 perspectives coverage, maintainer and surprise.
 No agent chooses them, so a skill-list entry would only cost the sessions that never use them;
-`mt get` serves them like any other guide. Stubs remain for what an agent or the owner picks:
-mvc, which settles a shape with the owner, oracle, which writes a closed shape's oracles before
-it is built, to-orca, which runs a change through Orca from a shape, an issue or prose, ask,
+`mt get` serves them like any other guide. The oracle guide has no stub either: oracles are the
+owner's, and install denies agents `mt oracle` and `mt get oracle` (see Install). Stubs remain for
+what an agent or the owner picks: mvc, which settles a shape with the owner, to-orca, which runs a change through Orca from a shape, an issue or prose, ask,
 which composes a question for whoever owns a decision, door-rule, which says whether a decision
 is asked at all, debugging, which finds the root cause of an unexpected failure before it is
 fixed, commit, which stages, writes and pushes commits as the session's destination allows, and
@@ -77,8 +77,8 @@ Each command's contract: its purpose, what it takes, what it prints, how it exit
 side-effect class. A class is one of read-only, which reads and prints and writes nothing; local
 write, which writes on this machine only; and external, which reaches a service off it. The classes
 are declared once in `src/install/side-effects.ts`, and install builds its permission rules from
-them: every class but external runs without a prompt, and each external command asks first (see
-Install). Every usage error prints `mt: <reason>` and a usage on stderr, nothing on stdout, and
+them: every class but external runs without a prompt, and each external command asks first, while
+`mt oracle` and `mt get oracle` are denied to agents whatever their class (see Install). Every usage error prints `mt: <reason>` and a usage on stderr, nothing on stdout, and
 exits 2. Only `mt config` and `mt dogfood triage` read the owner's config (see Config); every
 other command behaves the same whatever the config holds.
 
@@ -117,9 +117,8 @@ every oracle passes, or with `--base` when each does what its `base` says, and 1
 the shape cannot be read, its `oracles` block is not sound or it runs outside a git repo. No shape,
 two shapes, an unknown option or a `--timeout` that is not a whole number above 0 exits 2. It
 deletes the JUnit report each oracle names before running it, and runs each command as written,
-whatever that command does. It is classed local write by what it does itself, and runs without a
-prompt so a worker can run its oracles; nothing checks who wrote or approved the shape. See
-Oracles.
+whatever that command does. It is classed local write by what it does itself, and install denies it to agents, so the owner
+runs it; nothing checks who wrote or approved the shape. See Oracles.
 
 **`mt dogfood <title> [--body-file <file>]`**, external. Files a finding as an issue labelled
 `dogfooding` on this repo's public GitHub, through `gh`; `--body-file -` reads the body from stdin.
@@ -339,10 +338,14 @@ is missing or stale. It:
   stays where it is;
 - links each stub skill that has a guide into `~/.agents/skills`, and removes links into this
   clone whose stub is gone;
-- asks whether to add `Bash(mt:*)` to `permissions.allow` and `Bash(mt dogfood:*)` to
-  `permissions.ask` in `~/.claude/settings.json`, so Claude Code agents run every `mt` command
-  without a prompt except an external one, `mt dogfood`, which asks before each filing and each
-  triage. The rules follow from each command's side-effect class (see Contracts). A file that still
+- asks whether to add `Bash(mt:*)` to `permissions.allow`, `Bash(mt dogfood:*)` to
+  `permissions.ask`, and `Bash(mt oracle:*)` and `Bash(mt get oracle:*)` to `permissions.deny` in
+  `~/.claude/settings.json`, so Claude Code agents run every `mt` command without a prompt except
+  an external one, `mt dogfood`, which asks before each filing and each triage, and are refused
+  `mt oracle` and the oracle guide, which are the owner's. Claude Code checks deny rules first, so
+  the deny rules beat `Bash(mt:*)`; they match the command as written, so `mt` by its path or
+  inside `sh -c` still runs, and an agent that does not read these settings is not refused. The
+  allow and ask rules follow from each command's side-effect class (see Contracts). A file that still
   holds `Bash(mt get:*)`, `Bash(mt list)` or `Bash(mt shape:*)` from an earlier install has them
   replaced.
   A yes keeps everything else in the file; it is not asked again once the rules are there.
@@ -358,13 +361,13 @@ would write a stray link inside it. The whole mvc from before it became a guide 
 and so is a whole commit skill copied in before commit became one; the old and the new cannot both
 be installed under one name. To keep the old one for a later comparison, move it out of the skills
 folder rather than delete it. Settings that are not a JSON object, or whose `permissions` is not an
-object or whose `permissions.allow` or `permissions.ask` is not a list of strings, are left alone
-too, and the install fails saying which; it names the rules to add by hand only when the settings
+object or whose `permissions.allow`, `permissions.ask` or `permissions.deny` is not a list of
+strings, are left alone too, and the install fails saying which; it names the rules to add by hand only when the settings
 are not JSON or not an object.
 
 `make uninstall` takes it back out: the `mt` link and every link in the skills folder that points
 into this clone, so a skill or `mt` installed some other way stays. It asks before removing the
-two rules, and any of the three earlier ones, from the settings; `REMOVE_MT_RULES=yes` or `=no` answers without asking. It leaves
+four rules, and any of the three earlier ones, from the settings; `REMOVE_MT_RULES=yes` or `=no` answers without asking. It leaves
 Bun, the clone and its `node_modules`, your shell profile and the usage log. Pass the same
 `BIN_DIR`, `SKILLS_DIR` and `SETTINGS` you installed with.
 

@@ -80,6 +80,10 @@ ask_list() { # settings file -> one rule per line
   python3 -I -c 'import json, sys; print("\n".join(json.load(open(sys.argv[1]))["permissions"].get("ask", [])))' "$1"
 }
 
+deny_list() { # settings file -> one rule per line
+  python3 -I -c 'import json, sys; print("\n".join(json.load(open(sys.argv[1]))["permissions"].get("deny", [])))' "$1"
+}
+
 tools=$(for dir in "$ROOT"/skills/*/; do
   tool=$(basename "$dir")
   [ -f "$ROOT/guides/$tool.md" ] && echo "$tool"
@@ -105,6 +109,8 @@ case $(cat "$TMP/out") in *"removed stale"*) fail "a fresh install removed links
 check "a fresh install removes nothing"
 assert_eq "settings allow every mt command" "Bash(mt:*)" "$(allow_list "$H/.claude/settings.json")"
 assert_eq "settings ask before mt dogfood" "Bash(mt dogfood:*)" "$(ask_list "$H/.claude/settings.json")"
+assert_eq "settings deny agents mt oracle and the oracle guide" "$(printf 'Bash(mt oracle:*)\nBash(mt get oracle:*)')" \
+  "$(deny_list "$H/.claude/settings.json")"
 usage=$(HOME=$H "$H/.local/bin/mt" --help)
 assert_contains "the installed mt's usage lists mt config" "$usage" "mt config [<key>]"
 assert_contains "the installed mt's usage names the config file" "$usage" "\${XDG_CONFIG_HOME:-\$HOME/.config}/mt/config.toml"
@@ -142,7 +148,12 @@ assert_eq "ADD_MT_RULES=no exits 0" 0 "$rc"
 check "ADD_MT_RULES=no writes no settings"
 H=$TMP/allowed-already
 new_home "$H"
-install "$H" ADD_MT_RULES=yes >/dev/null
+install "$H" ADD_MT_RULES=yes; rc=$?
+assert_eq "ADD_MT_RULES=yes exits 0" 0 "$rc"
+assert_eq "ADD_MT_RULES=yes allows every mt command" "Bash(mt:*)" "$(allow_list "$H/.claude/settings.json")"
+assert_eq "ADD_MT_RULES=yes asks before mt dogfood" "Bash(mt dogfood:*)" "$(ask_list "$H/.claude/settings.json")"
+assert_eq "ADD_MT_RULES=yes denies mt oracle and mt get oracle" "$(printf 'Bash(mt oracle:*)\nBash(mt get oracle:*)')" \
+  "$(deny_list "$H/.claude/settings.json")"
 install_answering n "$H"
 case $(cat "$TMP/out") in *"[y/N]"*) fail "asked although every rule is there" ;; esac
 check "nothing is asked when every rule is there"
@@ -173,6 +184,8 @@ assert_eq "other settings are kept" "opus Bash(rm:*)" "$(python3 -I -c '
 import json, sys
 s = json.load(open(sys.argv[1]))
 print(s["model"], s["permissions"]["deny"][0])' "$H/.claude/settings.json")"
+assert_eq "the deny rules join the denies that are there" "$(printf 'Bash(rm:*)\nBash(mt oracle:*)\nBash(mt get oracle:*)')" \
+  "$(deny_list "$H/.claude/settings.json")"
 
 # the three rules an earlier install wrote are replaced, whatever else is listed
 H=$TMP/earlier
@@ -194,24 +207,33 @@ install_answering n "$H"
 assert_contains "the missing ask rule alone is asked about" "$(cat "$TMP/out")" "add Bash(mt dogfood:*) to permissions.ask"
 [ -z "$(ask_list "$H/.claude/settings.json")" ] || fail "declining wrote the ask rule"
 check "declining leaves the ask list as it was"
+printf '{"permissions": {"allow": ["Bash(mt:*)"], "ask": ["Bash(mt dogfood:*)"]}}\n' >"$H/.claude/settings.json"
+cp "$H/.claude/settings.json" "$TMP/settings.before"
+install_answering n "$H"
+assert_contains "the missing deny rules alone are asked about" "$(cat "$TMP/out")" \
+  "add Bash(mt oracle:*), Bash(mt get oracle:*) to permissions.deny?"
+cmp -s "$TMP/settings.before" "$H/.claude/settings.json" || fail "declining wrote the deny rules"
+check "declining leaves the settings without the deny rules"
 
-# an ask list that is not a list of strings is left alone
-for bad in '"Bash(x)"' '[1]' '{}'; do
-  H=$TMP/bad-ask
-  rm -rf "$H"
-  new_home "$H"
-  mkdir -p "$H/.claude"
-  printf '{"permissions": {"ask": %s}}\n' "$bad" >"$H/.claude/settings.json"
-  cp "$H/.claude/settings.json" "$TMP/bad-ask.before"
-  install "$H" ADD_MT_RULES=yes; rc=$?
-  [ "$rc" -ne 0 ] || fail "install over permissions.ask $bad exits 0"
-  assert_contains "the failure names permissions.ask" "$(cat "$TMP/out")" "permissions.ask is not a list of strings"
-  cmp -s "$TMP/bad-ask.before" "$H/.claude/settings.json" || fail "settings with permissions.ask $bad were rewritten"
-  uninstall "$H" REMOVE_MT_RULES=yes; rc=$?
-  [ "$rc" -ne 0 ] || fail "uninstall over permissions.ask $bad exits 0"
-  cmp -s "$TMP/bad-ask.before" "$H/.claude/settings.json" || fail "uninstall rewrote settings with permissions.ask $bad"
+# an ask or deny list that is not a list of strings is left alone
+for list in ask deny; do
+  for bad in '"Bash(x)"' '[1]' '{}'; do
+    H=$TMP/bad-$list
+    rm -rf "$H"
+    new_home "$H"
+    mkdir -p "$H/.claude"
+    printf '{"permissions": {"%s": %s}}\n' "$list" "$bad" >"$H/.claude/settings.json"
+    cp "$H/.claude/settings.json" "$TMP/bad.before"
+    install "$H" ADD_MT_RULES=yes; rc=$?
+    [ "$rc" -ne 0 ] || fail "install over permissions.$list $bad exits 0"
+    assert_contains "the failure names permissions.$list" "$(cat "$TMP/out")" "permissions.$list is not a list of strings"
+    cmp -s "$TMP/bad.before" "$H/.claude/settings.json" || fail "settings with permissions.$list $bad were rewritten"
+    uninstall "$H" REMOVE_MT_RULES=yes; rc=$?
+    [ "$rc" -ne 0 ] || fail "uninstall over permissions.$list $bad exits 0"
+    cmp -s "$TMP/bad.before" "$H/.claude/settings.json" || fail "uninstall rewrote settings with permissions.$list $bad"
+  done
+  check "a permissions.$list that is not a list of strings is left as it is"
 done
-check "a permissions.ask that is not a list of strings is left as it is"
 
 # settings that are not JSON are left alone
 H=$TMP/malformed
@@ -238,6 +260,16 @@ assert_eq "install with stale links exits 0" 0 "$rc"
 check "a link to a stub the clone no longer has is removed"
 [ -L "$H/.agents/skills/someone-elses" ] || fail "a broken link outside the clone was removed"
 check "a broken link outside the clone is kept"
+
+# the oracle stub is gone, so a link to it from an earlier install is removed
+H=$TMP/oracle-link
+new_home "$H"
+mkdir -p "$H/.agents/skills"
+ln -s "$ROOT/skills/oracle" "$H/.agents/skills/oracle"
+install "$H"; rc=$?
+assert_eq "install over an oracle link exits 0" 0 "$rc"
+[ -L "$H/.agents/skills/oracle" ] && fail "install kept the oracle link"
+check "install leaves no oracle link"
 
 # a real folder where a stub goes is left alone, and the rest still install
 H=$TMP/folder
@@ -278,6 +310,7 @@ check "uninstall removes every stub link"
 check "uninstall keeps skills it did not install"
 assert_eq "uninstall removes only the mt rules" "Bash(git status)" "$(allow_list "$H/.claude/settings.json")"
 assert_eq "uninstall removes the dogfood ask rule" "" "$(ask_list "$H/.claude/settings.json")"
+assert_eq "uninstall removes the deny rules" "" "$(deny_list "$H/.claude/settings.json")"
 assert_eq "uninstall keeps other settings" opus "$(python3 -I -c 'import json, sys; print(json.load(open(sys.argv[1]))["model"])' "$H/.claude/settings.json")"
 
 # running it again changes nothing, and asks nothing
@@ -298,6 +331,7 @@ assert_eq "declining rule removal still uninstalls" 0 "$rc"
 [ -e "$H/.local/bin/mt" ] && fail "declining rule removal left the mt link"
 assert_eq "declined rules stay" "Bash(mt:*)" "$(allow_list "$H/.claude/settings.json")"
 assert_eq "the declined ask rule stays" "Bash(mt dogfood:*)" "$(ask_list "$H/.claude/settings.json")"
+assert_eq "the declined deny rules stay" "$(printf 'Bash(mt oracle:*)\nBash(mt get oracle:*)')" "$(deny_list "$H/.claude/settings.json")"
 uninstall "$H"; rc=$?
 assert_eq "uninstall with no terminal to ask on exits 0" 0 "$rc"
 assert_contains "with no terminal it says how to answer" "$(cat "$TMP/out")" "REMOVE_MT_RULES=yes"
@@ -317,6 +351,15 @@ uninstall "$H" REMOVE_MT_RULES=yes; rc=$?
 assert_eq "uninstall over the earlier rules exits 0" 0 "$rc"
 assert_eq "uninstall removes the earlier rules" "Bash(git status)" "$(allow_list "$H/.claude/settings.json")"
 assert_eq "uninstall keeps other asks" "Bash(git push:*)" "$(ask_list "$H/.claude/settings.json")"
+
+# uninstall removes the deny rules, and the owner's denies stay
+H=$TMP/uninstall-deny
+new_home "$H"
+mkdir -p "$H/.claude"
+printf '{"permissions": {"deny": ["Bash(mt oracle:*)", "Bash(rm:*)", "Bash(mt get oracle:*)"]}}\n' >"$H/.claude/settings.json"
+uninstall "$H" REMOVE_MT_RULES=yes; rc=$?
+assert_eq "uninstall over the deny rules exits 0" 0 "$rc"
+assert_eq "uninstall removes both deny rules and keeps the owner's" "Bash(rm:*)" "$(deny_list "$H/.claude/settings.json")"
 
 # an mt that is not this clone's link stays
 H=$TMP/uninstall-foreign
