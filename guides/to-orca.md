@@ -109,10 +109,10 @@ do.
   observed for the UI; remove when Orca keeps or names commits that only a removed worktree held.
 - **Every worker whose report you accept stays live**, whether it reports success or failure:
   kept with `orca orchestration worker-retain` and never released, so its terminal closes only
-  when the owner deletes its worktree in Orca's UI. Orca's orchestration skill releases a settled
-  worker by default; keeping it live is the owner's standing wish.
+  when the owner deletes its worktree in Orca's UI.
 - **Every process a Task left running is named.** The hand-off names each one a Task started that
-  will still run once its worker's terminal closes, and the owner decides whether it is stopped.
+  still runs at the hand-off, and says for each whether deleting its worktree stops it; the owner
+  decides whether it is stopped.
   Workaround for closing an agent's terminal stopping only what the agent's harness started;
   remove when closing it stops every process a Task started.
 - **The hand-off.** The destination the owner approved: the branch, or a pull request. An
@@ -129,8 +129,9 @@ do.
 - Never remove a worktree or a branch.
 - Never retry, stop or abandon a worker without the owner's choice or Orca's positive proof that
   it is gone. Absence is not proof.
-- Two Tasks that run the repo's code never run in one worktree at once. A judge that runs code can
-  get its own worktree cut from the work branch.
+- Two Tasks that run the repo's code never run in one worktree at once. A retained worker whose
+  harness still runs a process it started is still running the repo's code. A judge that runs code
+  can get its own worktree cut from the work branch.
 - A judge is never pointed at, or placed where it would find, more of the shape than its slice.
 - A spec never changes. A change is a new Task.
 
