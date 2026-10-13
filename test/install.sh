@@ -80,6 +80,15 @@ ask_list() { # settings file -> one rule per line
   python3 -I -c 'import json, sys; print("\n".join(json.load(open(sys.argv[1]))["permissions"].get("ask", [])))' "$1"
 }
 
+links() { # folder... -> each entry, where it links to and its inode, so a link written again shows
+  python3 -I -c '
+import os, sys
+for folder in sys.argv[1:]:
+    for name in sorted(os.listdir(folder)):
+        path = os.path.join(folder, name)
+        print(path, os.readlink(path) if os.path.islink(path) else "-", os.lstat(path).st_ino)' "$@"
+}
+
 tools=$(for dir in "$ROOT"/skills/*/; do
   tool=$(basename "$dir")
   [ -f "$ROOT/guides/$tool.md" ] && echo "$tool"
@@ -152,14 +161,15 @@ check "nothing is asked when every rule is there"
 # running it again changes nothing
 H=$TMP/fresh
 cp "$H/.claude/settings.json" "$TMP/settings.before"
-ls -l "$H/.claude/skills" "$H/.local/bin" >"$TMP/links.before"
+links "$H/.claude/skills" >"$TMP/links.before"
 install "$H"; rc=$?
 assert_eq "second install exits 0" 0 "$rc"
 cmp -s "$TMP/settings.before" "$H/.claude/settings.json" || fail "second install rewrote the settings"
 check "second install leaves the settings as they are"
-ls -l "$H/.claude/skills" "$H/.local/bin" >"$TMP/links.after"
+links "$H/.claude/skills" >"$TMP/links.after"
 cmp -s "$TMP/links.before" "$TMP/links.after" || fail "second install changed the links"
 check "second install leaves the links as they are"
+assert_eq "second install keeps mt linked to the clone" "$ROOT/cli/mt" "$(readlink "$H/.local/bin/mt")"
 
 # with ~/.agents/skills, Claude Code's folder links to it
 H=$TMP/agents
@@ -172,12 +182,33 @@ for tool in $tools; do
   [ "$(readlink "$H/.claude/skills/$tool")" = "$H/.agents/skills/$tool" ] || fail "$tool in ~/.claude/skills is not linked to ~/.agents/skills"
 done
 check "with ~/.agents/skills, each stub links there and ~/.claude/skills links to it"
-ls -l "$H/.agents/skills" "$H/.claude/skills" >"$TMP/links.before"
+links "$H/.agents/skills" "$H/.claude/skills" >"$TMP/links.before"
 install "$H"; rc=$?
 assert_eq "second install with ~/.agents/skills exits 0" 0 "$rc"
-ls -l "$H/.agents/skills" "$H/.claude/skills" >"$TMP/links.after"
+links "$H/.agents/skills" "$H/.claude/skills" >"$TMP/links.after"
 cmp -s "$TMP/links.before" "$TMP/links.after" || fail "second install changed the links in either skills folder"
 check "second install leaves both skills folders as they are"
+rm "$H/.claude/skills/commit" "$H/.claude/skills/mvc"
+ln -s ../../.agents/skills/commit "$H/.claude/skills/commit"
+ln -s "$ROOT/skills/mvc" "$H/.claude/skills/mvc"
+install "$H"; rc=$?
+assert_eq "install over a relative link and a link into the clone exits 0" 0 "$rc"
+assert_eq "a relative link to ~/.agents/skills/commit is left as it is" ../../.agents/skills/commit \
+  "$(readlink "$H/.claude/skills/commit")"
+assert_eq "a link in ~/.claude/skills straight into the clone is relinked to ~/.agents/skills" "$H/.agents/skills/mvc" \
+  "$(readlink "$H/.claude/skills/mvc")"
+
+# a Claude Code folder that links to SKILLS_DIR gets no link to itself
+H=$TMP/claude-linked
+new_home "$H"
+mkdir -p "$H/.agents/skills" "$H/.claude"
+ln -s ../.agents/skills "$H/.claude/skills"
+install "$H"; rc=$?
+assert_eq "install with ~/.claude/skills linking to ~/.agents/skills exits 0" 0 "$rc"
+for tool in $tools; do
+  [ "$(readlink "$H/.agents/skills/$tool")" = "$ROOT/skills/$tool" ] || fail "$tool in ~/.agents/skills does not link to the clone"
+done
+check "with ~/.claude/skills linking to ~/.agents/skills, every stub still links to the clone"
 
 # a SKILLS_DIR that is Claude Code's folder gets the stubs straight from the clone
 H=$TMP/claude-only

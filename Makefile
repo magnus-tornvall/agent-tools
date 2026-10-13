@@ -50,7 +50,8 @@ mt:
 
 # Links every stub that has a guide into SKILLS_DIR, and each into Claude Code's folder when that is
 # another folder, and removes links to a stub that is gone. A real folder in the way is left alone:
-# ln -sfn would write a stray link inside it. The folders are compared by physical path, so a
+# ln -sfn would write a stray link inside it. A link that already leads to its target's place,
+# however it spells the path, is left as it is. The folders are compared by physical path, so a
 # Claude Code folder that links to SKILLS_DIR gets no link to itself.
 skills:
 	@mkdir -p "$(SKILLS_DIR)" "$(CLAUDE_SKILLS_DIR)"
@@ -60,6 +61,9 @@ skills:
 	    echo "$$2 is a real folder, not a link; move it out of $$(dirname "$$2") and run make again" >&2; \
 	    status=1; return 1; \
 	  fi; \
+	  to=$$(readlink "$$2") && \
+	    [ "$$(cd -P "$$(dirname "$$2")" && cd -P "$$(dirname "$$to")" 2>/dev/null && pwd)/$$(basename "$$to")" = \
+	      "$$(cd -P "$$(dirname "$$1")" && pwd)/$$(basename "$$1")" ] && return 0; \
 	  ln -sfn "$$1" "$$2"; \
 	}; \
 	skills=$$(cd -P "$(SKILLS_DIR)" && pwd); \
