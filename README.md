@@ -72,10 +72,11 @@ the attempt is still logged, with `found` false.
 Each command's contract: its purpose, what it takes, what it prints, how it exits, and its
 side-effect class. A class is either read-only, which reads and prints and writes nothing, or local
 write, which writes on this machine only. The classes are declared once in
-`src/install/side-effects.ts`, and install builds its permission rule from them: every class runs
-without a prompt (see Install). Every usage error prints `mt: <reason>` and a usage on stderr,
-nothing on stdout, and exits 2. Only `mt config` reads the owner's config (see Config); every other
-command behaves the same whatever the config holds.
+`src/install/side-effects.ts`. Every class stays on the machine, so the one allow rule `Bash(mt:*)`
+covers every command and runs without a prompt (see Install); a class that leaves the machine would
+have to bring install's handling with it. Every usage error prints `mt: <reason>` and a usage on
+stderr, nothing on stdout, and exits 2. Only `mt config` reads the owner's config (see Config);
+every other command behaves the same whatever the config holds.
 
 **`mt get <tool> [--ref <ref>]`**, local write. Prints a tool's guide, `guides/<tool>.md`, or one
 of its references, `guides/<tool>/<ref>.md`, on stdout and exits 0. A tool or ref with no such
@@ -259,12 +260,12 @@ is missing or stale. It:
 - links each stub skill that has a guide into `~/.agents/skills`, and removes links into this
   clone whose stub is gone;
 - asks whether to add `Bash(mt:*)` to `permissions.allow` in `~/.claude/settings.json`, so Claude
-  Code agents run every `mt` command without a prompt. The rule follows from each command's
-  side-effect class (see Contracts), and `permissions.ask` is left as it is. A file that still
-  holds `Bash(mt get:*)`, `Bash(mt list)` or `Bash(mt shape:*)` from an earlier install has them
-  replaced. A yes keeps everything else in the file; it is not asked again once the rules are there.
-  `ADD_MT_RULES=yes` or `ADD_MT_RULES=no` answers without asking, and with no terminal to ask on
-  nothing is written;
+  Code agents run every `mt` command without a prompt. Every side-effect class stays on the
+  machine (see Contracts), so that one rule covers every command, and `permissions.ask` is left as
+  it is. A file that still holds `Bash(mt get:*)`, `Bash(mt list)` or `Bash(mt shape:*)` from an
+  earlier install has them replaced. A yes keeps everything else in the file; it is not asked again
+  once the rule is there. `ADD_MT_RULES=yes` or `ADD_MT_RULES=no` answers without asking, and with
+  no terminal to ask on nothing is written;
 - checks that a login shell started from your profile alone finds `mt` and Bun. Orca starts a
   worker in a terminal running your shell, so this is the PATH workers get.
 
@@ -281,9 +282,9 @@ object.
 
 `make uninstall` takes it back out: the `mt` link and every link in the skills folder that points
 into this clone, so a skill or `mt` installed some other way stays. It asks before removing the
-rule, and any of the three earlier ones, from the settings; `REMOVE_MT_RULES=yes` or `=no` answers without asking. It leaves
-Bun, the clone and its `node_modules`, your shell profile and the usage log. Pass the same
-`BIN_DIR`, `SKILLS_DIR` and `SETTINGS` you installed with.
+rule, and any of the three earlier ones, from the settings; `REMOVE_MT_RULES=yes` or `=no` answers
+without asking. It leaves Bun, the clone and its `node_modules`, your shell profile and the usage
+log. Pass the same `BIN_DIR`, `SKILLS_DIR` and `SETTINGS` you installed with.
 
 A skill already linked from a clone becomes a stub when that clone pulls this layout, and the
 stub runs `mt get`. Run `make install` with the pull, or every agent that loads the skill fails on
@@ -323,8 +324,8 @@ string `command` and an array `path`), each as one line instead of one per menti
 
 `bun test` runs guide-lint against fixture repos and a fake `orca`, and checks the shape
 schema and `mt shape`, `mt config` against a throwaway `XDG_CONFIG_HOME`, and that every command in
-`mt --help` has a side-effect class. `bun run typecheck`
-runs `tsc --noEmit` over `src/`; `tsc` cannot read `cli/mt`, which has no extension.
+`mt --help` has a side-effect class. `bun run typecheck` runs `tsc --noEmit` over `src/`; `tsc`
+cannot read `cli/mt`, which has no extension.
 
 ## Layout
 

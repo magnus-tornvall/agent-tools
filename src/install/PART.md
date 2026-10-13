@@ -10,17 +10,18 @@ declares each `mt` command's side-effect class. The README keeps the steps a hum
 
 An agent, or an Orca worker started in the owner's login shell, can run every `mt` command and
 load every stub, and every `mt` command's own effect stays on the machine. A class covers what
-`mt` itself does. `mt oracle run` runs the commands of a shape, which may reach further. It is allowed so a worker runs its oracles without a prompt, and nothing checks
-who wrote or approved the shape it runs.
+`mt` itself does. `mt oracle run` runs the commands of a shape, which may reach further. It is
+allowed so a worker runs its oracles without a prompt, and nothing checks who wrote or approved the
+shape it runs.
 
 ## Principles
 
 - **Idempotence.** Every target converges on the desired state: it changes only what is missing or
   stale, so it is safe to run again after a pull or on a half-set-up machine.
-- **Least privilege**, as far as `mt`'s own effects go. A command's permission follows from its
-  side-effect class, declared once in code. Every class, read-only or local write, stays on the
-  machine and is allowed. The commands `mt oracle run` runs for a shape are not `mt`'s own and are
-  not classed.
+- **Least privilege**, as far as `mt`'s own effects go. A command's class is declared once in code.
+  Every class, read-only or local write, stays on the machine, so the one allow rule `Bash(mt:*)`
+  covers every command; a class that leaves the machine would have to bring install's handling with
+  it. The commands `mt oracle run` runs for a shape are not `mt`'s own and are not classed.
 - **Mechanism, not policy.** Install proposes the rules; the owner decides. Nothing is written to
   the settings without a yes, and with no answer and no terminal nothing is written.
 - **Ownership.** Uninstall removes only what install made: links that point into this clone and
