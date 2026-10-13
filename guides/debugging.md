@@ -15,8 +15,8 @@ failure, with a report. It reads no config.
   explains nothing.
 - **Minimal change.** The fix is made where the wrong value or state first appears, not where it is
   noticed, and nothing rides along with it.
-- **Evidence over recall.** A claim about the cause rests on what was run and what it showed, not
-  on what the code is remembered or expected to do.
+- **Evidence hierarchy**, from the Evidence domain. What was run and what it showed outranks what
+  the code is remembered or expected to do, so a claim about the cause rests on the run.
 
 ## Objectives
 
