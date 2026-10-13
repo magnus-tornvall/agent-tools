@@ -93,6 +93,10 @@ relative() { # path from-folder -> path spelled relative to from-folder
   python3 -I -c 'import os, sys; print(os.path.relpath(sys.argv[1], sys.argv[2]))' "$1" "$2"
 }
 
+has_ask() { # settings file -> exit 0 when it has permissions.ask
+  python3 -I -c 'import json, sys; sys.exit(0 if "ask" in json.load(open(sys.argv[1]))["permissions"] else 1)' "$1"
+}
+
 tools=$(for dir in "$ROOT"/skills/*/; do
   tool=$(basename "$dir")
   [ -f "$ROOT/guides/$tool.md" ] && echo "$tool"
@@ -119,7 +123,8 @@ check "guides without a stub are not linked"
 case $(cat "$TMP/out") in *"removed stale"*) fail "a fresh install removed links it made" ;; esac
 check "a fresh install removes nothing"
 assert_eq "settings allow every mt command" "Bash(mt:*)" "$(allow_list "$H/.claude/settings.json")"
-assert_eq "settings ask before mt dogfood" "Bash(mt dogfood:*)" "$(ask_list "$H/.claude/settings.json")"
+has_ask "$H/.claude/settings.json" && fail "a fresh install wrote permissions.ask"
+check "a fresh install writes no ask list"
 usage=$(HOME=$H "$H/.local/bin/mt" --help)
 assert_contains "the installed mt's usage lists mt config" "$usage" "mt config [<key>]"
 assert_contains "the installed mt's usage names the config file" "$usage" "\${XDG_CONFIG_HOME:-\$HOME/.config}/mt/config.toml"
@@ -253,6 +258,17 @@ assert_eq "install for another agent on a fresh machine exits 0" 0 "$rc"
 [ -e "$H/.claude/skills" ] && fail "install for another agent created ~/.claude/skills"
 check "install for another agent does not create ~/.claude/skills"
 
+# settings with no permissions get the allow rule and no ask list
+H=$TMP/no-permissions
+new_home "$H"
+mkdir -p "$H/.claude"
+printf '{"model": "opus"}\n' >"$H/.claude/settings.json"
+install "$H" ADD_MT_RULES=yes; rc=$?
+assert_eq "install over settings with no permissions exits 0" 0 "$rc"
+assert_eq "settings with no permissions allow every mt command" "Bash(mt:*)" "$(allow_list "$H/.claude/settings.json")"
+has_ask "$H/.claude/settings.json" && fail "install over settings with no permissions wrote permissions.ask"
+check "install over settings with no permissions writes no ask list"
+
 # existing settings keep everything else, and no rule is added twice
 H=$TMP/settings
 new_home "$H"
@@ -277,35 +293,31 @@ printf '{"permissions": {"allow": ["Bash(mt get:*)", "Bash(git status)", "Bash(m
 install "$H" ADD_MT_RULES=yes; rc=$?
 assert_eq "install over the earlier rules exits 0" 0 "$rc"
 assert_eq "the earlier rules are replaced" "$(printf 'Bash(git status)\nBash(mt:*)')" "$(allow_list "$H/.claude/settings.json")"
-assert_eq "the dogfood rule joins the asks that are there" "$(printf 'Bash(git push:*)\nBash(mt dogfood:*)')" \
-  "$(ask_list "$H/.claude/settings.json")"
+assert_eq "the asks that are there stay" "Bash(git push:*)" "$(ask_list "$H/.claude/settings.json")"
 printf '{"permissions": {"allow": ["Bash(mt get:*)"]}}\n' >"$H/.claude/settings.json"
 install_answering y "$H"
 assert_contains "the question names what is replaced" "$(cat "$TMP/out")" "remove Bash(mt get:*) from permissions.allow"
 assert_eq "one earlier rule is replaced too" "Bash(mt:*)" "$(allow_list "$H/.claude/settings.json")"
-printf '{"permissions": {"allow": ["Bash(mt:*)"]}}\n' >"$H/.claude/settings.json"
-install_answering n "$H"
-assert_contains "the missing ask rule alone is asked about" "$(cat "$TMP/out")" "add Bash(mt dogfood:*) to permissions.ask"
-[ -z "$(ask_list "$H/.claude/settings.json")" ] || fail "declining wrote the ask rule"
-check "declining leaves the ask list as it was"
 
-# an ask list that is not a list of strings is left alone
+# a permissions.ask that is not a list of strings is kept as it is, and the allow rule is handled as usual
+H=$TMP/bad-ask
+new_home "$H"
+mkdir -p "$H/.claude"
 for bad in '"Bash(x)"' '[1]' '{}'; do
-  H=$TMP/bad-ask
-  rm -rf "$H"
-  new_home "$H"
-  mkdir -p "$H/.claude"
-  printf '{"permissions": {"ask": %s}}\n' "$bad" >"$H/.claude/settings.json"
-  cp "$H/.claude/settings.json" "$TMP/bad-ask.before"
+  printf '{"permissions": {"allow": ["Bash(mt get:*)"], "ask": %s}}\n' "$bad" >"$H/.claude/settings.json"
   install "$H" ADD_MT_RULES=yes; rc=$?
-  [ "$rc" -ne 0 ] || fail "install over permissions.ask $bad exits 0"
-  assert_contains "the failure names permissions.ask" "$(cat "$TMP/out")" "permissions.ask is not a list of strings"
-  cmp -s "$TMP/bad-ask.before" "$H/.claude/settings.json" || fail "settings with permissions.ask $bad were rewritten"
+  assert_eq "install over an ask of $bad exits 0" 0 "$rc"
+  assert_eq "install over an ask of $bad adds the allow rule" "Bash(mt:*)" "$(allow_list "$H/.claude/settings.json")"
+  assert_eq "install leaves an ask of $bad as it was" "$bad" "$(python3 -I -c '
+import json, sys
+print(json.dumps(json.load(open(sys.argv[1]))["permissions"]["ask"]))' "$H/.claude/settings.json")"
   uninstall "$H" REMOVE_MT_RULES=yes; rc=$?
-  [ "$rc" -ne 0 ] || fail "uninstall over permissions.ask $bad exits 0"
-  cmp -s "$TMP/bad-ask.before" "$H/.claude/settings.json" || fail "uninstall rewrote settings with permissions.ask $bad"
+  assert_eq "uninstall over an ask of $bad exits 0" 0 "$rc"
+  assert_eq "uninstall over an ask of $bad removes the allow rule" "" "$(allow_list "$H/.claude/settings.json")"
+  assert_eq "uninstall leaves an ask of $bad as it was" "$bad" "$(python3 -I -c '
+import json, sys
+print(json.dumps(json.load(open(sys.argv[1]))["permissions"]["ask"]))' "$H/.claude/settings.json")"
 done
-check "a permissions.ask that is not a list of strings is left as it is"
 
 # settings that are not JSON are left alone
 H=$TMP/malformed
@@ -317,6 +329,7 @@ install "$H"; rc=$?
 [ "$rc" -ne 0 ] || fail "install over malformed settings exits 0"
 check "install over malformed settings fails"
 assert_contains "the failure names the settings file" "$(cat "$TMP/out")" "$H/.claude/settings.json is not JSON"
+assert_contains "the failure names the rule to add by hand" "$(cat "$TMP/out")" "add Bash(mt:*) in permissions.allow by hand"
 cmp -s "$TMP/malformed.before" "$H/.claude/settings.json" || fail "malformed settings were rewritten"
 check "malformed settings are left as they are"
 
@@ -424,7 +437,6 @@ check "uninstall removes a relative link into the clone in ~/.claude/skills"
 [ -L "$H/.claude/skills/someone-elses" ] && [ -d "$H/.claude/skills/caveman" ] || fail "uninstall removed a skill in ~/.claude/skills it did not install"
 check "uninstall keeps skills it did not install"
 assert_eq "uninstall removes only the mt rules" "Bash(git status)" "$(allow_list "$H/.claude/settings.json")"
-assert_eq "uninstall removes the dogfood ask rule" "" "$(ask_list "$H/.claude/settings.json")"
 assert_eq "uninstall keeps other settings" opus "$(python3 -I -c 'import json, sys; print(json.load(open(sys.argv[1]))["model"])' "$H/.claude/settings.json")"
 
 # running it again changes nothing, and asks nothing
@@ -478,7 +490,6 @@ uninstall_answering n "$H"; rc=$?
 assert_eq "declining rule removal still uninstalls" 0 "$rc"
 [ -e "$H/.local/bin/mt" ] && fail "declining rule removal left the mt link"
 assert_eq "declined rules stay" "Bash(mt:*)" "$(allow_list "$H/.claude/settings.json")"
-assert_eq "the declined ask rule stays" "Bash(mt dogfood:*)" "$(ask_list "$H/.claude/settings.json")"
 uninstall "$H"; rc=$?
 assert_eq "uninstall with no terminal to ask on exits 0" 0 "$rc"
 assert_contains "with no terminal it says how to answer" "$(cat "$TMP/out")" "REMOVE_MT_RULES=yes"
@@ -486,7 +497,6 @@ assert_eq "with no terminal the rules stay" "Bash(mt:*)" "$(allow_list "$H/.clau
 uninstall "$H" REMOVE_MT_RULES=yes; rc=$?
 assert_eq "REMOVE_MT_RULES=yes exits 0" 0 "$rc"
 assert_eq "REMOVE_MT_RULES=yes removes the allow rule" "" "$(allow_list "$H/.claude/settings.json")"
-assert_eq "REMOVE_MT_RULES=yes removes the ask rule" "" "$(ask_list "$H/.claude/settings.json")"
 
 # uninstall removes the earlier rules too, and other asks stay
 H=$TMP/uninstall-earlier

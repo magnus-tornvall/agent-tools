@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { parseMtUsage } from "../guide-lint/lint.ts";
-import { COMMANDS, rules } from "./side-effects.ts";
+import { COMMANDS } from "./side-effects.ts";
 
 const MT = new URL("../../cli/mt", import.meta.url).pathname;
 
@@ -27,7 +27,7 @@ describe("side-effect classes", () => {
     expect(usageCommands()).toEqual(Object.keys(COMMANDS).sort());
   });
 
-  test("D9: get and oracle run are local writes, dogfood and its triage external, the rest read-only", () => {
+  test("D9: get and oracle run are local writes, the rest read-only", () => {
     expect(COMMANDS).toEqual({
       get: "local write",
       list: "read-only",
@@ -35,22 +35,7 @@ describe("side-effect classes", () => {
       "shape slice": "read-only",
       "oracle hash": "read-only",
       "oracle run": "local write",
-      dogfood: "external",
-      "dogfood triage": "external",
       config: "read-only",
     });
-  });
-
-  test("C3: install allows Bash(mt:*) and asks only Bash(mt dogfood:*), which covers dogfood triage", () => {
-    expect(rules()).toEqual({ allow: ["Bash(mt:*)"], ask: ["Bash(mt dogfood:*)"] });
-  });
-
-  test("D8: an external command gets its own ask rule unless a shorter external one covers it", () => {
-    expect(rules({ list: "read-only", publish: "external", "oracle run": "local write", "publish all": "external", dogfood: "external" })).toEqual({
-      allow: ["Bash(mt:*)"],
-      ask: ["Bash(mt publish:*)", "Bash(mt dogfood:*)"],
-    });
-    expect(rules({ dogfoodx: "external", dogfood: "external" }).ask).toEqual(["Bash(mt dogfoodx:*)", "Bash(mt dogfood:*)"]);
-    expect(rules({ get: "local write", list: "read-only" })).toEqual({ allow: ["Bash(mt:*)"], ask: [] });
   });
 });

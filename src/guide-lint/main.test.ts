@@ -154,15 +154,27 @@ describe("mt mentions", () => {
     expect(out).toBe("guides/mvc.md:3: `mt get ask extra`: mt get rejects these arguments\n");
   });
 
-  test("runs no mt command but mt get: an mt dogfood mention files nothing", () => {
-    writeFileSync(join(FIX, "guides", "mvc.md"), '# mvc\n\nFile it with `mt dogfood "a finding"`.\n');
-    const gh = join(TMP, "with-gh");
-    const ghCalls = join(TMP, "gh-calls");
-    rmSync(ghCalls, { force: true });
-    write(join(gh, "gh"), `#!/bin/bash\necho "$*" >>"${ghCalls}"\n`);
-    chmodSync(join(gh, "gh"), 0o755);
-    expect(lint(gh).status).toBe(0);
-    expect(existsSync(ghCalls)).toBe(false);
+  test("runs no mt command but mt get: an mt publish mention publishes nothing", () => {
+    writeFileSync(join(FIX, "guides", "mvc.md"), '# mvc\n\nPublish it with `mt publish "a finding"`.\n');
+    const calls = join(TMP, "mt-calls");
+    rmSync(calls, { force: true });
+    renameSync(join(FIX, "cli", "mt"), join(FIX, "cli", "mt-real"));
+    writeFileSync(
+      join(FIX, "cli", "mt"),
+      [
+        'import { appendFileSync } from "node:fs";',
+        "const args = process.argv.slice(2);",
+        'if (args[0] !== "--help" && args[0] !== "get") appendFileSync(' + JSON.stringify(calls) + ', `${args.join(" ")}\\n`);',
+        'const real = Bun.spawnSync([process.execPath, import.meta.dir + "/mt-real", ...args], { stdin: "ignore" });',
+        "process.stdout.write(real.stdout);",
+        'if (args[0] === "--help") process.stdout.write("       mt publish <title>            publish a finding\\n");',
+        "process.stderr.write(real.stderr);",
+        "process.exit(real.exitCode);",
+        "",
+      ].join("\n"),
+    );
+    expect(lint(WITH_ORCA).status).toBe(0);
+    expect(existsSync(calls)).toBe(false);
   });
 
   test("says once that mt did not run, instead of failing every mention", () => {
