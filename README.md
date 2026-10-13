@@ -209,14 +209,12 @@ The owner's explicit choice for a Run beats it.
 A TOML float with an integer value, such as `fix_rounds = 2.0`, counts as that integer, since
 `Bun.TOML.parse` cannot tell them apart. `Bun.TOML.parse` also reads some values that are not
 valid TOML as numbers: `-foo`, `+inf`, `-inf` and `-nan` as 0, `.7` as 0.7 and `07` as 7. So
-`mt config` takes `fix_rounds = -foo` as a valid 0. The owner writes the number keys as plain TOML
-numbers.
-`mt` checks that an agent name is well formed, not that Orca knows it, and a repeated name is
-allowed.
+`mt config` takes `fix_rounds = -foo` as a valid 0. The owner writes `fix_rounds` as a plain TOML
+number. `mt` checks that an agent name is well formed, not that Orca knows it, and a repeated name
+is allowed.
 
-No `mt` command reads `agents` or `fix_rounds`;
-whatever coordinates unattended work, such as the to-orca guide, reads them through
-`mt config <key>`. For example:
+No `mt` command reads `agents` or `fix_rounds`; whatever coordinates unattended work, such as the
+to-orca guide, reads them through `mt config <key>`. For example:
 
 ```toml
 agents = ["claude"]
@@ -303,8 +301,9 @@ bun test
 bun run typecheck
 ```
 
-`test/mt.sh` checks `mt get` and `mt list`, and needs `python3` on PATH to parse the log's JSON lines; `mt` itself needs only Bun. `test/install.sh` runs `make
-install` and `make uninstall` against throwaway home folders, and needs `python3` too.
+`test/mt.sh` checks `mt get` and `mt list`, and needs `python3` on PATH to parse the log's JSON
+lines; `mt` itself needs only Bun. `test/install.sh` runs `make install` and `make uninstall`
+against throwaway home folders, and needs `python3` too.
 `src/install/PART.md` and `src/guide-lint/PART.md` hold the contracts of install and guide-lint.
 `test/guides.sh` is guide-lint, whose code is `src/guide-lint/`. It fails, one ``file:line:
 `mention`: reason`` line each, when a guide, stub skill or `AGENTS.md` mentions in backticks an `mt
