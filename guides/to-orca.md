@@ -37,8 +37,10 @@ it, and how, with the tools named at the end, is yours to compose.
   place, the input or state that shows it, the fix proposed and its door, each as it was raised,
   and what became of it: fixed, saying what the fix changed and which Task made it; dropped, and
   why; the owner's decision; or still open, and who holds it: you, a fix Task, or the owner. In a
-  message to the owner, each finding the owner must rule on comes first, its row in full; every
-  other finding is one line, its key and what became of it, and its full row when the owner asks.
+  message to the owner, the table follows any question, never inside one, and opens with each
+  finding the owner must rule on, its row in full, unless a question in that message already
+  carries it; every other finding is one line, its key and what became of it, and its full row
+  when the owner asks. The hand-off places those lines as its objective below says.
 - **The findings table is rebuilt for each message** from Orca's inbox and Task results, and for a
   finding you raised, or one dropped or ruled on with no Task to carry it, from the owner's own
   answer or what you recorded of it; never from memory. Workaround for Orca keeping no state for a
@@ -114,11 +116,11 @@ do.
   a human can answer; remove when Orca reports such a worker to its coordinator.
 - **The owner can judge every finding from what reaches them.** Once a report has raised a
   finding, or you have, every message you send the owner carries the findings table so far, laid
-  out as the Contract says, after any question rather than in it, and the hand-off carries the
-  final table. The table alone is no reason to message them.
-- **Nothing the owner must judge reaches them only as a reference.** A commit, file path, ID or
-  file on disk that the owner must judge comes with what of it they need, as the ask guide holds
-  for every question; one named only for the record is named by its ID, its content on request.
+  out as the Contract says, and the hand-off carries the final table. The table alone is no reason
+  to message them.
+- **Nothing the owner must judge reaches them only as a reference.** A commit, Task worktree or
+  file a worker wrote that the owner must judge is cited as the brief guide says, never by its
+  name alone.
 - **Evidence that is not text reaches the owner where they can check it.** Such evidence, a
   screenshot for one, is described in the message and named by its path, and the hand-off names
   each such file with the Task worktree that holds it, so the owner can check it before removing
@@ -140,13 +142,16 @@ do.
   Workaround for closing an agent's terminal stopping only what the agent's harness started;
   remove when closing it stops every process a Task started.
 - **The hand-off.** It opens with the rulings the owner must make, each finding still open for
-  them in full. Then the destination the owner approved: the branch, or a pull request. One line
-  each for every other finding in the final table, dropped or fixed, and for every failed attempt,
-  requirement without evidence, departure from the approved plan and uncertain assumption. Each
-  Task, commit and question you answered named by its ID, without its account, which the owner
-  gets on request. All of it rebuilt from Orca's inbox and Task results, and the table as the
-  Contract says, not from memory. Proposed edits to the guides, drawn from the workers' Toolbox
-  lines, which the owner picks from; apply only the picked ones, and never on the work branch.
+  them in full. Everything else the owner must act on follows: the proposed edits to the guides,
+  drawn from the workers' Toolbox lines, to pick from; the `mt oracle run` command and each
+  tampered oracle; each process left running, to decide on; and each worktree and file of evidence
+  to check before teardown. Then the destination the owner approved: the branch, or a pull
+  request. Then one line each for every other finding in the final table, whatever became of it,
+  and for every failed attempt, requirement without evidence, departure from the approved plan
+  and uncertain assumption. Each Task, commit and question you answered named by its ID, without
+  its account, which the owner gets on request. All of it rebuilt from Orca's inbox and Task
+  results, and the table as the Contract says, not from memory. Apply only the guide edits the
+  owner picks, and never on the work branch.
 
 ## Guardrails
 
