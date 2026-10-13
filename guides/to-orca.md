@@ -32,14 +32,16 @@ it, and how, with the tools named at the end, is yours to compose.
 - **The hand-off** is what the Run returns to the owner, as the objectives below describe it.
 - **The findings table** has one row per finding raised in the Run, by a report or by you. A
   report's finding is keyed by the ID its report gave it, such as `T4/F1`, and one you raise by its
-  place. A row gives who raised it, a Task and its perspective or you, its place, the input or
-  state that shows it, the fix proposed and its door, each in full as it was raised and never cut
-  to a line, and what became of it: fixed, saying what the fix changed and which Task made it;
-  dropped, and why; the owner's decision; or still open, and who holds it: you, a fix Task, or the
-  owner. It is rebuilt for each message from Orca's inbox and Task results, and for a finding you
-  raised, or one dropped or ruled on with no Task to carry it, from the owner's own answer or what
-  you recorded of it; never from memory. Workaround for Orca keeping no state for a Run's
-  findings; remove when Orca or `mt` keeps each finding's state.
+  place as first raised plus a short title, a key that stays the same in every message even when
+  the branch moves that place. A row gives who raised it, a Task and its perspective or you, its
+  place, the input or state that shows it, the fix proposed and its door, each in full as it was
+  raised and never cut to a line, and what became of it: fixed, saying what the fix changed and
+  which Task made it; dropped, and why; the owner's decision; or still open, and who holds it: you,
+  a fix Task, or the owner.
+- **The findings table is rebuilt for each message** from Orca's inbox and Task results, and for a
+  finding you raised, or one dropped or ruled on with no Task to carry it, from the owner's own
+  answer or what you recorded of it; never from memory. Workaround for Orca keeping no state for a
+  Run's findings; remove when Orca or `mt` keeps each finding's state.
 - **Every worker** is an Orca Task whose spec follows the Task-spec contract of Orca's
   orchestration skill, carries the spec head, and loads its assignment's guide.
 
@@ -114,6 +116,11 @@ do.
 - **Nothing the owner must judge reaches them only as a reference.** A commit, file path, ID or
   file on disk in a message to the owner comes with the content it names, as the ask guide holds
   for every question.
+- **Evidence that is not text reaches the owner where they can check it.** Such evidence, a
+  screenshot for one, is described in the message and named by its path, and the hand-off names
+  each such file with the Task worktree that holds it, so the owner can check it before removing
+  that worktree. Workaround for Orca's messages carrying only text and keeping no file a Task
+  wrote; remove when a message to the owner can carry a file that outlives its worktree.
 - **A question about a finding can be decided from its own text.** It carries the finding as its
   row gives it, each option written out with what it changes, and the constraint, ruling or
   decision the finding conflicts with, quoted with its source.
@@ -150,7 +157,7 @@ do.
   loop, the Task lifecycle, and the Task-spec contract every spec follows: Target, Change,
   Constraints, Ownership, Observable acceptance.
 - **The inbox and Task results** are the Run's durable record; the hand-off is rebuilt from them,
-  and the findings table from them and the other sources its definition names.
+  and the findings table from them and the other sources the Contract names for it.
 - **Decision gates** hold a Task on an owner decision that blocks it.
 - **`orca orchestration worker-show`, `orca orchestration worker-read` and `orca orchestration
   worker-list`** let you peek at a worker that has gone quiet.

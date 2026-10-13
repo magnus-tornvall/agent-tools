@@ -35,6 +35,8 @@ and what the repo's own checks and builds write.
 - **Every finding can be acted on without asking.** It names its place, the input or state that
   shows it, the fix, and its door: two-way, or one-way and who pays to undo it
   (`mt get door-rule`).
+- **Evidence that is not text can be checked**, such as a screenshot: the report describes what it
+  shows and names it by its path. Evidence that is text is in the report's own text.
 
 ## Report
 
