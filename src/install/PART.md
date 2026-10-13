@@ -48,8 +48,9 @@ Code's folder and `~/.agents` is not created. Install needs Bun 1.2.23 or later 
   `CLAUDE_SKILLS_DIR` is another folder, `CLAUDE_SKILLS_DIR/<tool>` linking to `SKILLS_DIR/<tool>`;
   no link left for a stub that is gone, whether into this clone or to such a link in `SKILLS_DIR`;
   the rules in `SETTINGS` if the owner said yes, and a login shell that finds `mt` and Bun. It
-  prints what it changed and exits 0, or fails, naming the cause on stderr: Bun missing or too old, `BIN_DIR/mt` a folder, a stub's place a real folder, settings it cannot
-  read, or a login shell that cannot find `mt` and Bun.
+  prints what it changed and exits 0, or fails, naming the cause on stderr: Bun missing or too old,
+  `BIN_DIR/mt` a folder, a stub's place a real folder, settings it cannot read, or a login shell
+  that cannot find `mt` and Bun.
 - `uninstall` leaves no `mt` link, no link in `SKILLS_DIR` or `CLAUDE_SKILLS_DIR` that points into
   this clone, and none in `CLAUDE_SKILLS_DIR` to a link in `SKILLS_DIR` that does, absolute or
   relative, whoever made it; and the rules removed if the owner said yes. It leaves Bun, the clone
