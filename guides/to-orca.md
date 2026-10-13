@@ -83,8 +83,7 @@ do.
   `git commit` a worker's launch permissions would not allow. When a requirement needs the app
   running, it names where the app under test actually sends its requests, read from the config it
   runs with, not from the docs. The message opens with the approval question and anything that
-  would stop a worker or cost money, before the per-Task details. A changed plan is approved
-  again.
+  would stop a worker, before the per-Task details. A changed plan is approved again.
 - **A shape's oracles are the owner's to write and run.** No Task writes an oracle, or runs one
   through `mt oracle` or by its own command. An oracle the repo's checks pick up runs with them,
   as any test does, and the checks pass with it. No Task changes a file an oracle pins. When the
@@ -148,10 +147,11 @@ do.
   to check before teardown. Then the destination the owner approved: the branch, or a pull
   request. Then one line each for every other finding in the final table, whatever became of it,
   and for every failed attempt, requirement without evidence, departure from the approved plan
-  and uncertain assumption. Each Task, commit and question you answered named by its ID, without
-  its account, which the owner gets on request. All of it rebuilt from Orca's inbox and Task
-  results, and the table as the Contract says, not from memory. Apply only the guide edits the
-  owner picks, and never on the work branch.
+  and uncertain assumption. An assumption is uncertain when you would not have reached it from the
+  shape and the owner's rulings alone, as you judge it. Each Task, commit and question you answered
+  named by its ID, without its account, which the owner gets on request. All of it rebuilt from
+  Orca's inbox and Task results, and the table as the Contract says, not from memory. Apply only
+  the guide edits the owner picks, and never on the work branch.
 
 ## Guardrails
 
