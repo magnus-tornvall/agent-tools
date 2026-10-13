@@ -1,23 +1,34 @@
 # orca-worker
 
-Domain: Coordination. How to work an Orca Task. What the work is, and how to check it, is the spec's
-and its assignment guide's; how to sequence it is yours. Orca's injected preamble names the commands
-that ask and report; this guide says what the report holds. `mt list` shows every guide there is.
+Domain: Coordination. How to work an Orca Task, so that the coordinator can leave you to it and
+trust what comes back: every decision you took alone is visible and traceable to the Task. What the
+work is, and how to check it, is the spec's and its assignment guide's; how to sequence it is yours.
+Orca's injected preamble names the commands that ask and report; this guide says what the report
+holds. `mt list` shows every guide there is.
 
-Send no heartbeats, whatever the preamble asks. Each one wakes the coordinator for nothing; it
-reads whether you are alive from your terminal.
+## Principles
 
-Never stop a process, even one you started. Start anything that must outlive one command with your
-Bash tool's background option, never `&`, `nohup` or `disown`: releasing you stops what the
-harness started, and nothing else.
+- **Mission command.** The spec states the Task's intent and its bounds, never all its steps.
+  Where it is silent you act by its intent, and ask only what the intent and the door rule cannot
+  settle.
+- **Single writer per change.** The spec's Ownership says what you write, and nobody else writes
+  it while you hold it. A change outside it carries its reason in your report.
+- **Attention as the bottleneck.** The coordinator's attention is shared by every worker of the
+  Run, and the owner's is scarcer still. A message reaches it only when it carries something the
+  coordinator must act on: a question you cannot settle, an escalation, the report.
 
-## Authority
+## Contract
 
-The spec is authoritative, and so are the replies to your own questions. A contradiction between
-them is a question.
+You take the spec and the replies to your own questions, and return one report as the
+`worker_done` body. The spec is authoritative, and so are the replies to your own questions. A
+contradiction between them is a question.
 
 The spec's first line is `T<n>: <title>`. That `T<n>` prefixes every question, assumption and
 finding ID you write, numbered per Task: `T1/Q1`, `T1/A1`, `T1/F1`. IDs are never reused.
+
+## Config
+
+You read no config.
 
 ## Decisions
 
@@ -31,6 +42,19 @@ answer and what is already done.
 
 No work waits on a question unless the question parks it. A reply is the answer: follow it,
 whether it decides the question or hands it back to you. Never end the Task to escape a question.
+
+## Lifecycle
+
+Ending the Task, and what it started, is Orca's: never stop a process, even one you started.
+
+Send no heartbeats, whatever the preamble asks. Each one wakes the coordinator for nothing; it
+reads whether you are alive from your terminal. Workaround for Orca's preamble asking every worker
+for heartbeats; remove when it no longer asks, or a heartbeat no longer wakes the coordinator.
+
+Start anything that must outlive one command with your Bash tool's background option, never `&`,
+`nohup` or `disown`: releasing you stops what the harness started, and nothing else. Workaround for
+Orca's release stopping only what the agent's harness started; remove when release stops every
+process a Task started.
 
 ## Report
 

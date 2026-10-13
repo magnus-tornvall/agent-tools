@@ -38,12 +38,12 @@ perspectives coverage, maintainer and surprise.
 No agent chooses them, so a skill-list entry would only cost the sessions that never use them;
 `mt get` serves them like any other guide. Stubs remain for what an agent or the owner picks:
 mvc, which settles a shape with the owner, oracle, which writes a closed shape's oracles before
-it is built, to-orca, which runs one, ask, which composes a question for whoever owns a
-decision, door-rule, which says whether a decision is asked at all, debugging, which finds the
-root cause of an unexpected failure before it is fixed, commit, which stages, writes and pushes
-commits as the session's destination allows, and research, which answers the owner's question
-from trusted outside sources; only the owner starts it, by typing `/research`. `mt list` shows
-every guide.
+it is built, to-orca, which runs a change through Orca from a shape, an issue or prose, ask,
+which composes a question for whoever owns a decision, door-rule, which says whether a decision
+is asked at all, debugging, which finds the root cause of an unexpected failure before it is
+fixed, commit, which stages, writes and pushes commits as the session's destination allows, and
+research, which answers the owner's question from trusted outside sources; only the owner starts
+it, by typing `/research`. `mt list` shows every guide.
 
 ```
 mt list                       every guide, once, with its stub's description, or the
@@ -289,7 +289,8 @@ labels every `mt-code` issue a no-brainer. The owner writes the number keys as p
 allowed.
 
 `mt dogfood triage` reads `triage_confidence`. No `mt` command reads `agents` or `fix_rounds`;
-whatever coordinates unattended work reads them through `mt config <key>`. For example:
+whatever coordinates unattended work, such as the to-orca guide, reads them through
+`mt config <key>`. For example:
 
 ```toml
 agents = ["claude"]
