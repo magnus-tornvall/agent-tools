@@ -50,7 +50,7 @@ chmod +x "$REPO/cli/mt"
 printf '# Door rule\nbody line\n' >"$REPO/guides/door-rule.md"
 printf '# To orca\n' >"$REPO/guides/to-orca.md"
 printf '# Overlay\noverlay body\n' >"$REPO/guides/to-orca/overlay.md"
-printf '# Solo, no stub\n\nA guide only a spec loads,\n  over two lines.\n\n## Later\nnot read\n' >"$REPO/guides/no-stub.md"
+printf '# Solo, no stub\n\nDomain: Tools. A guide only a spec loads,\n  over two lines.\n\n## Later\nnot read\n' >"$REPO/guides/no-stub.md"
 printf '# Solo\n' >"$REPO/guides/solo.md"
 
 cat >"$REPO/skills/door-rule/SKILL.md" <<'SK'
@@ -183,6 +183,8 @@ assert_contains "R3 quoted description unquoted" "$out" "Quoted description, sin
 case $out in *"allowed-tools"*|*"must not be read"*) fail "R3 list read past the description" ;; esac
 check "R3 list stops at the description"
 assert_contains "R3 guide without a stub shows its first paragraph" "$out" "A guide only a spec loads, over two lines."
+case $out in *"Domain:"*) fail "R3 list shows a guide's domain line" ;; esac
+check "R3 list leaves out a guide's domain"
 case $out in *"not read"*) fail "R3 list read past a guide's first paragraph" ;; esac
 check "R3 list stops at a guide's first paragraph"
 case $out in *orphan-stub*) fail "R3 list shows a stub that has no guide" ;; esac

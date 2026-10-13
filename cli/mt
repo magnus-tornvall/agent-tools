@@ -119,6 +119,7 @@ function cmdGet(args: string[]): number {
 const SPACE = "[ \\t\\n\\v\\f\\r]";
 const LEADING_SPACE = new RegExp(`^${SPACE}+`);
 const TRAILING_SPACE = new RegExp(`${SPACE}+$`);
+const DOMAIN = /^Domain: [^.]*\.\s*/;
 
 /** The `description` in a stub's front matter, a folded or literal block joined with spaces. */
 function stubDescription(file: string): string {
@@ -151,7 +152,7 @@ function stubDescription(file: string): string {
   return description;
 }
 
-/** A guide's first paragraph after its title, joined with spaces. */
+/** A guide's first paragraph after its title, joined with spaces, without the `Domain: <domain>.` it opens with. */
 function guideSummary(file: string): string {
   const parts: string[] = [];
   for (const raw of readFileSync(file, "utf8").split("\n")) {
@@ -166,7 +167,7 @@ function guideSummary(file: string): string {
     }
     parts.push(line.replace(LEADING_SPACE, ""));
   }
-  return parts.join(" ");
+  return parts.join(" ").replace(DOMAIN, "");
 }
 
 function cmdList(): number {
