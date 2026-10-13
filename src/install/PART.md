@@ -2,18 +2,18 @@
 
 Domain: Tools. Install puts `mt` and its stub skills where agents find them, and offers the owner
 the Claude Code permission rules that let agents run `mt`; uninstall takes back out what install
-put there. Its code is `install.sh`, which clones the newest release and runs `make install` there, the
-Makefile's `install` and `uninstall` targets and the targets they run, `src/install/mt-rules.ts`,
-which edits the settings, and `src/install/side-effects.ts`, which declares each `mt` command's
-side-effect class. The README keeps the steps a human follows.
+put there. Its code is `install.sh`, which clones the newest release and runs `make install`
+there, the Makefile's `install` and `uninstall` targets and the targets they run,
+`src/install/mt-rules.ts`, which edits the settings, and `src/install/side-effects.ts`, which
+declares each `mt` command's side-effect class. The README keeps the steps a human follows.
 
 ## Purpose
 
 An agent, or an Orca worker started in the owner's login shell, can run every `mt` command the owner
 does not keep and load every stub, and is asked before a command whose own effect leaves the
 machine. Oracles are the owner's to write and run, so an agent in Claude Code is refused `mt oracle`
-and `mt get oracle`. A class covers what `mt` itself does. `mt oracle run` runs the commands of a shape,
-which may reach further, and nothing checks who wrote or approved the shape it runs.
+and `mt get oracle`. A class covers what `mt` itself does. `mt oracle run` runs the commands of a
+shape, which may reach further, and nothing checks who wrote or approved the shape it runs.
 
 ## Principles
 
@@ -52,8 +52,12 @@ needs Bun 1.2.23 or later on PATH.
   `${XDG_DATA_HOME:-$HOME/.local/share}/agent-tools` with the highest `vMAJOR.MINOR.PATCH` tag
   checked out, other tags ignored, and runs `make install` there with its input from the terminal
   when there is one, so the settings question is asked under `curl | bash`. A clone of that repo
-  already there is updated by its own `mt update`, whose exit code it returns; anything else there is
-  left as it is, and it exits 1 naming it.
+  already there, its origin spelled with or without a trailing `/` or `.git`, or over ssh for
+  GitHub, is updated by its own `mt update`, whose exit code it returns: refused or failed before
+  `make install`, the clone stays as it was, and when `make install` fails after the move, the
+  move stays and it says to run `make install` again. Anything else there is left as it is, and it
+  exits 1 naming it. While `$HOME/.local/bin/mt` links into another clone, it exits 1 naming that
+  clone and saying to run `make uninstall` there first, and clones and links nothing.
 - `install` leaves the clone's dependencies installed from its lockfile, `BIN_DIR/mt` linking to
   `cli/mt`, each stub skill that has a guide linked into `SKILLS_DIR`, and, when it links Claude
   Code's folder and that is another folder, `CLAUDE_SKILLS_DIR/<tool>` linking to
@@ -72,8 +76,9 @@ needs Bun 1.2.23 or later on PATH.
   something to change, and exits 0 whether it changed the file, found nothing to change or was
   declined; declined, it prints one line naming what it left as it is. A file that is not a JSON
   object, or whose `permissions` is not an object or whose `permissions.allow`, `permissions.ask`
-  or `permissions.deny` is not a list of strings, is left as it is: one line on stderr says which, naming the rules to add
-  by hand when the file is not a JSON object, and it exits 1. A usage error exits 2.
+  or `permissions.deny` is not a list of strings, is left as it is: one line on stderr says which,
+  naming the rules to add by hand when the file is not a JSON object, and it exits 1. A usage error
+  exits 2.
 - The rules are `ALLOW_RULES`, `ASK_RULES` and `DENY_RULES` in `side-effects.ts`: `Bash(mt:*)` in
   `permissions.allow`, which allows every command; in `permissions.ask` one `Bash(mt <command>:*)`
   per network command, `Bash(mt update:*)`; and in `permissions.deny` one `Bash(mt <prefix>:*)` per

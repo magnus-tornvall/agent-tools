@@ -1,9 +1,9 @@
 #!/bin/bash
 # Tests for install.sh and mt update against a local origin and throwaway home folders. Exits
 # non-zero on the first failure. Nothing reaches the network: origin is a local repo, given to
-# install.sh through AGENT_TOOLS_URL; make install's bun install reads Bun's package cache; and
-# HTTP goes to a proxy that refuses it, so a package missing from the cache fails the test instead
-# of being fetched.
+# install.sh through AGENT_TOOLS_URL; make install's bun install reads Bun's package cache; HTTP
+# goes to a proxy that refuses it, so a package missing from the cache fails the test instead of
+# being fetched; and git is allowed local paths alone, so an origin spelled as GitHub's fails.
 
 set -u
 
@@ -18,7 +18,7 @@ TMP=$(cd "$TMP" && pwd -P)
 export MT_LOG=$TMP/usage.jsonl XDG_STATE_HOME=$TMP/state
 export BUN_INSTALL_CACHE_DIR=$BUN_CACHE
 export HTTP_PROXY=http://127.0.0.1:9 HTTPS_PROXY=http://127.0.0.1:9 http_proxy=http://127.0.0.1:9 https_proxy=http://127.0.0.1:9
-export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1
+export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 GIT_ALLOW_PROTOCOL=file
 export GIT_AUTHOR_NAME=test GIT_AUTHOR_EMAIL=test@example.com GIT_COMMITTER_NAME=test GIT_COMMITTER_EMAIL=test@example.com
 unset NO_PROXY no_proxy XDG_DATA_HOME
 
@@ -99,6 +99,30 @@ installed() { # home origin ref: a clone of origin with ref checked out where in
 update() { # home -> runs the installed mt update, output in $TMP/out
   HOME=$1 SHELL=/bin/bash "$1/.local/bin/mt" update </dev/null >"$TMP/out" 2>&1
 }
+
+cloned() { # home origin ref: a clone of origin with ref checked out where install.sh puts it, not installed
+  new_home "$1"
+  mkdir -p "$(dirname "$(clone_of "$1")")"
+  git -c advice.detachedHead=false clone -q --branch "$3" "$2" "$(clone_of "$1")" || fail "cloning $2 at $3"
+}
+
+update_clone() { # home [VAR=value...] -> runs the clone's own mt update by its path, output in $TMP/out
+  local home=$1
+  shift
+  env HOME="$home" SHELL=/bin/bash "$@" "$(clone_of "$home")/cli/mt" update </dev/null >"$TMP/out" 2>&1
+}
+
+links() { # home -> every link under it with its target
+  find "$1" -type l | sort | while read -r link; do echo "$link -> $(readlink "$link")"; done
+}
+
+# make stubs: one that succeeds, so only mt update's own logic runs, and one that fails
+mkdir -p "$TMP/make-ok" "$TMP/make-fails"
+printf '#!/bin/sh\nexit 0\n' >"$TMP/make-ok/make"
+printf '#!/bin/sh\necho make failed here >&2\nexit 1\n' >"$TMP/make-fails/make"
+chmod +x "$TMP/make-ok/make" "$TMP/make-fails/make"
+MAKE_OK=$TMP/make-ok:$PATH
+MAKE_FAILS=$TMP/make-fails:$PATH
 
 state() { # clone -> its HEAD, branch, status and the diff of its files
   git -C "$1" rev-parse HEAD
@@ -339,3 +363,146 @@ for ref in v0.1.0 main; do
   cmp -s "$TMP/before" "$TMP/after" || fail "mt update at $ref with origin unreachable changed the clone"
   check "mt update at $ref with origin unreachable leaves HEAD as it was"
 done
+
+# R11 on main: a main ahead of or diverged from origin's main cannot move forward and stays
+for how in "is ahead of" "has diverged from"; do
+  H=$TMP/main-${how// /-}
+  O=$(origin "main-${how// /-}")
+  D=$(clone_of "$H")
+  cloned "$H" "$O" main
+  git -C "$D" commit -q --allow-empty -m local
+  [ "$how" = "is ahead of" ] || git -C "$O" commit -q --allow-empty -m upstream
+  state "$D" >"$TMP/before"
+  update_clone "$H" PATH="$MAKE_OK"; rc=$?
+  assert_eq "mt update when main $how origin's exits 1" 1 "$rc"
+  assert_contains "mt update says main $how origin's main" "$(cat "$TMP/out")" "main $how origin's main, so it cannot move forward"
+  state "$D" >"$TMP/after"
+  cmp -s "$TMP/before" "$TMP/after" || fail "mt update when main $how origin's changed the clone"
+  check "mt update when main $how origin's leaves HEAD as it was"
+done
+
+# a failed make install after the move exits 1, says to run it again, and keeps the move
+H=$TMP/make-fails
+O=$(origin make-fails)
+D=$(clone_of "$H")
+cloned "$H" "$O" v0.1.0
+update_clone "$H" PATH="$MAKE_FAILS"; rc=$?
+assert_eq "mt update with make install failing exits 1" 1 "$rc"
+assert_contains "mt update says make install failed" "$(cat "$TMP/out")" "make install failed in $D"
+assert_contains "mt update says to run make install again" "$(cat "$TMP/out")" "run make install there again"
+assert_eq "mt update with make install failing keeps the move to v0.2.0" "$(commit_of "$O" v0.2.0)" "$(git -C "$D" rev-parse HEAD)"
+
+# a local release tag origin lacks is not a release to move to
+H=$TMP/local-tag
+O=$(origin local-tag)
+D=$(clone_of "$H")
+cloned "$H" "$O" v0.1.0
+git -C "$D" tag v0.5.0 "$(git -C "$D" commit-tree "HEAD^{tree}" -p HEAD -m local)"
+update_clone "$H" PATH="$MAKE_OK"; rc=$?
+assert_eq "mt update with a local v0.5.0 exits 0" 0 "$rc"
+assert_eq "mt update moves to origin's v0.2.0, not the local v0.5.0" "$(commit_of "$O" v0.2.0)" "$(git -C "$D" rev-parse HEAD)"
+
+# refusals that leave the clone as it was: no release on origin, detached at a commit that is no
+# release, git or make missing
+H=$TMP/norelease
+O=$(origin norelease)
+D=$(clone_of "$H")
+cloned "$H" "$O" v0.1.0
+git -C "$O" tag -d v0.1.0 v0.2.0 >/dev/null
+for kind in "no release on origin" "detached at no release" "no git" "no make"; do
+  env=(PATH="$MAKE_OK")
+  case $kind in
+    "no release on origin") want="origin has no release tag" ;;
+    "detached at no release")
+      git -C "$D" remote set-url origin "$(origin detached)"
+      git -C "$D" -c advice.detachedHead=false checkout -q --detach "$(git -C "$D" commit-tree "HEAD^{tree}" -p HEAD -m local)"
+      want="neither main nor a release tag" ;;
+    "no git") env=(PATH="$TMP/bin-without-git"); want="git is not on PATH" ;;
+    "no make") env=(PATH="$TMP/bin-without-make"); want="make is not on PATH" ;;
+  esac
+  state "$D" >"$TMP/before"
+  update_clone "$H" "${env[@]}"; rc=$?
+  assert_eq "mt update with $kind exits 1" 1 "$rc"
+  assert_contains "mt update with $kind says so" "$(cat "$TMP/out")" "$want"
+  state "$D" >"$TMP/after"
+  cmp -s "$TMP/before" "$TMP/after" || fail "mt update with $kind changed the clone"
+  check "mt update with $kind leaves the clone as it was"
+done
+
+# an argument is a usage error
+state "$D" >"$TMP/before"
+env HOME="$H" "$D/cli/mt" update now </dev/null >"$TMP/out" 2>&1; rc=$?
+assert_eq "mt update with an argument exits 2" 2 "$rc"
+assert_contains "mt update names the argument" "$(cat "$TMP/out")" "unexpected argument 'now'"
+state "$D" >"$TMP/after"
+cmp -s "$TMP/before" "$TMP/after" || fail "mt update with an argument changed the clone"
+
+# install.sh with no release on origin, or origin unreachable, fails and clones nothing
+for kind in "no release" unreachable; do
+  H=$TMP/install-${kind// /-}
+  new_home "$H"
+  case $kind in
+    "no release")
+      O=$(origin install-norelease)
+      git -C "$O" tag -d v0.1.0 v0.2.0 >/dev/null
+      want="$O has no release tag" ;;
+    unreachable) O=$TMP/gone.git; want="listing the tags of $O failed" ;;
+  esac
+  run_install "$H" "$O"; rc=$?
+  assert_eq "install.sh with $kind exits 1" 1 "$rc"
+  assert_contains "install.sh with $kind says so" "$(cat "$TMP/out")" "$want"
+  [ -e "$(clone_of "$H")" ] && fail "install.sh with $kind created $(clone_of "$H")"
+  check "install.sh with $kind creates no clone"
+done
+
+# install.sh takes another spelling of origin's URL as the same repo and runs the clone's mt update
+H=$TMP/spelled
+O=$(origin spelled)
+D=$(clone_of "$H")
+cloned "$H" "$O" v0.1.0
+for spelling in "$O/" "${O%.git}"; do
+  git -C "$D" -c advice.detachedHead=false checkout -q --detach v0.1.0
+  git -C "$D" remote set-url origin "$spelling"
+  run_install "$H" "$O" PATH="$MAKE_OK"; rc=$?
+  assert_eq "install.sh over a clone whose origin is $spelling exits 0" 0 "$rc"
+  assert_eq "install.sh over a clone whose origin is $spelling moves it to v0.2.0" "$(commit_of "$O" v0.2.0)" "$(git -C "$D" rev-parse HEAD)"
+done
+
+# install.sh takes GitHub's https and ssh spellings of this repo as the same and refuses another;
+# taken, the clone's mt update runs and fails at the fetch, which may reach local paths alone
+GITHUB=github.com/magnus-tornvall/agent-tools
+for pair in "git@github.com:magnus-tornvall/agent-tools.git|" "https://$GITHUB|ssh://git@$GITHUB.git" \
+  "ssh://git@$GITHUB|https://$GITHUB.git" "git@github.com:someone-else/agent-tools.git|"; do
+  spelling=${pair%%|*}
+  url=${pair#*|}
+  git -C "$D" remote set-url origin "$spelling"
+  state "$D" >"$TMP/before"
+  run_install "$H" "$url" PATH="$MAKE_OK"; rc=$?
+  assert_eq "install.sh over a clone whose origin is $spelling exits 1" 1 "$rc"
+  case $spelling in
+    *someone-else*)
+      assert_contains "install.sh refuses a clone of another GitHub repo" "$(cat "$TMP/out")" "is there but is not a clone" ;;
+    *)
+      case $(cat "$TMP/out") in *"not a clone"*) fail "install.sh refused a clone whose origin is $spelling" ;; esac
+      assert_contains "install.sh hands a clone whose origin is $spelling to its mt update" "$(cat "$TMP/out")" "mt: update: fetching the tags from origin failed" ;;
+  esac
+  state "$D" >"$TMP/after"
+  cmp -s "$TMP/before" "$TMP/after" || fail "install.sh over a clone whose origin is $spelling changed it"
+done
+
+# install.sh refuses while ~/.local/bin/mt links into another clone, and clones and links nothing
+H=$TMP/linked-elsewhere
+O=$(origin linked-elsewhere)
+OTHER=$H/dev/agent-tools
+new_home "$H"
+git clone -q "$O" "$OTHER" || fail "cloning $O into $OTHER"
+HOME=$H SHELL=/bin/bash make -s -C "$OTHER" install ADD_MT_RULES=no </dev/null >"$TMP/out" 2>&1 ||
+  fail "make install in $OTHER: $(cat "$TMP/out")"
+links "$H" >"$TMP/before"
+run_install "$H" "$O"; rc=$?
+assert_eq "install.sh with mt linked into another clone exits 1" 1 "$rc"
+assert_contains "install.sh names the other clone and says to uninstall it" "$(cat "$TMP/out")" "links into $OTHER; run make uninstall there first"
+[ -e "$(clone_of "$H")" ] && fail "install.sh with mt linked into another clone created $(clone_of "$H")"
+links "$H" >"$TMP/after"
+cmp -s "$TMP/before" "$TMP/after" || fail "install.sh with mt linked into another clone changed a link"
+check "install.sh with mt linked into another clone clones and links nothing"

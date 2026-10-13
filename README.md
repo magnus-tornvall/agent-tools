@@ -132,14 +132,16 @@ key. With a key, prints that key's value alone. Exits 0, 1 or 2 as Config says.
 out, then runs `make install` from it. With a release tag checked out, it lists origin's tags and
 checks out the newest release, the highest `vMAJOR.MINOR.PATCH`, other tags ignored, when it is
 newer, printing the release it leaves and the one it moves to; at the newest it says the clone is
-already there. With `main` checked out, it fetches origin's `main` and fast-forwards to it. It runs
-`make install` whether or not the clone moved, its input from `mt update`'s, and exits 0, or 1 when
-`make install` fails, saying so. It refuses, exiting 1 with one line on stderr and the clone's
-`HEAD`, branch and files as they were, when tracked files have local changes, naming them; when the
-clone is on a branch other than `main`, naming it; when it has neither `main` nor a release checked
-out; when its release is newer than origin's newest, so it cannot move forward; when origin has no
-release; when git or make is not on PATH; and when a fetch from origin fails, naming it. An argument
-exits 2. Agents are asked before they run it (see Install).
+already there. With `main` checked out, it fetches origin's `main` and fast-forwards to it; at
+origin's `main` it says the clone is already there. It runs `make install` whether or not the clone
+moved, its input from `mt update`'s, and exits 0. When `make install` fails, it exits 1 saying to
+run `make install` again, and keeps the move. It refuses, exiting 1 with one line on stderr and the
+clone's `HEAD`, branch and files as they were, when tracked files have local changes, naming them;
+when the clone is on a branch other than `main`, naming it; when it has neither `main` nor a
+release checked out; when its release is newer than origin's newest, or its `main` is ahead of or
+has diverged from origin's `main`, so it cannot move forward; when origin has no release; when git
+or make is not on PATH; and when a fetch from origin fails, naming it. An argument exits 2. Agents
+are asked before they run it (see Install).
 
 **`mt`, `mt help`, `mt -h` and `mt --help`**, read-only. Print the usage on stdout and exit 0.
 The usage lists every command, and names the usage log's path and the config file's path.
@@ -276,13 +278,17 @@ curl -fsSL https://raw.githubusercontent.com/magnus-tornvall/agent-tools/main/in
 newest release checked out, the highest `vMAJOR.MINOR.PATCH` tag, and runs `make install` there,
 asking its question on your terminal. It installs none of git, make and Bun: one missing, it says
 which and clones nothing. A folder already in the clone's place that is not a clone of this repo is
-left as it is, and it fails naming it. Run again over the clone, it runs the clone's `mt update`.
-`AGENT_TOOLS_URL` clones another repo instead, as the tests do with a local one.
+left as it is, and it fails naming it; a clone whose origin spells this repo's GitHub URL another
+way, over ssh or without `.git`, is a clone of it. While `~/.local/bin/mt` links into another
+clone, such as one you ran `make install` from, it fails naming that clone and clones and links
+nothing: run `make uninstall` there first. Run again over the clone, it runs the clone's
+`mt update`. `AGENT_TOOLS_URL` clones another repo instead, as the tests do with a local one.
 
 The clone follows the channel it has checked out, with no config: a release tag follows releases,
 and `main` follows `main`. `mt update` moves it forward along that channel and runs `make install`
 again (see Contracts); check out `main` in the clone to follow it. A clone on another branch, with
-local changes or ahead of origin is left as it is.
+local changes or ahead of origin is left as it is. When `make install` fails after a move, the move
+stays and `mt update` says to run `make install` again.
 
 To work on `mt`, run `make install` from your own clone instead. It is safe to run again, after a
 pull or on a machine that is half set up; it changes only what is missing or stale. It:
@@ -319,18 +325,18 @@ The whole mvc from before it became a guide is such a folder, and so is a whole 
 in before commit became one; the old and the new cannot both be installed under one name. To keep
 the old one for a later comparison, move it out of the skills folder rather than delete it. Settings
 that are not a JSON object, or whose `permissions` is not an object or whose `permissions.allow`,
-`permissions.ask` or `permissions.deny` is not a list of strings, are left alone too, and the install
-fails saying which;
-it names the rules to add by hand only when the settings are not JSON or not an object.
+`permissions.ask` or `permissions.deny` is not a list of strings, are left alone too, and the
+install fails saying which; it names the rules to add by hand only when the settings are not JSON
+or not an object.
 
 `make uninstall` takes it back out: the `mt` link, every link in either skills folder that points
 into this clone, and every link in `~/.claude/skills` to such a link in `~/.agents/skills`, however
 it spells the path and even one made by hand, so a skill or `mt` installed some other way stays.
 With `~/.agents/skills` gone, it also removes the links in `~/.claude/skills` to it. It asks before
-removing the rules, and any of the three earlier ones, from the settings, keeping every other rule; `REMOVE_MT_RULES=yes`
-or `=no` answers without asking. It leaves Bun, the clone and its `node_modules`, your shell profile
-and the usage log. Pass the same `BIN_DIR`, `SKILLS_DIR`, `CLAUDE_SKILLS_DIR` and `SETTINGS` you
-installed with.
+removing the rules, and any of the three earlier ones, from the settings, keeping every other rule;
+`REMOVE_MT_RULES=yes` or `=no` answers without asking. It leaves Bun, the clone and its
+`node_modules`, your shell profile and the usage log. Pass the same `BIN_DIR`, `SKILLS_DIR`,
+`CLAUDE_SKILLS_DIR` and `SETTINGS` you installed with.
 
 A skill already linked from a clone becomes a stub when that clone pulls this layout, and the
 stub runs `mt get`. Run `make install` with the pull, or every agent that loads the skill fails on

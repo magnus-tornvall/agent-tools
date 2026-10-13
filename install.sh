@@ -2,7 +2,8 @@
 # Installs agent-tools from its newest release: clones it into
 # ${XDG_DATA_HOME:-$HOME/.local/share}/agent-tools with the highest vMAJOR.MINOR.PATCH tag checked
 # out, and runs make install there. Run again over that clone, it runs the clone's mt update. It
-# needs git, make and Bun on PATH, and installs none of them. The README's Install section runs it:
+# needs git, make and Bun on PATH, and installs none of them. While ~/.local/bin/mt links into
+# another clone, it refuses and touches nothing. The README's Install section runs it:
 #   curl -fsSL https://raw.githubusercontent.com/magnus-tornvall/agent-tools/main/install.sh | bash
 # AGENT_TOOLS_URL clones another repo, such as a local one in a test.
 
@@ -13,16 +14,32 @@ fail() {
   exit 1
 }
 
-# The repo a URL names, without a trailing slash or .git, so two spellings of one URL compare equal.
+# The repo a URL names, without a trailing slash or .git and with GitHub's ssh forms spelled as its
+# https one, so two spellings of one URL compare equal.
 repo() {
   local url=${1%/}
-  echo "${url%.git}"
+  url=${url%.git}
+  case $url in
+    git@github.com:*) url=https://github.com/${url#git@github.com:} ;;
+    ssh://git@github.com/*) url=https://github.com/${url#ssh://git@github.com/} ;;
+  esac
+  echo "$url"
+}
+
+# The folder of the clone that $HOME/.local/bin/mt links into, when that is not the clone at $1.
+other_clone() {
+  local link=$HOME/.local/bin/mt target folder
+  [ -L "$link" ] && [ -e "$link" ] || return 0
+  target=$(readlink "$link")
+  case $target in */cli/mt) ;; *) return 0 ;; esac
+  folder=$(cd -P "$(dirname "$link")" && cd -P "$(dirname "$target")/.." && pwd)
+  [ "$folder" = "$(cd -P "$1" 2>/dev/null && pwd)" ] || echo "$folder"
 }
 
 main() {
   local url=${AGENT_TOOLS_URL:-https://github.com/magnus-tornvall/agent-tools.git}
   local dir=${XDG_DATA_HOME:-$HOME/.local/share}/agent-tools
-  local missing="" tool input=/dev/null tag
+  local missing="" tool input=/dev/null tag other
   for tool in git make bun; do
     command -v "$tool" >/dev/null || missing="$missing $tool"
   done
@@ -30,6 +47,9 @@ main() {
 
   # Under curl | bash, stdin is this script, so make install asks its question on the terminal.
   if (: </dev/tty) 2>/dev/null; then input=/dev/tty; fi
+
+  other=$(other_clone "$dir")
+  [ -z "$other" ] || fail "$HOME/.local/bin/mt links into $other; run make uninstall there first and run this again"
 
   if [ -e "$dir" ] || [ -L "$dir" ]; then
     [ -d "$dir" ] && [ "$(git -C "$dir" rev-parse --show-toplevel 2>/dev/null)" = "$(cd -P "$dir" && pwd)" ] &&

@@ -225,12 +225,26 @@ function shortCommit(rev: string): string {
   return gitIn(`reading ${rev}`, ["rev-parse", "--short", rev]);
 }
 
-/** Fast-forwards main to origin's main; returns what it says of the move. */
+/** Whether commit a is an ancestor of commit b; throws UpdateError when git cannot say. */
+function isAncestor(a: string, b: string): boolean {
+  const result = Bun.spawnSync(["git", "-C", ROOT, "merge-base", "--is-ancestor", a, b]);
+  if (result.exitCode === 0 || result.exitCode === 1) return result.exitCode === 0;
+  throw new UpdateError(`comparing ${a} with ${b} failed: ${result.stderr.toString().trim()}`);
+}
+
+/**
+ * Fast-forwards main to origin's main; returns what it says of the move. Refuses a main that is
+ * ahead of or has diverged from origin's main, since it cannot move forward to it.
+ */
 function updateMain(): string {
   const before = shortCommit("HEAD");
   gitIn("fetching main from origin", ["fetch", "--quiet", "origin", "main"]);
   const after = shortCommit("FETCH_HEAD");
   if (after === before) return `${ROOT} is already at origin's main, ${after}`;
+  if (!isAncestor("HEAD", "FETCH_HEAD")) {
+    const how = isAncestor("FETCH_HEAD", "HEAD") ? "is ahead of" : "has diverged from";
+    throw new UpdateError(`${ROOT}'s main ${how} origin's main, so it cannot move forward to ${after}`);
+  }
   gitIn(`fast-forwarding main from ${before} to origin's ${after}`, ["merge", "--quiet", "--ff-only", "FETCH_HEAD"]);
   return `moved ${ROOT} on main from ${before} to ${after}`;
 }
@@ -255,7 +269,8 @@ function updateRelease(): string {
 /**
  * Moves the clone forward along the channel it has checked out, main or a release tag, then runs
  * make install from it. Refused or failed before make install, it leaves HEAD, the branch and the
- * files as they were.
+ * files as they were. When make install fails after the move, it keeps the move, exits 1 and says
+ * to run make install again.
  */
 function cmdUpdate(args: string[]): number {
   if (args.length > 0) throw new UsageError(`unexpected argument '${args[0]}'`);
