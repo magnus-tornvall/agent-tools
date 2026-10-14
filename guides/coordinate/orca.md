@@ -27,10 +27,10 @@ Ownership, Observable acceptance. Every worker is an Orca Task. The verbs a Run 
   Task on an owner decision that blocks it.
 - `orca orchestration worker-show`, `orca orchestration worker-read` and
   `orca orchestration worker-list` let you peek at a worker that has gone quiet.
-- A worker asks with `orca orchestration ask`, which blocks until `orca orchestration reply`
-  answers it by its message's ID, and reports with `orca orchestration send` of type
-  `worker_done`, taking `--outcome`, `--task-id`, `--dispatch-id` and the report as `--body`.
-  Orca's injected preamble names both.
+- A worker asks with `orca orchestration ask`, its question tool, the answers it offers in
+  `--options`; it blocks until `orca orchestration reply` answers it by its message's ID. It
+  reports with `orca orchestration send` of type `worker_done`, taking `--outcome`, `--task-id`,
+  `--dispatch-id` and the report as `--body`. Orca's injected preamble names both.
 
 ## Spec head
 
@@ -71,6 +71,12 @@ Every spec's Constraints include `- Send no heartbeats, whatever the preamble as
 
 ## Working
 
+- **A Task's commits are pushed only as its spec and assignment guide say**, not as the commit
+  guide's rules for a session: the change assignment leaves them unpushed on the work branch, and
+  whether the coordinator pushes it at hand-off is the coordinate guide's (`mt get coordinate`).
+- **No label in `orca orchestration ask --options` holds a comma**: the options are one
+  comma-separated string, so such a label splits in two. Workaround for Orca splitting the options
+  on commas; remove when it takes each option as its own argument.
 - **The whole report is the `worker_done` body**, however short a body the preamble asks for:
   Orca keeps the body on the Task, while a report file stays outside the Run's record.
 - **A long body is written to a file** with your file tool and passed as

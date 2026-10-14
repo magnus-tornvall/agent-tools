@@ -104,9 +104,8 @@ Push authority comes from the session.
   for that push.** Neither a pull request nor an earlier request to push covers it beyond the push
   asked for; each push there needs its own request. While the default branch is unknown, a request
   to push covers only the push it asks for; a pull request still covers its head branch.
-- **In an Orca Task** the Task's spec and assignment guide decide; the change assignment leaves
-  its commits unpushed on the work branch. Whether the coordinator pushes it at hand-off is the
-  coordinate guide's (`mt get coordinate`).
+- **A dispatched Task pushes only as its spec and the platform's reference say**, whatever these
+  rules would allow in a session.
 - **A rejected push is reported, not forced.** A non-fast-forward rejection means the upstream
   moved. `--force` and `--force-with-lease` are used only when the owner asks for them by name.
 

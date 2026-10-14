@@ -28,10 +28,10 @@ expected pick first. A question without one hands the work back to the person as
 ## Channel
 
 The channel follows the form. Options and gwt go through the asker's own question tool
-(`AskUserQuestion` in Claude Code, `orca orchestration ask --options`): each answer one option, the
-position's pick first. In gwt, the tool's free answer is **Neither**, or **Either**. A stance goes
-in plain text, never a picker, so "you are asking the wrong thing" is as easy to type as an
-answer.
+(`AskUserQuestion` in Claude Code; on a platform, the verb its reference names): each answer one
+option, the position's pick first. In gwt, the tool's free answer is **Neither**, or **Either**. A
+stance goes in plain text, never a picker, so "you are asking the wrong thing" is as easy to type
+as an answer.
 
 When a message holds more than the tool's questions, such as a line the tool has no field for or
 a grill's map, each question the tool carries is written out complete in the text, with its lines,
@@ -39,10 +39,6 @@ in the order the questions are asked and before anything else the message holds;
 repeats the question and its options. Workaround for question tools showing after the message's
 text and lacking a field for a line, such as a position or an option's description; remove when
 the asker's question tool shows first and carries every line.
-
-`orca orchestration ask --options` takes the options as one comma-separated string, so a label
-holding a comma splits in two; there each label has none. Workaround for Orca splitting the options
-on commas; remove when it takes each option as its own argument.
 
 ## Every question
 
