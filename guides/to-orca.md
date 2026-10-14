@@ -71,32 +71,33 @@ do.
   thing the owner approves is the plan. Given intent in any other form, you settle the shape with
   the owner as mvc does (`mt get mvc`), have mvc write the closed shape to its default location as
   `mvc-<slug>.yaml`, as it names a parked draft, and the owner approves it in its own ask, which
-  names that path, apart from the plan. The change Tasks are given that path; a judge is given
-  only its slice. A ruling leaves the shape as written and reaches every Task it bears on.
+  names that path, apart from the plan. The oracle and change Tasks are given that path; a judge
+  is given only its slice. A ruling leaves the shape as written and reaches every Task it bears on.
 - **The owner approves a plan they can trust to run unattended.** It names the first Tasks and
   the assignments expected next, each Task's agent, model and effort, the base branch, and the
   destination: the branch, or a pull request. Each model and effort is your judgment for that
-  Task. When the shape has oracles, it names the commit that holds their files, and the work
-  branch is cut from a base that includes it; when no commit does, it says so. It names anything
-  that would stop a worker at its first command or at a permission prompt: `mt` or Bun missing
-  from the PATH a worker launches with, and each `mt get`, `mt shape`, repo check and
-  `git commit` a worker's launch permissions would not allow. When a requirement needs the app
-  running, it names where the app under test actually sends its requests, read from the config it
-  runs with, not from the docs. The message opens with the approval question and anything that
-  would stop a worker, before the per-Task details. A changed plan is approved again.
-- **A shape's oracles are the owner's to write and run.** No Task writes an oracle, or runs one
-  through `mt oracle` or by its own command. An oracle the repo's checks pick up runs with them,
-  as any test does, and the checks pass with it. No Task changes a file an oracle pins. When the
-  shape has oracles, the hand-off names each one with the keys it covers, and the `mt oracle run`
-  command, with the shape's path, that the owner runs on the final branch. When no commit holds
-  their files, the hand-off reports those oracles absent, not tampered.
+  Task. It names anything that would stop a worker at its first command or at a permission prompt:
+  `mt` or Bun missing from the PATH a worker launches with, and each `mt get`, `mt shape`, repo
+  check and `git commit` a worker's launch permissions would not allow. When a requirement needs
+  the app running, it names where the app under test actually sends its requests, read from the
+  config it runs with, not from the docs. The message opens with the approval question and
+  anything that would stop a worker, before the per-Task details. A changed plan is approved
+  again.
+- **Oracle tests are the owner's opt-in.** When the repo has an e2e or integration command, one
+  that runs a suite the oracle guide (`mt get oracle`) counts as oracle-enabling, and the change
+  is not only to guides or prose, the plan offers an oracle Task before the change, naming that
+  command and where it was found in the repo's manifests, agent instructions or CI; with more than
+  one, it asks the owner which. Approving it is the opt-in. With no such command, the plan offers
+  none. Only the oracle Task writes oracle tests, as its own commit on the work branch, before any
+  change Task starts. A change Task runs them through the suite's command, and they pass before it
+  reports done. No Task changes a file the oracle commit added.
 - **The change exists on its own branch, made by workers.** The base branch is untouched.
 - **The repo's own checks pass on the branch.** Fixed: changing it is the owner's call.
 - **Every requirement has evidence at least as strong as the requirement.**
   Fixed: changing it is the owner's call.
-- **No oracle is tampered on the final branch**: each file an oracle pins has the sha256 the shape
-  pins for it, compared without `mt oracle`, and the hand-off names each oracle that is tampered.
-  Whether the oracles pass is the owner's to check. Fixed: changing it is the owner's call.
+- **No oracle is tampered on the final branch**: each file the oracle commit added is unchanged
+  there, and the hand-off names each one that changed as tampered.
+  Fixed: changing it is the owner's call.
 - **Nothing in the diff would stop a maintainer merging.** Fixed: changing it is the owner's call.
 - **Nothing on the branch would surprise the owner**, above all a one-way door decided without a
   question. Fixed: changing it is the owner's call.
@@ -142,8 +143,8 @@ do.
   remove when closing it stops every process a Task started.
 - **The hand-off.** It opens with the rulings the owner must make, each finding still open for
   them in full. Everything else the owner must act on follows: the proposed edits to the guides,
-  drawn from the workers' Toolbox lines, to pick from; the `mt oracle run` command and each
-  tampered oracle; each process left running, to decide on; and each worktree and file of evidence
+  drawn from the workers' Toolbox lines, to pick from; each tampered oracle file, and why an oracle
+  Task wrote none; each process left running, to decide on; and each worktree and file of evidence
   to check before teardown. Then the destination the owner approved: the branch, or a pull
   request. Then one line each for every other finding in the final table, whatever became of it,
   and for every failed attempt, requirement without evidence, departure from the approved plan
@@ -183,9 +184,14 @@ do.
 - **The mvc guide** (`mt get mvc`) settles a shape with the owner, and owns where it is written.
 - **Assignments**, each a guide a worker loads with `mt get <name>`, and a judge also its
   perspective's reference. What a worker is given is all it gets.
+  - `oracle` writes failing tests for the shape's observable requirements through the repo's e2e
+    or integration suite, as its own commit on the work branch, or writes nothing and says why. It
+    runs the repo's code and commits. Given the whole shape, the work branch and the owner's pick
+    of suite.
   - `change` makes the shape's change on the work branch, or fixes findings judges handed over.
-    It runs the repo's code and commits. Given the whole shape and the owner's rulings, and when
-    fixing the findings with the reports that raised them and every earlier change report.
+    It runs the repo's code and commits. Given the whole shape, the owner's rulings and the oracle
+    commit with its suite's command, when there is one, and when fixing the findings with the
+    reports that raised them and every earlier change report.
   - `verification` judges the work branch from one perspective, each a reference loaded with
     `mt get verification --ref <perspective>`, and edits nothing. `coverage` judges whether the
     branch does what the shape says, and runs the code. `maintainer` judges whether a maintainer

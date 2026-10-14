@@ -221,6 +221,14 @@ assert_contains "dogfood prints the usage" "$(cat "$TMP/err")" "usage: mt get"
 [ -e "$GH_SEEN/calls" ] && fail "dogfood ran gh"
 check "dogfood never runs gh"
 
+# R10: mt oracle is gone, so each of its commands is an unknown command
+for sub in run hash; do
+  out=$(cd "$OTHER" && "$MT" oracle "$sub" 2>"$TMP/err"); rc=$?
+  assert_eq "mt oracle $sub exits 2" 2 "$rc"
+  assert_eq "mt oracle $sub prints nothing on stdout" "" "$out"
+  assert_eq "mt oracle $sub is an unknown command" "mt: unknown command 'oracle'" "$(head -n 1 "$TMP/err")"
+done
+
 # usage
 for args in "" "--help"; do
   out=$("$MT" ${args:+"$args"}); rc=$?

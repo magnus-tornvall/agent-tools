@@ -124,8 +124,7 @@ case $(cat "$TMP/out") in *"removed stale"*) fail "a fresh install removed links
 check "a fresh install removes nothing"
 assert_eq "settings allow every mt command" "Bash(mt:*)" "$(allow_list "$H/.claude/settings.json")"
 assert_eq "settings ask before mt update" "Bash(mt update:*)" "$(ask_list "$H/.claude/settings.json")"
-assert_eq "settings deny agents mt oracle and the oracle guide" "$(printf 'Bash(mt oracle:*)\nBash(mt get oracle:*)')" \
-  "$(deny_list "$H/.claude/settings.json")"
+assert_eq "settings deny agents nothing" "" "$(deny_list "$H/.claude/settings.json")"
 usage=$(HOME=$H "$H/.local/bin/mt" --help)
 assert_contains "the installed mt's usage lists mt config" "$usage" "mt config [<key>]"
 assert_contains "the installed mt's usage names the config file" "$usage" "\${XDG_CONFIG_HOME:-\$HOME/.config}/mt/config.toml"
@@ -167,8 +166,7 @@ install "$H" ADD_MT_RULES=yes; rc=$?
 assert_eq "ADD_MT_RULES=yes exits 0" 0 "$rc"
 assert_eq "ADD_MT_RULES=yes allows every mt command" "Bash(mt:*)" "$(allow_list "$H/.claude/settings.json")"
 assert_eq "ADD_MT_RULES=yes asks before mt update" "Bash(mt update:*)" "$(ask_list "$H/.claude/settings.json")"
-assert_eq "ADD_MT_RULES=yes denies mt oracle and mt get oracle" "$(printf 'Bash(mt oracle:*)\nBash(mt get oracle:*)')" \
-  "$(deny_list "$H/.claude/settings.json")"
+assert_eq "ADD_MT_RULES=yes denies nothing" "" "$(deny_list "$H/.claude/settings.json")"
 install_answering n "$H"
 case $(cat "$TMP/out") in *"[y/N]"*) fail "asked although every rule is there" ;; esac
 check "nothing is asked when every rule is there"
@@ -288,8 +286,7 @@ assert_eq "other settings are kept" "opus Bash(rm:*)" "$(python3 -I -c '
 import json, sys
 s = json.load(open(sys.argv[1]))
 print(s["model"], s["permissions"]["deny"][0])' "$H/.claude/settings.json")"
-assert_eq "the deny rules join the denies that are there" "$(printf 'Bash(rm:*)\nBash(mt oracle:*)\nBash(mt get oracle:*)')" \
-  "$(deny_list "$H/.claude/settings.json")"
+assert_eq "the denies that are there stay as they are" "Bash(rm:*)" "$(deny_list "$H/.claude/settings.json")"
 
 # the three rules an earlier install wrote are replaced, whatever else is listed
 H=$TMP/earlier
@@ -306,23 +303,33 @@ printf '{"permissions": {"allow": ["Bash(mt get:*)"]}}\n' >"$H/.claude/settings.
 install_answering y "$H"
 assert_contains "the question names what is replaced" "$(cat "$TMP/out")" "remove Bash(mt get:*) from permissions.allow"
 assert_eq "one earlier rule is replaced too" "Bash(mt:*)" "$(allow_list "$H/.claude/settings.json")"
-printf '{"permissions": {"allow": ["Bash(mt:*)"], "ask": ["Bash(mt update:*)"]}}\n' >"$H/.claude/settings.json"
+
+# R11: the deny rules an earlier install wrote are removed when the owner says so, and the owner's stay
+H=$TMP/earlier-deny
+new_home "$H"
+mkdir -p "$H/.claude"
+printf '{"permissions": {"allow": ["Bash(mt:*)"], "ask": ["Bash(mt update:*)"], "deny": ["Bash(mt oracle:*)", "Bash(rm:*)", "Bash(mt get oracle:*)"]}}\n' \
+  >"$H/.claude/settings.json"
 cp "$H/.claude/settings.json" "$TMP/settings.before"
 install_answering n "$H"
-assert_contains "the missing deny rules alone are asked about" "$(cat "$TMP/out")" \
-  "add Bash(mt oracle:*), Bash(mt get oracle:*) to permissions.deny?"
-cmp -s "$TMP/settings.before" "$H/.claude/settings.json" || fail "declining wrote the deny rules"
-check "declining leaves the settings without the deny rules"
-assert_contains "declining the deny rules says agents are not refused oracle" "$(cat "$TMP/out")" \
-  "agents are not refused mt oracle, mt get oracle"
-case $(cat "$TMP/out") in *"agents will ask"*) fail "declining the deny rules says agents will ask" ;; esac
-check "declining the deny rules does not say agents will ask"
+assert_contains "the earlier deny rules alone are asked about" "$(cat "$TMP/out")" \
+  "remove Bash(mt oracle:*), Bash(mt get oracle:*) from permissions.deny?"
+cmp -s "$TMP/settings.before" "$H/.claude/settings.json" || fail "declining removed the earlier deny rules"
+check "declining leaves the earlier deny rules"
+assert_contains "declining names the deny rules kept" "$(cat "$TMP/out")" \
+  "kept in permissions.deny: Bash(mt oracle:*), Bash(mt get oracle:*)"
+install_answering y "$H"; rc=$?
+assert_eq "accepting the removal exits 0" 0 "$rc"
+assert_eq "both earlier deny rules are gone, the owner's stays" "Bash(rm:*)" "$(deny_list "$H/.claude/settings.json")"
+out=$(MT_LOG=$TMP/usage.jsonl XDG_STATE_HOME=$TMP/state HOME=$H "$H/.local/bin/mt" get oracle); rc=$?
+assert_eq "mt get oracle exits 0" 0 "$rc"
+assert_eq "mt get oracle prints the oracle guide" "$(cat "$ROOT/guides/oracle.md")" "$out"
 
 # settings from an install before the ask rule get it alone, and declining it says what that leaves
 H=$TMP/before-ask
 new_home "$H"
 mkdir -p "$H/.claude"
-printf '{"permissions": {"allow": ["Bash(mt:*)"], "deny": ["Bash(mt oracle:*)", "Bash(mt get oracle:*)"]}}\n' >"$H/.claude/settings.json"
+printf '{"permissions": {"allow": ["Bash(mt:*)"]}}\n' >"$H/.claude/settings.json"
 cp "$H/.claude/settings.json" "$TMP/settings.before"
 install_answering n "$H"
 assert_contains "the missing ask rule alone is asked about" "$(cat "$TMP/out")" "add Bash(mt update:*) to permissions.ask?"
@@ -362,7 +369,7 @@ install "$H"; rc=$?
 check "install over malformed settings fails"
 assert_contains "the failure names the settings file" "$(cat "$TMP/out")" "$H/.claude/settings.json is not JSON"
 assert_contains "the failure names the rules to add by hand" "$(cat "$TMP/out")" \
-  "add Bash(mt:*) in permissions.allow, Bash(mt update:*) in permissions.ask and Bash(mt oracle:*), Bash(mt get oracle:*) in permissions.deny by hand"
+  "add Bash(mt:*) in permissions.allow and Bash(mt update:*) in permissions.ask by hand"
 cmp -s "$TMP/malformed.before" "$H/.claude/settings.json" || fail "malformed settings were rewritten"
 check "malformed settings are left as they are"
 
@@ -480,7 +487,6 @@ check "uninstall removes a relative link into the clone in ~/.claude/skills"
 [ -L "$H/.claude/skills/someone-elses" ] && [ -d "$H/.claude/skills/caveman" ] || fail "uninstall removed a skill in ~/.claude/skills it did not install"
 check "uninstall keeps skills it did not install"
 assert_eq "uninstall removes only the mt rules" "Bash(git status)" "$(allow_list "$H/.claude/settings.json")"
-assert_eq "uninstall removes the deny rules" "" "$(deny_list "$H/.claude/settings.json")"
 assert_eq "uninstall keeps other settings" opus "$(python3 -I -c 'import json, sys; print(json.load(open(sys.argv[1]))["model"])' "$H/.claude/settings.json")"
 
 # running it again changes nothing, and asks nothing
@@ -534,9 +540,8 @@ uninstall_answering n "$H"; rc=$?
 assert_eq "declining rule removal still uninstalls" 0 "$rc"
 [ -e "$H/.local/bin/mt" ] && fail "declining rule removal left the mt link"
 assert_eq "declined rules stay" "Bash(mt:*)" "$(allow_list "$H/.claude/settings.json")"
-assert_eq "the declined deny rules stay" "$(printf 'Bash(mt oracle:*)\nBash(mt get oracle:*)')" "$(deny_list "$H/.claude/settings.json")"
 assert_contains "declining rule removal names the rules kept" "$(cat "$TMP/out")" \
-  "kept in permissions.allow: Bash(mt:*); kept in permissions.ask: Bash(mt update:*); kept in permissions.deny: Bash(mt oracle:*), Bash(mt get oracle:*)"
+  "kept in permissions.allow: Bash(mt:*); kept in permissions.ask: Bash(mt update:*)"
 uninstall "$H"; rc=$?
 assert_eq "uninstall with no terminal to ask on exits 0" 0 "$rc"
 assert_contains "with no terminal it says how to answer" "$(cat "$TMP/out")" "REMOVE_MT_RULES=yes"
@@ -566,7 +571,7 @@ assert_eq "uninstall over the ask rule exits 0" 0 "$rc"
 assert_eq "uninstall removes the ask rule and keeps the owner's" "$(printf 'Bash(git push:*)\nBash(rm:*)')" \
   "$(ask_list "$H/.claude/settings.json")"
 
-# uninstall removes the deny rules, and the owner's denies stay
+# uninstall removes the deny rules an earlier install wrote, and the owner's denies stay
 H=$TMP/uninstall-deny
 new_home "$H"
 mkdir -p "$H/.claude"

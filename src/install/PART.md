@@ -11,9 +11,7 @@ declares each `mt` command's side-effect class. The README keeps the steps a hum
 
 An agent, or an Orca worker started in the owner's login shell, can run every `mt` command the owner
 does not keep and load every stub, and is asked before a command whose own effect leaves the
-machine. Oracles are the owner's to write and run, so an agent in Claude Code is refused `mt oracle`
-and `mt get oracle`. A class covers what `mt` itself does. `mt oracle run` runs the commands of a
-shape, which may reach further, and nothing checks who wrote or approved the shape it runs.
+machine.
 
 ## Principles
 
@@ -22,8 +20,7 @@ shape, which may reach further, and nothing checks who wrote or approved the sha
 - **Least privilege**, as far as `mt`'s own effects go. A command's class is declared once in code:
   read-only, local write, or network, which leaves the machine. The one allow rule `Bash(mt:*)`
   covers every command, and each network command brings an ask rule, so an agent is asked before
-  it. What only the owner runs is denied to agents, whatever its class. The commands `mt oracle run`
-  runs for a shape are not `mt`'s own and are not classed.
+  it.
 - **Mechanism, not policy.** Install proposes the rules; the owner decides. Nothing is written to
   the settings without a yes, and with no answer and no terminal nothing is written.
 - **Ownership** is by where a link points, not by who made it. Uninstall removes the links that
@@ -79,13 +76,12 @@ needs Bun 1.2.23 or later on PATH.
   or `permissions.deny` is not a list of strings, is left as it is: one line on stderr says which,
   naming the rules to add by hand when the file is not a JSON object, and it exits 1. A usage error
   exits 2.
-- The rules are `ALLOW_RULES`, `ASK_RULES` and `DENY_RULES` in `side-effects.ts`: `Bash(mt:*)` in
-  `permissions.allow`, which allows every command; in `permissions.ask` one `Bash(mt <command>:*)`
-  per network command, `Bash(mt update:*)`; and in `permissions.deny` one `Bash(mt <prefix>:*)` per
-  owner-only prefix, `Bash(mt oracle:*)` and `Bash(mt get oracle:*)`. Claude Code checks deny rules,
-  then ask rules, then allow rules, and an ask rule prompts even in auto mode. A deny or ask rule
-  matches the command as an agent writes it, so `mt` by its path or inside `sh -c` is not refused or
-  asked. Install adds the ask rule after the asks already there, and uninstall removes it alone.
+- The rules are `ALLOW_RULES` and `ASK_RULES` in `side-effects.ts`: `Bash(mt:*)` in
+  `permissions.allow`, which allows every command, and in `permissions.ask` one
+  `Bash(mt <command>:*)` per network command, `Bash(mt update:*)`. Claude Code checks ask rules
+  before allow rules, and an ask rule prompts even in auto mode. An ask rule matches the command as
+  an agent writes it, so `mt` by its path or inside `sh -c` is not asked. Install adds the ask rule
+  after the asks already there, and uninstall removes it alone.
 - Side effects: local writes to `BIN_DIR`, `SKILLS_DIR`, `CLAUDE_SKILLS_DIR` when `SKILLS_DIR` is
   not given, and `SETTINGS`;
   `bun install` fetches packages from the npm registry; `install.sh` clones from GitHub or
@@ -104,3 +100,8 @@ come from the make variables above, each the owner's choice for that run.
 A settings file that still holds `Bash(mt get:*)`, `Bash(mt list)` or `Bash(mt shape:*)` has them
 replaced by `Bash(mt:*)` on install, and removed on uninstall. Workaround for settings an install
 before `Bash(mt:*)` wrote; remove when no such install is left.
+
+A settings file that still holds `Bash(mt oracle:*)` or `Bash(mt get oracle:*)` in
+`permissions.deny` has them removed on install and on uninstall, so an agent can load the oracle
+guide; the owner's other denies stay. Workaround for settings an install before `mt oracle` was
+removed wrote; remove when no such install is left.

@@ -10,8 +10,8 @@ no config.
 
 - **Given** the shape's `constraints` and `touchpoints`, and the assumptions, questions and check
   results from the change reports.
-- **Withheld** the shape's `outcome`, `purpose`, `requirements`, `non_goals`, `decisions`, `oracles`
-  and `unchecked`, since a maintainer judges the diff on its own merits.
+- **Withheld** the shape's `outcome`, `purpose`, `requirements`, `non_goals` and `decisions`, since
+  a maintainer judges the diff on its own merits.
 
 Fixed: changing it is the owner's call.
 

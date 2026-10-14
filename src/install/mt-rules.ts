@@ -6,10 +6,16 @@
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
-import { ALLOW_RULES, ASK_RULES, DENY_RULES } from "./side-effects.ts";
+import { ALLOW_RULES, ASK_RULES } from "./side-effects.ts";
 
 /** Workaround for settings an install before Bash(mt:*) wrote; remove when no such install is left. */
 const EARLIER_ALLOW_RULES = ["Bash(mt get:*)", "Bash(mt list)", "Bash(mt shape:*)"];
+
+/**
+ * Workaround for settings an install before mt oracle was removed wrote, refusing agents it and the
+ * oracle guide; remove when no such install is left.
+ */
+const EARLIER_DENY_RULES = ["Bash(mt oracle:*)", "Bash(mt get oracle:*)"];
 
 const USAGE = "usage: bun src/install/mt-rules.ts add|remove <settings.json> [yes|no]\n";
 
@@ -53,13 +59,13 @@ function planEdits(mode: Mode, allow: readonly string[], ask: readonly string[],
         remove: EARLIER_ALLOW_RULES.filter((rule) => allow.includes(rule)),
       },
       ask: { add: ASK_RULES.filter((rule) => !ask.includes(rule)), remove: [] },
-      deny: { add: DENY_RULES.filter((rule) => !deny.includes(rule)), remove: [] },
+      deny: { add: [], remove: EARLIER_DENY_RULES.filter((rule) => deny.includes(rule)) },
     };
   }
   return {
     allow: { add: [], remove: [...ALLOW_RULES, ...EARLIER_ALLOW_RULES].filter((rule) => allow.includes(rule)) },
     ask: { add: [], remove: ASK_RULES.filter((rule) => ask.includes(rule)) },
-    deny: { add: [], remove: DENY_RULES.filter((rule) => deny.includes(rule)) },
+    deny: { add: [], remove: EARLIER_DENY_RULES.filter((rule) => deny.includes(rule)) },
   };
 }
 
@@ -73,7 +79,7 @@ function describe(edits: Edits): string {
   return parts.join("; ");
 }
 
-/** The command a `Bash(<command>:*)` rule matches, such as `mt oracle`. */
+/** The command a `Bash(<command>:*)` rule matches, such as `mt update`. */
 function command(rule: string): string {
   return rule.replace(/^Bash\((.*):\*\)$/, "$1");
 }
@@ -83,7 +89,6 @@ function declined(edits: Edits): string {
   const parts: string[] = [];
   if (edits.allow.add.length > 0) parts.push("agents will ask before each mt command");
   else if (edits.ask.add.length > 0) parts.push(`agents run ${edits.ask.add.map(command).join(", ")} without being asked`);
-  if (edits.deny.add.length > 0) parts.push(`agents are not refused ${edits.deny.add.map(command).join(", ")}`);
   for (const list of LISTS) {
     const { remove } = edits[list];
     if (remove.length > 0) parts.push(`kept in permissions.${list}: ${remove.join(", ")}`);
@@ -117,7 +122,7 @@ function main(args: readonly string[]): number {
   const settings = readSettings(file);
   if (typeof settings === "string") {
     process.stderr.write(
-      `mt-rules: ${file} is ${settings}; ${mode} ${ALLOW_RULES.join(", ")} in permissions.allow, ${ASK_RULES.join(", ")} in permissions.ask and ${DENY_RULES.join(", ")} in permissions.deny by hand\n`,
+      `mt-rules: ${file} is ${settings}; ${mode} ${ALLOW_RULES.join(", ")} in permissions.allow and ${ASK_RULES.join(", ")} in permissions.ask by hand\n`,
     );
     return 1;
   }
@@ -145,7 +150,7 @@ function main(args: readonly string[]): number {
   }
   const next: Json = { ...permissions, allow: applyEdit(allow, edits.allow) };
   if (permissions.ask !== undefined || edits.ask.add.length > 0) next.ask = applyEdit(ask, edits.ask);
-  if (permissions.deny !== undefined || edits.deny.add.length > 0) next.deny = applyEdit(deny, edits.deny);
+  if (permissions.deny !== undefined) next.deny = applyEdit(deny, edits.deny);
   settings.permissions = next;
   mkdirSync(dirname(file), { recursive: true });
   writeFileSync(file, `${JSON.stringify(settings, null, 2)}\n`);

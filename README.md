@@ -1,8 +1,8 @@
 # agent-tools
 
 Skills for agents working in Orca, and `mt`, which loads them on demand, checks and slices shapes
-and drafts, runs a shape's oracles, prints the owner's config, and updates its own clone. Install it
-with one line (see Install):
+and drafts, prints the owner's config, and updates its own clone. Install it with one line (see
+Install):
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/magnus-tornvall/agent-tools/main/install.sh | bash
@@ -12,11 +12,8 @@ curl -fsSL https://raw.githubusercontent.com/magnus-tornvall/agent-tools/main/in
 
 A shape is one YAML document: the outcome, optionally its `purpose`, why the outcome matters,
 requirements keyed `R1…`, non-goals keyed `N1…`, constraints keyed `C1…`, touchpoints, and
-decisions keyed `D1…`. Once closed, it may gain oracles keyed `O1…`: acceptance tests in the repo,
-each naming the keys it covers, what it does at the base commit, the command that runs it and the
-sha256 of each of its files, with `unchecked` naming each key no oracle covers and why. With
-oracles, the outcome, every requirement, boundary non-goal and constraint must be covered or
-unchecked; `mt get oracle --ref example` prints a shape with its oracles.
+decisions keyed `D1…`. Oracles are not part of it: they are tests in the repo, written as their
+own commit on the work branch (`mt get oracle`).
 The schema in `src/shape/shape.ts` is the contract: a shape is what `mt shape check`
 accepts, and `mt get mvc --ref example` prints a filled-in example.
 
@@ -42,8 +39,8 @@ orca-worker; brief, which the ask, mvc and to-orca guides load to lay out every 
 owner; and the assignments change and verification, whose references are its judging
 perspectives coverage, maintainer and surprise.
 No agent chooses them, so a skill-list entry would only cost the sessions that never use them;
-`mt get` serves them like any other guide. The oracle guide has no stub either: oracles are the
-owner's, and install denies agents `mt oracle` and `mt get oracle` (see Install). Stubs remain for
+`mt get` serves them like any other guide. The oracle guide has no stub either: an oracle Task runs
+only when the owner approves a to-orca plan that offers one. Stubs remain for
 what an agent or the owner picks: mvc, which settles a shape with the owner, to-orca, which runs a
 change through Orca from a shape, an issue or prose, ask, which composes a question for whoever owns
 a decision, door-rule, which says whether a decision is asked at all, debugging, which finds the
@@ -62,10 +59,6 @@ mt shape check [--draft] <file>
                               - reads stdin
 mt shape slice <file> --keys <key,...>
                               print the shape with only those top-level keys; - reads stdin
-mt oracle hash <file>...      print each file's path from the repo root and sha256, to pin it
-mt oracle run [--base] [--timeout <seconds>] <shape>
-                              check each oracle's pinned files and run it from the repo root;
-                              --base checks each does what its base says; - reads stdin
 mt config [<key>]             print the owner's config, or one key's value
 mt update                     move this clone forward along the channel it has checked out,
                               and run make install
@@ -83,8 +76,7 @@ side-effect class. A class is read-only, which reads and prints and writes nothi
 which writes on this machine only; or network, which reaches off this machine. The classes are
 declared once in `src/install/side-effects.ts`. The one allow rule `Bash(mt:*)` covers every
 command, and an ask rule per network command, `Bash(mt update:*)`, makes Claude Code ask before an
-agent runs it (see Install). `mt oracle` and `mt get oracle` are denied to agents whatever their
-class (see Install). Every usage error prints `mt: <reason>` and a usage on stderr,
+agent runs it (see Install). Every usage error prints `mt: <reason>` and a usage on stderr,
 nothing on stdout, and exits 2. Only `mt config` reads the owner's config (see Config); every other
 command behaves the same whatever the config holds.
 
@@ -110,21 +102,6 @@ top-level keys to keep. Prints those keys as YAML on stdout and exits 0. A key t
 define, a file that cannot be read, is not YAML or whose top level is not a map prints a line on
 stderr, nothing on stdout, and exits 1. No file, a second file, no `--keys` value or an unknown
 option exits 2.
-
-**`mt oracle hash <file>...`**, read-only. Prints `<path>: <sha256>` on stdout per file, its path
-from the root of the git repo it runs in, and exits 0. Run outside a git repo, or given a file it
-cannot read or pin, it says so on stderr and exits 1, still printing the files it could. No file or
-an option exits 2.
-
-**`mt oracle run [--base] [--timeout <seconds>] <shape>`**, local write. Takes a shape, or `-` for
-stdin, whose `oracles` block is sound. Runs each oracle's command from the repo root, its output on
-stderr, and prints one `O<n>: <verdict> (covers <keys>)` line per oracle on stdout. Exits 0 when
-every oracle passes, or with `--base` when each does what its `base` says, and 1 otherwise, or when
-the shape cannot be read, its `oracles` block is not sound or it runs outside a git repo. No shape,
-two shapes, an unknown option or a `--timeout` that is not a whole number above 0 exits 2. It
-deletes the JUnit report each oracle names before running it, and runs each command as written,
-whatever that command does. It is classed local write by what it does itself, and install denies it
-to agents, so the owner runs it; nothing checks who wrote or approved the shape. See Oracles.
 
 **`mt config [<key>]`**, read-only. Prints the owner's config: the file's path, then one line per
 key. With a key, prints that key's value alone. Exits 0, 1 or 2 as Config says.
@@ -175,10 +152,10 @@ If the log cannot be written, `mt` says so on stderr and still prints the guide.
 prints one `path: message` line per violation on stderr and exits 1; a file that is not YAML
 is one violation, on `(document)`, and a `draft` key is one on `draft`. With `--draft` it
 checks a draft instead: the `draft` block is required and checked, and every other key is
-optional but checked when present, `requirements` with no minimum and oracles without the
-coverage rule. A key repeated in `requirements`, `non_goals`, `constraints`, `decisions`,
-`oracles` or `unchecked` is a violation on that key, found in block-style maps; YAML keeps only
-the last of a repeated key, so without this one entry would be dropped silently.
+optional but checked when present, `requirements` with no minimum. A key repeated in
+`requirements`, `non_goals`, `constraints` or `decisions` is a violation on that key, found in
+block-style maps; YAML keeps only the last of a repeated key, so without this one entry would be
+dropped silently.
 
 `mt shape slice <file> --keys outcome,non_goals` prints a YAML document with only those
 top-level keys of the shape, their values unchanged. A key the schema does not define, or a
@@ -188,34 +165,8 @@ does not run the check, so a shape with a violation the owner ruled on can still
 Both read the document from stdin when the file is `-`, and read only a whole YAML document:
 a shape inside other text, such as Markdown, is taken out of it by whoever pipes it in.
 
-The schema is `src/shape/shape.ts`. `mt shape` and `mt oracle` load it only when called, so
-`mt get` and `mt list` need nothing beyond `cli/mt` and Bun.
-
-### Oracles
-
-`mt oracle run <shape>`, run anywhere in a git repo, takes each oracle in turn; pinned files,
-`junit` and commands are relative to the repo root. A pinned file that is missing, not a file, or
-whose sha256 differs makes the oracle `tampered`, and it is not run. Otherwise its command runs
-through `sh -c`, its output going to stderr, and it is `pass`, `fail`, `blocked` or `broken`: from
-its JUnit report when it names one in `junit`, where an error is broken, a failure fails, a skip is
-blocked and a report with no test case, or one that does not end its root element, is broken,
-comments and CDATA unread; else from its exit code, read as automake does, 0 pass, 77 blocked, 99
-broken, anything else fail, except 126 or 127, a command that did not start, and 128 and up, a
-signal, which are broken. Those exit codes are broken even when a report was written. The file
-`junit` names is deleted before the run, so a report from an earlier run never answers; a `junit`
-that names a folder is broken, and the schema refuses one that names a file any oracle pins. Each
-command runs in a process group of its own, killed when the command exits, so nothing it started in
-the background outlives it. With `--timeout`, an oracle still running after that many seconds is
-killed and broken. It prints one `O<n>: <verdict> (covers <keys>)` line per oracle on stdout and
-exits 0 when every oracle passes. With `--base` it exits 0 when each does what its `base` says
-instead: `fail` for new behaviour, `pass` for what must not change. Only the `oracles` block has to
-be sound; the rest of the shape is not checked, so an owner's ruling on another violation does not
-stop the run, and the block piped alone as `-` is enough. Each command is run as written: `mt oracle
-run` executes what the shape says, so run it only on a shape you trust.
-
-`mt oracle hash <file>...` prints `<path>: <sha256>` per file, the form `files` takes, with the
-path from the repo root whichever folder it runs in; a file outside the repo, or whose path holds
-whitespace, cannot be pinned and exits 1.
+The schema is `src/shape/shape.ts`. `mt shape` loads it only when called, so `mt get` and
+`mt list` need nothing beyond `cli/mt` and Bun.
 
 ### Config
 
@@ -301,18 +252,17 @@ pull or on a machine that is half set up; it changes only what is missing or sta
   `~/.claude/skills` as a link to `~/.agents/skills/<tool>`, so Claude Code finds it. With no
   `~/.agents/skills` folder it links the stubs straight into `~/.claude/skills` and does not create
   `~/.agents`. It removes the links to a stub that is gone;
-- asks whether to add `Bash(mt:*)` to `permissions.allow`, `Bash(mt update:*)` to
-  `permissions.ask`, and `Bash(mt oracle:*)` and `Bash(mt get oracle:*)` to `permissions.deny`, in
-  `~/.claude/settings.json`, so Claude Code agents run every `mt` command without a prompt but
-  `mt update`, which reaches off the machine (see Contracts) and is asked first, and are refused
-  `mt oracle` and the oracle guide, which are the owner's. Claude Code checks deny rules first, then
-  ask rules, then allow rules, so the deny and ask rules beat `Bash(mt:*)`, and an ask rule prompts
-  even in auto mode; they match the command as written, so `mt` by its path or inside `sh -c` still
-  runs, and an agent that does not read these settings is not refused or asked. A file
+- asks whether to add `Bash(mt:*)` to `permissions.allow` and `Bash(mt update:*)` to
+  `permissions.ask` in `~/.claude/settings.json`, so Claude Code agents run every `mt` command
+  without a prompt but `mt update`, which reaches off the machine (see Contracts) and is asked
+  first. Claude Code checks ask rules before allow rules, so the ask rule beats `Bash(mt:*)`, and it
+  prompts even in auto mode; it matches the command as written, so `mt` by its path or inside
+  `sh -c` still runs unasked, and an agent that does not read these settings is not asked. A file
   that still holds `Bash(mt get:*)`, `Bash(mt list)` or `Bash(mt shape:*)` from an earlier install
-  has them replaced. A yes keeps everything else in the file; it is not asked again once the rules
-  are there. `ADD_MT_RULES=yes` or `ADD_MT_RULES=no` answers without asking, and with no terminal to
-  ask on nothing is written;
+  has them replaced, and one that still holds `Bash(mt oracle:*)` or `Bash(mt get oracle:*)` in
+  `permissions.deny` has them removed. A yes keeps everything else in the file; it is not asked
+  again once the rules are there. `ADD_MT_RULES=yes` or `ADD_MT_RULES=no` answers without asking,
+  and with no terminal to ask on nothing is written;
 - checks that a login shell started from your profile alone finds `mt` and Bun. Orca starts a
   worker in a terminal running your shell, so this is the PATH workers get.
 
@@ -334,7 +284,7 @@ or not an object.
 into this clone, and every link in `~/.claude/skills` to such a link in `~/.agents/skills`, however
 it spells the path and even one made by hand, so a skill or `mt` installed some other way stays.
 With `~/.agents/skills` gone, it also removes the links in `~/.claude/skills` to it. It asks before
-removing the rules, and any of the three earlier ones, from the settings, keeping every other rule;
+removing the rules, and any of the earlier ones, from the settings, keeping every other rule;
 `REMOVE_MT_RULES=yes` or `=no` answers without asking. It leaves Bun, the clone and its
 `node_modules`, your shell profile and the usage log. Pass the same `BIN_DIR`, `SKILLS_DIR`,
 `CLAUDE_SKILLS_DIR` and `SETTINGS` you installed with.
@@ -405,10 +355,10 @@ cli/      mt
 install.sh
           the curl line's installer: clones the newest release and runs make install
 Makefile  make install and make uninstall
-src/      shape/, the shape schema and mt shape; oracle/, mt oracle; config/, the owner's config
-          and mt config; install/, the side-effect classes and the settings rules; guide-lint/,
-          the check test/guides.sh runs; each with its tests, and install/ and guide-lint/ with
-          their part, PART.md
+src/      shape/, the shape schema and mt shape; config/, the owner's config and mt config;
+          install/, the side-effect classes and the settings rules; guide-lint/, the check
+          test/guides.sh runs; each with its tests, and install/ and guide-lint/ with their part,
+          PART.md
 guides/   one guide per tool, <name>.md, with its references in <name>/<ref>.md
 skills/   a stub skill per guide an agent or the owner picks, <name>/SKILL.md, mvc and ask
           among them

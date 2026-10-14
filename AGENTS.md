@@ -27,9 +27,8 @@ agent composes better.
 Each part declares its own domain, so the mapping lives in the parts rather than in a list that
 goes stale. A guide and each of its references begin the first paragraph after their title with
 `Domain: <domain>.` A stub skill that only loads a guide declares none; it is its guide's part.
-The code under `cli/` and `src/` is Tools. So are the shape format's two examples,
-`mt get mvc --ref example` and `mt get oracle --ref example`, which carry no line and belong with
-the schema in `src/shape/`.
+The code under `cli/` and `src/` is Tools. So is the shape format's example,
+`mt get mvc --ref example`, which carries no line and belongs with the schema in `src/shape/`.
 
 This charter is the home of Toolbox's principles. Research notes and behaviour records under
 `docs/` are inputs, not parts.
@@ -42,9 +41,9 @@ reads guides through `mt get` and never sees this repo's `AGENTS.md`, so the rul
 part. Only the owner changes a fixed rule.
 
 - **Acceptance obligations** hold on the final branch, fix commits included: the repo's checks
-  pass; evidence is as strong as each requirement; no oracle is tampered, the owner checking that
-  they pass; nothing in the diff would stop a maintainer merging; nothing surprises the owner.
-  Which Tasks meet them is composed. Home: the to-orca guide (`mt get to-orca`).
+  pass; evidence is as strong as each requirement; no oracle is tampered, each file the oracle
+  commit added unchanged; nothing in the diff would stop a maintainer merging; nothing surprises
+  the owner. Which Tasks meet them is composed. Home: the to-orca guide (`mt get to-orca`).
 - **A separate actor per verification perspective**, so work is never judged by whoever made it,
   and a judge after fixes runs in a fresh context. Home: the verification guide
   (`mt get verification`).

@@ -1,9 +1,10 @@
 # change
 
 Domain: Change. Make the shape's change in this worktree, or fix the findings handed over, so that
-each requirement holds by evidence and nothing else moves. It takes the whole shape and the
-owner's rulings, and when fixing the findings with the reports that raised them; it returns commits
-on the work branch and a report. Where the shape is silent, its `purpose` says which way to lean.
+each requirement holds by evidence and nothing else moves. It takes the whole shape, the owner's
+rulings and the oracle commit with its suite's command, when the work branch has one, and when
+fixing the findings with the reports that raised them; it returns commits on the work branch and a
+report. Where the shape is silent, its `purpose` says which way to lean.
 It reads no config.
 
 ## Principles
@@ -19,14 +20,13 @@ It reads no config.
 ## Objectives
 
 - **Every requirement holds**, shown by a test written from it. A requirement with no observable
-  form gets a test you pick, recorded as an assumption. The shape's oracles are the owner's to
-  run: none is your evidence, and you run none through `mt oracle` or by its own command. An
-  oracle the repo's checks pick up runs with them, as any test does, and the checks pass with it.
-- **Files an oracle pins are never changed**: each keeps the sha256 the shape pins for it. An
-  oracle you judge wrong is a question with the contradiction and its source, never an edit.
-  Changing what an oracle runs through but does not pin, such as its runner's config, a shared
-  base class or the test script, is a one-way door like changing what a test asserts
-  (`mt get door-rule`).
+  form gets a test you pick, recorded as an assumption.
+- **The oracle tests pass before you report done**, run through the suite's command, when the work
+  branch has an oracle commit.
+- **Files the oracle commit added are never changed.** An oracle test you judge wrong is a question
+  with the contradiction and its source, never an edit. Changing what an oracle test runs through,
+  such as its runner's config, a shared base class or the test script, is a one-way door like
+  changing what a test asserts (`mt get door-rule`).
 - **No non-goal is built.** The constraints, decisions and the owner's rulings are followed.
 - **A change outside the touchpoints has a reason.**
 - **When fixing, only the findings are fixed.** The owner's rulings decide any finding they cover.
@@ -44,6 +44,7 @@ It reads no config.
 
 ## Report
 
-Besides what orca-worker asks: each requirement's status and the evidence for it; each finding's
-fix and commit, or why it was not fixed; each check and its result; each file outside the
-touchpoints and why.
+Besides what orca-worker asks: each requirement's status and the evidence for it; the oracle tests'
+run through the suite's command and its result, when the branch has an oracle commit; each
+finding's fix and commit, or why it was not fixed; each check and its result; each file outside
+the touchpoints and why.
