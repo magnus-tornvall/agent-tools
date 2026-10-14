@@ -98,6 +98,9 @@ is outlined. Workaround for Orca carrying no attachment on a message or question
 primitive that opens a tab at an element for the owner, and showing a worker's question only in
 terminal scrollback; remove when Orca has them.
 
+A prototype is served from the worktree and opened in such a tab rather than published as a public
+link.
+
 ## Known behaviour
 
 Each with the version or commit it was seen on. Workaround for Orca's orchestration skill not
