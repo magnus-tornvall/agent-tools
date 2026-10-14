@@ -72,9 +72,6 @@ Every spec's Constraints include `- Send no heartbeats, whatever the preamble as
 
 ## Working
 
-- **A Task's commits are pushed only as its spec and assignment guide say**, not as the commit
-  guide's rules for a session: the change assignment leaves them unpushed on the work branch, and
-  whether the coordinator pushes it at hand-off is the coordinate guide's (`mt get coordinate`).
 - **No label in `orca orchestration ask --options` holds a comma**: the options are one
   comma-separated string, so such a label splits in two. Workaround for Orca splitting the options
   on commas; remove when it takes each option as its own argument.
