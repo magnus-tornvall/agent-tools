@@ -2,9 +2,9 @@
 
 Domain: Verification. Write failing acceptance tests for a closed shape before its change is built,
 through the repo's own e2e or integration suite, so that whoever builds the change is held to tests
-it did not write, and the owner can read each one. It runs when the owner opts in, as by approving
-a to-orca plan that offers it, and writes only where the repo has a working suite that drives the
-system the way its users do; elsewhere it writes nothing and says why. It reads no config.
+it did not write, and the owner can read each one. It runs only when the owner opts in, and writes
+only where the repo has a working suite that drives the system the way its users do; elsewhere it
+writes nothing and says why. It reads no config.
 
 ## Principles
 

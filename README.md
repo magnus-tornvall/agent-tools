@@ -40,7 +40,7 @@ owner; and the assignments change and verification, whose references are its jud
 perspectives coverage, maintainer and surprise.
 No agent chooses them, so a skill-list entry would only cost the sessions that never use them;
 `mt get` serves them like any other guide. The oracle guide has no stub either: an oracle Task runs
-only when the owner approves a to-orca plan that offers one. Stubs remain for
+only when the owner opts in. Stubs remain for
 what an agent or the owner picks: mvc, which settles a shape with the owner, to-orca, which runs a
 change through Orca from a shape, an issue or prose, ask, which composes a question for whoever owns
 a decision, door-rule, which says whether a decision is asked at all, debugging, which finds the
