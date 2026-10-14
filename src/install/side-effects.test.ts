@@ -18,7 +18,7 @@ describe("side-effect classes", () => {
     expect(usageCommands()).toEqual(Object.keys(COMMANDS).sort());
   });
 
-  test("D2: update is network, the rest read-only", () => {
+  test("update is network, the rest read-only", () => {
     expect(COMMANDS).toEqual({
       get: "read-only",
       list: "read-only",
