@@ -62,8 +62,8 @@ part. Only the owner changes a fixed rule.
 - **The shape's format and validation.** Home: `mt`'s schema and examples, which `mt shape check`
   enforces in place of a mark. Principles for writing good intent belong to the mvc guide. Other
   parts name the shape's keys and never restate its structure or field rules.
-- **Lifecycle bookkeeping belongs in tools or Orca.** Until one owns a step, the step stays in
-  guide prose as a tagged workaround naming the gap. Home: this charter.
+- **Lifecycle bookkeeping belongs in tools or the platform.** Until one owns a step, the step
+  stays in guide prose as a tagged workaround naming the gap. Home: this charter.
   Fixed: changing it is the owner's call.
 
 Everything else is composed by the agent: which parts a task needs, which perspectives judge a

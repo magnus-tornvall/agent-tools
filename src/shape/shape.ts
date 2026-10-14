@@ -1,6 +1,6 @@
 /**
- * The shape: the contract between whatever produces a shape and Orca. A user opts in by
- * producing one YAML document that conforms to `Shape`; mvc is one producer, not the contract.
+ * The shape: the contract between whatever produces a shape and whatever consumes it. A user opts
+ * in by producing one YAML document that conforms to `Shape`; mvc is one producer, not the contract.
  *
  * This schema is the one source of truth; `mt shape` uses it.
  */
