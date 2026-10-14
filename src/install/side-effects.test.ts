@@ -29,7 +29,7 @@ describe("side-effect classes", () => {
     });
   });
 
-  test("D3: install asks before an agent runs mt update, the one network command", () => {
+  test("the one ask rule covers mt update, the one network command", () => {
     expect(ASK_RULES).toEqual(["Bash(mt update:*)"]);
   });
 });
