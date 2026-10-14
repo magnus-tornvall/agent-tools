@@ -50,8 +50,9 @@ The commit is the oracle's record: whatever builds the change leaves every file 
 - **Each test reads on its own** in the suite's test framework: what it sets up, does and asserts
   is in the test, so the owner understands it without knowing a second or third language or tool
   that runs part of it.
-- **Only tests are written**, in the suite's own folders and conventions: no product code, no
-  change to an existing test or to what the suite runs through, such as its config.
+- **Only tests are written**, each in a file the oracle commit adds, in the suite's own folders
+  and conventions: no product code, no test appended to an existing file, and no change to an
+  existing test or to what the suite runs through, such as its config.
 - **Each test fails at base on an assertion**, shown by running it through the suite's command
   while the product code is still the base commit's.
 - **The tests are one commit of their own on the work branch**, never on the base branch.
