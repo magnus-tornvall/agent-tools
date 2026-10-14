@@ -102,7 +102,7 @@ returns the closed shape, or a decomposition when the change is too big to settl
 - **The door rule** (`mt get door-rule`) says what is settled, a two-way door or a one-way door,
   and who pays to undo it.
 - **The ask guide** (`mt get ask`) composes every question: its form, its channel and what each
-  carries.
+  carries. An Either answer is a decision naming the input it covers.
 - **The brief guide** (`mt get brief`) lays out every message to the owner: what it shows first,
   what it leaves until asked, and how the owner asks for it.
 
