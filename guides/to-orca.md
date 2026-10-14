@@ -66,11 +66,12 @@ Task starts until the owner answers.
 The Run's objective: nothing on the branch would surprise the owner. It holds when all of these
 do.
 
-- **The intent is settled before any plan is shown.** Given a shape, `mt shape check` passes on
-  it, or the owner has ruled on each violation it prints. Given intent in any other form, you
-  orchestrate from it on your own judgment, and a grill as the mvc guide describes (`mt get mvc`)
-  runs only when you judge one-way doors or intent only the owner holds still open, never because
-  of the input's form. A ruling leaves the intent as given and reaches every Task it bears on.
+- **The intent is clear enough to plan from before any plan is shown.** Given a shape,
+  `mt shape check` passes on it, or the owner has ruled on each violation it prints. Given intent
+  in any other form, you orchestrate from it on your own judgment. A grill as the mvc guide
+  describes (`mt get mvc`) runs only when you judge one-way doors or intent only the owner holds
+  still open, never because of the input's form. A ruling leaves the intent as given and reaches
+  every Task it bears on.
 - **The owner approves a plan they can trust to run unattended.** It names the first Tasks and
   the assignments expected next, each Task's agent, model and effort, the base branch, and the
   destination: the branch, or a pull request. Each model and effort is your judgment for that
@@ -81,7 +82,8 @@ do.
   config it runs with, not from the docs. The message opens with the approval question and
   anything that would stop a worker, before the per-Task details. A changed plan is approved
   again.
-- **Oracle tests run only when the owner opts in.** Fixed: changing it is the owner's call.
+- **Oracle tests run only when the owner opts in**: the owner asks for an oracle Task for this Run,
+  and a plan never proposes one unasked. Fixed: changing it is the owner's call.
 - **The change exists on its own branch, made by workers.** The base branch is untouched.
 - **The repo's own checks pass on the branch.** Fixed: changing it is the owner's call.
 - **Every requirement has evidence at least as strong as the requirement.**

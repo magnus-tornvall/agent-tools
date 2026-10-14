@@ -43,12 +43,12 @@ file it added unchanged.
   two target environments, the owner picks before any test is written, asked as the ask guide
   composes it (`mt get ask`). A pick the owner already made for this Run, such as in the plan they
   approved, is that answer.
-- **Only outcomes a user can observe get a test.** What no caller can observe, what the intent
-  excludes and how it says the change is built get none; the change's own tests and the judges
-  cover those. An outcome the suite cannot reach gets none either, and the report names it with
+- **Only requirements a user can observe get a test.** What no caller can observe, what the
+  intent excludes and how it says the change is built get none; the change's own tests and the
+  judges cover those. A requirement the suite cannot reach gets none; the report names it with
   why.
-- **Each test names the outcome it covers in words**, by what it observes, never by an ID from the
-  intent: the intent is never committed, so an ID in a test's name points at nothing in the repo.
+- **Each test names the requirement it covers in words**, by what it observes, never by an ID from
+  the intent: it is never committed, so an ID in a test's name points at nothing in the repo.
 - **Each test reads on its own** in the suite's test framework: what it sets up, does and asserts
   is in the test, so the owner understands it without knowing a second or third language or tool
   that runs part of it.
@@ -70,7 +70,7 @@ file it added unchanged.
 
 ## Report
 
-The suite's command and where it was found; each test with the outcome it covers, and how it failed
-at base; the commit; and each observable outcome given no test, with why. When nothing is written,
-why: no oracle-enabling test strategy, with what was looked for and where; the command and its
-output when the suite failed at base; or no outcome the suite reaches.
+The suite's command and where it was found; each test with the requirement it covers, and how it
+failed at base; the commit; and each observable requirement given no test, with why. When nothing
+is written, why: no oracle-enabling test strategy, with what was looked for and where; the command
+and its output when the suite failed at base; or no requirement the suite reaches.
