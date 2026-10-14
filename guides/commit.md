@@ -5,7 +5,7 @@ single change they can explain, with a message that says what changed and why, p
 the session allows a push. It supplements the built-in commit behaviour, whose safety
 defaults stay: no destructive operations, no skipped hooks. This guide owns what is staged, the
 message format and whether to push. It takes a working tree, the session's instructions and
-request, and what they allow pushed; it returns commits on the current branch, pushed or not, and
+requests, and the pushes they ask for; it returns commits on the current branch, pushed or not, and
 a report. It reads no config.
 
 ## Principles
@@ -18,8 +18,8 @@ a report. It reads no config.
 - **The history is evidence.** A later reader, or `git bisect`, trusts a message for what changed
   and why; the diff already shows which lines did.
 - **Reversibility.** A commit is a two-way door until it leaves the machine. A push is an external
-  effect: once fetched it cannot be recalled (`mt get door-rule`). So a push happens only on an
-  allowance, never by default.
+  effect: once fetched it cannot be recalled (`mt get door-rule`). So a push is made only on the
+  owner's word given in the session, never by default and never on a standing instruction.
 
 ## Objectives
 
@@ -28,7 +28,11 @@ a report. It reads no config.
   to commit.
 - **A commit on the repo's default branch, or on a branch the owner's instructions protect, is the
   owner's choice**, asked before it is made unless the instructions or the request already settle
-  it: commit there, or branch out.
+  it: commit there, or branch out. A request for a pull request settles it as a new branch, since a
+  pull request needs a head other than its base. The default branch is the one `origin` names as
+  its HEAD on the remote, not the local `origin/HEAD` ref, so it is unknown only when `origin`
+  cannot be reached or names no HEAD. While it is unknown, a commit on a branch that could be the
+  default is the owner's choice too.
 - **Every untracked file is a decision**: committed, ignored or left alone. Ignoring one is its own
   concern, so its own commit. Anything that reads as a credential (`.env`, `*.pem`, `*.key`,
   `credentials*`), a build artifact or scratch output is reported, not staged.
@@ -80,9 +84,26 @@ in bash 3.2.
 
 Push authority comes from the session.
 
-- **In an interactive session** the owner's instructions and the request decide. When either allows
-  pushing the current branch, it is pushed, with an upstream set when it has none. When neither
-  does, nothing is pushed and the report names the branch as unpushed.
+- **In an interactive session a push is the owner's word, given in that session**: a request to
+  push, or a pull request chosen as the work's destination. A standing instruction grants none,
+  however it is worded, so a branch no request in the session covers stays unpushed and the report
+  says no push was asked for. A standing instruction or a request that forbids a push still holds.
+- **A request to push covers that branch for the rest of the session.** Each later push to it that
+  only adds to what is pushed is made without asking again. It covers no other branch and no later
+  session.
+- **A pull request chosen in the session as the destination covers its head branch from when it is
+  chosen, before it is opened, until it is merged or closed.** The head is pushed to the branch of
+  the same name on the remote the pull request's head lives on, with an upstream set when it has
+  none. A new pull request's head goes to the remote the request names; when it names none and the
+  repo has more than one remote, the owner is asked which. Each later push to it that only adds to
+  what is pushed is made without asking. Once the pull request is merged or closed, only a request
+  to push covers the branch. It never covers the base branch or another person's pull request
+  branch: a pull request someone else opened is not this change's, so pushing to its head needs a
+  request to push.
+- **The default branch, or a branch the owner's instructions protect, is pushed only by a request
+  for that push.** Neither a pull request nor an earlier request to push covers it beyond the push
+  asked for; each push there needs its own request. While the default branch is unknown, a request
+  to push covers only the push it asks for; a pull request still covers its head branch.
 - **In an Orca Task** the Task's spec and assignment guide decide; the change assignment leaves
   its commits unpushed on the work branch. Whether the coordinator pushes it at hand-off is the
   to-orca guide's (`mt get to-orca`).
@@ -92,4 +113,5 @@ Push authority comes from the session.
 ## Report
 
 Each commit's hash and subject, verbatim from `git log --oneline`, with its branch; whether each
-branch was pushed, naming any left unpushed; and every file reported rather than staged, with why.
+branch was pushed, naming any left unpushed and why; and every file reported rather than staged,
+with why.
