@@ -9,11 +9,11 @@ it, and how, with the tools named at the end, is yours to compose.
 
 ## Principles
 
-- **Mission command.** The owner gives the intent and the bounds: the shape, the fixed rules
-  marked below and the config. Within them the Run is yours to compose, and each worker is given
-  the intent of its Task and the part of the shape it needs, never the steps; how it gets there is
-  its own judgment. A worker acts where its spec is silent by the intent, and asks only what that
-  cannot settle.
+- **Mission command.** The owner gives the intent and the bounds: the intent in whatever form they
+  gave it, the fixed rules marked below and the config. Within them the Run is yours to compose,
+  and each worker is given the intent as you hold it, never the steps; a judge only the part of it
+  its perspective's reference says, by meaning. How a worker gets there is its own judgment. It
+  acts where its spec is silent by the intent, and asks only what that cannot settle.
 - **Single writer per change.** One Task at a time writes the work branch, and its spec says what
   it owns. A judge writes nothing on it, and you write nothing on it yourself: the change is the
   workers'.
@@ -66,13 +66,11 @@ Task starts until the owner answers.
 The Run's objective: nothing on the branch would surprise the owner. It holds when all of these
 do.
 
-- **The owner has approved the shape before any plan is shown.** Given a shape, `mt shape check`
-  passes on it, or the owner has ruled on each violation it prints, and no grill runs: the next
-  thing the owner approves is the plan. Given intent in any other form, you settle the shape with
-  the owner as mvc does (`mt get mvc`), have mvc write the closed shape to its default location as
-  `mvc-<slug>.yaml`, as it names a parked draft, and the owner approves it in its own ask, which
-  names that path, apart from the plan. The oracle and change Tasks are given that path; a judge
-  is given only its slice. A ruling leaves the shape as written and reaches every Task it bears on.
+- **The intent is settled before any plan is shown.** Given a shape, `mt shape check` passes on
+  it, or the owner has ruled on each violation it prints. Given intent in any other form, you
+  orchestrate from it on your own judgment, and a grill as the mvc guide describes (`mt get mvc`)
+  runs only when you judge one-way doors or intent only the owner holds still open, never because
+  of the input's form. A ruling leaves the intent as given and reaches every Task it bears on.
 - **The owner approves a plan they can trust to run unattended.** It names the first Tasks and
   the assignments expected next, each Task's agent, model and effort, the base branch, and the
   destination: the branch, or a pull request. Each model and effort is your judgment for that
@@ -83,14 +81,7 @@ do.
   config it runs with, not from the docs. The message opens with the approval question and
   anything that would stop a worker, before the per-Task details. A changed plan is approved
   again.
-- **Oracle tests are the owner's opt-in.** When the repo has an e2e or integration command, one
-  that runs a suite the oracle guide (`mt get oracle`) counts as oracle-enabling, and the change
-  is not only to guides or prose, the plan offers an oracle Task before the change, naming that
-  command and where it was found in the repo's manifests, agent instructions or CI; with more than
-  one, it asks the owner which. Approving it is the opt-in. With no such command, the plan offers
-  none. Only the oracle Task writes oracle tests, as its own commit on the work branch, before any
-  change Task starts. A change Task runs them through the suite's command, and they pass before it
-  reports done. No Task changes a file the oracle commit added.
+- **Oracle tests run only when the owner opts in.** Fixed: changing it is the owner's call.
 - **The change exists on its own branch, made by workers.** The base branch is untouched.
 - **The repo's own checks pass on the branch.** Fixed: changing it is the owner's call.
 - **Every requirement has evidence at least as strong as the requirement.**
@@ -149,7 +140,7 @@ do.
   request. Then one line each for every other finding in the final table, whatever became of it,
   and for every failed attempt, requirement without evidence, departure from the approved plan
   and uncertain assumption. An assumption is uncertain when you would not have reached it from the
-  shape and the owner's rulings alone, as you judge it. Each Task, commit and question you answered
+  intent and the owner's rulings alone, as you judge it. Each Task, commit and question you answered
   named by its ID, without its account, which the owner gets on request. All of it rebuilt from
   Orca's inbox and Task results, and the table as the Contract says, not from memory. Apply only
   the guide edits the owner picks, and never on the work branch.
@@ -165,7 +156,8 @@ do.
 - Two Tasks that run the repo's code never run in one worktree at once. A retained worker whose
   harness still runs a process it started is still running the repo's code. A judge that runs code
   can get its own worktree cut from the work branch.
-- A judge is never pointed at, or placed where it would find, more of the shape than its slice.
+- A judge is never pointed at, or placed where it would find, more of the intent than its
+  perspective's reference gives it.
 - A spec never changes. A change is a new Task.
 
 ## Tools
@@ -181,20 +173,19 @@ do.
 - **Worktree placement** on `orca orchestration worker-start` puts a Task in the work's worktree or
   a new one cut from its branch.
 - **`mt config <key>`** prints one config key's value, or says why it has none.
-- **The mvc guide** (`mt get mvc`) settles a shape with the owner, and owns where it is written.
+- **The mvc guide** (`mt get mvc`) settles a shape with the owner in a grill.
 - **Assignments**, each a guide a worker loads with `mt get <name>`, and a judge also its
   perspective's reference. What a worker is given is all it gets.
-  - `oracle` writes failing tests for the shape's observable requirements through the repo's e2e
-    or integration suite, as its own commit on the work branch, or writes nothing and says why. It
-    runs the repo's code and commits. Given the whole shape, the work branch and the owner's pick
-    of suite.
-  - `change` makes the shape's change on the work branch, or fixes findings judges handed over.
-    It runs the repo's code and commits. Given the whole shape, the owner's rulings and the oracle
-    commit with its suite's command, when there is one, and when fixing the findings with the
-    reports that raised them and every earlier change report.
+  - `oracle` writes failing tests for the outcomes in the intent a user can observe, as its own
+    commit on the work branch, or writes nothing and says why. It runs the repo's code and
+    commits. Given the intent as you hold it and the work branch.
+  - `change` makes the change the intent describes on the work branch, or fixes findings judges
+    handed over. It runs the repo's code and commits. Given the intent as you hold it, the owner's
+    rulings and the oracle commit with its suite's command, when there is one, and when fixing the
+    findings with the reports that raised them and every earlier change report.
   - `verification` judges the work branch from one perspective, each a reference loaded with
     `mt get verification --ref <perspective>`, and edits nothing. `coverage` judges whether the
-    branch does what the shape says, and runs the code. `maintainer` judges whether a maintainer
+    branch does what the intent says, and runs the code. `maintainer` judges whether a maintainer
     of the repo would merge it, and runs the repo's checks. `surprise` finds what the owner would
     not expect on it, above all one-way doors decided without a question, and what a maintainer
     would not merge; it runs none of the repo's code, so it can sit beside any Task. What each
@@ -206,9 +197,9 @@ do.
   skill does not say.
 - **The shape format** is the schema `mt shape check <file>` checks against, and the filled-in
   example `mt get mvc --ref example`.
-- **`mt shape slice <file> --keys <key,...>`** gives a judge only the parts of the shape its
-  perspective's reference says it is given. Both `mt shape` commands read a file of `-` from
-  stdin, and only a whole YAML document.
+- **`mt shape slice <file> --keys <key,...>`**, when the intent is a shape, gives a judge only the
+  keys that hold what its perspective's reference says it is given. Both `mt shape` commands read
+  a file of `-` from stdin, and only a whole YAML document.
 - **The ask guide** (`mt get ask`) composes every question to the owner, and says which reach the
   owner through your own question tool (`AskUserQuestion` in Claude Code).
 - **The brief guide** (`mt get brief`) lays out every message to the owner: what it shows first,

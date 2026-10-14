@@ -9,10 +9,9 @@ none of the repo's code, so it can sit beside any Task; it edits nothing. It rea
 
 ## Given and withheld
 
-- **Given** the shape's `outcome`, `purpose`, `non_goals` and `decisions`, the
-  owner's rulings, and the assumptions and questions from the change reports.
-- **Withheld** the shape's `requirements` and `constraints`, since a worker cannot unsee what
-  anchors it.
+- **Given** the intent, its why and exclusions, and the record of decisions: each choice and what
+  it ruled out, the owner's rulings, and the change reports' assumptions and questions.
+- **Withheld** what the change was checked against, its requirements and bounds.
 
 Fixed: changing it is the owner's call.
 

@@ -58,6 +58,7 @@ part. Only the owner changes a fixed rule.
   without asking, and the judge holding the least found the most (`docs/guides-behaviour.md`).
   Remove when Runs show workers no longer deciding one-way doors without asking, and the owner
   decides to remove it. A Run without such a door is not evidence.
+- **The oracle runs only when the owner opts in.** Home: the to-orca guide.
 - **The shape's format and validation.** Home: `mt`'s schema and examples, which `mt shape check`
   enforces in place of a mark. Principles for writing good intent belong to the mvc guide. Other
   parts name the shape's keys and never restate its structure or field rules.

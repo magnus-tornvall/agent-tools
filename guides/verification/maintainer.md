@@ -8,10 +8,10 @@ no config.
 
 ## Given and withheld
 
-- **Given** the shape's `constraints`, and the assumptions, questions and check
-  results from the change reports.
-- **Withheld** the shape's `outcome`, `purpose`, `requirements`, `non_goals` and `decisions`, since
-  a maintainer judges the diff on its own merits.
+- **Given** the bounds the work had to keep, and the assumptions, questions and check results from
+  the change reports.
+- **Withheld** what the work was for: its end state, why, its requirements, what it excludes and
+  the choices behind it, since a maintainer judges the diff on its own merits.
 
 Fixed: changing it is the owner's call.
 

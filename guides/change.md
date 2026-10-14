@@ -1,16 +1,16 @@
 # change
 
-Domain: Change. Make the shape's change in this worktree, or fix the findings handed over, so that
-each requirement holds by evidence and nothing else moves. It takes the whole shape, the owner's
-rulings and the oracle commit with its suite's command, when the work branch has one, and when
-fixing the findings with the reports that raised them; it returns commits on the work branch and a
-report. Where the shape is silent, its `purpose` says which way to lean.
-It reads no config.
+Domain: Change. Make the change the intent describes in this worktree, or fix the findings handed
+over, so that each requirement holds by evidence and nothing else moves. It takes the intent as
+the coordinator holds it, a shape or otherwise, the owner's rulings and the oracle commit with its
+suite's command, when the work branch has one, and when fixing the findings with the reports that
+raised them; it returns commits on the work branch and a report. Where the intent is silent, why
+the owner wants the change says which way to lean. It reads no config.
 
 ## Principles
 
 - **Minimal change.** The change is the smallest one that makes the requirements hold, at their
-  root cause, not at a symptom. What the shape does not ask for does not ride along.
+  root cause, not at a symptom. What the intent does not ask for does not ride along.
 - **Root cause by the scientific method.** A failure nobody expected is explained with evidence
   before anything changes to make it pass (`mt get debugging`).
 - **Test oracle.** Each requirement is shown by a check that can fail: a test written from it.
@@ -27,7 +27,8 @@ It reads no config.
   with the contradiction and its source, never an edit. Changing what an oracle test runs through,
   such as its runner's config, a shared base class or the test script, is a one-way door like
   changing what a test asserts (`mt get door-rule`).
-- **No non-goal is built.** The constraints, decisions and the owner's rulings are followed.
+- **Nothing the intent excludes is built.** Its bounds, its choices and the owner's rulings are
+  followed.
 - **When fixing, only the findings are fixed.** The owner's rulings decide any finding they cover.
   A finding you judge wrong is not fixed, and the report says why.
 - **The repo's own checks pass before you claim success.** Find them in its manifests and agent

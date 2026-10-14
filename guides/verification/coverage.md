@@ -1,16 +1,16 @@
 # verification: coverage
 
-Domain: Verification. Judges whether the work branch does what the shape says, so that a change
-reported done is done as the owner settled it. It rests on the test oracle: the shape's
+Domain: Verification. Judges whether the work branch does what the intent says, so that a change
+reported done is done as the owner settled it. It rests on the test oracle: the intent's
 requirements are the expected result, and evidence is held to the strength of what it shows. It
 runs the repo's code and edits nothing. It reads no config.
 
 ## Given and withheld
 
-- **Given** the shape's `outcome`, `requirements`, `non_goals`, `constraints` and `decisions`, the
-  owner's rulings and the change reports.
-- **Withheld** the shape's `purpose`, and the change worker's reasoning beyond its report.
-  `purpose` is no end state, so nothing on the branch can show it holds.
+- **Given** what the owner wants shown true: the end state, its requirements, what it excludes,
+  the bounds and choices it sets, the owner's rulings and the change reports.
+- **Withheld** why the owner wants it, and the change worker's reasoning beyond its report. Why is
+  no end state, so nothing on the branch can show it holds.
 
 Fixed: changing it is the owner's call.
 
