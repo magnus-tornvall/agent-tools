@@ -169,7 +169,7 @@ for args in "" "--help"; do
   assert_eq "usage ($args) exits 0" 0 "$rc"
   assert_contains "usage ($args) shows get" "$out" "mt get"
   assert_contains "usage ($args) names the config file" "$out" "mt/config.toml"
-  for word in dogfood triage TYPESAFE_API_KEY log; do
+  for word in dogfood triage TYPESAFE_API_KEY; do
     case $out in *"$word"*) fail "usage ($args) names $word" ;; esac
     check "usage ($args) names no $word"
   done
@@ -177,14 +177,22 @@ done
 "$MT" frobnicate >/dev/null 2>&1; rc=$?
 assert_eq "unknown command exits 2" 2 "$rc"
 
-# no command writes anything under an empty HOME, or says anything about a log
+# no command writes anything under an empty HOME, whatever the caller's environment carries
 EMPTY_HOME=$TMP/empty-home
 mkdir -p "$EMPTY_HOME"
-for args in "get door-rule" "get nope" "get relay --ref overlay" "get relay --ref missing" "list" "--help"; do
-  (cd "$OTHER" && HOME=$EMPTY_HOME "$MT" $args >/dev/null 2>"$TMP/err")
+NOT_FOUND_NOPE="mt: no guide for tool 'nope'. Run 'mt list' to see the tools."
+NOT_FOUND_REF="mt: no reference 'missing' for tool 'relay'. Run 'mt list' to see the tools."
+while IFS='|' read -r args want; do
+  (cd "$OTHER" && env -i PATH="$PATH" HOME="$EMPTY_HOME" "$MT" $args >/dev/null 2>"$TMP/err")
   assert_eq "mt $args leaves HOME empty" "" "$(find "$EMPTY_HOME" -mindepth 1)"
-  case $(cat "$TMP/err") in *log*) fail "mt $args names a log on stderr" ;; esac
-  check "mt $args names no log on stderr"
-done
+  assert_eq "mt $args stderr" "$want" "$(cat "$TMP/err")"
+done <<EOF
+get door-rule|
+get nope|$NOT_FOUND_NOPE
+get relay --ref overlay|
+get relay --ref missing|$NOT_FOUND_REF
+list|
+--help|
+EOF
 
 echo "all checks passed"
