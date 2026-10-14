@@ -92,12 +92,11 @@ Every spec's Constraints include `- Send no heartbeats, whatever the preamble as
 
 A visual question's exhibit reaches the owner in Orca's embedded browser, scoped to the worktree:
 a tab opened at the state to judge, `orca tab create --url`, the element to judge outlined,
-`orca highlight --selector`, and the worktree card marked unread, `orca worktree set --unread`.
-The question names the worktree, the tab and what is outlined. A prototype is served from the
-worktree and opened in such a tab rather than published as a public link. Workaround for Orca
-carrying no attachment on a message or question, having no focus primitive that opens a tab at an
-element for the owner, and showing a worker's question only in terminal scrollback; remove when
-Orca has them.
+`orca highlight --selector`, and the worktree card marked unread,
+`orca worktree set --worktree current --unread`. The question names the worktree, the tab and what
+is outlined. Workaround for Orca carrying no attachment on a message or question, having no focus
+primitive that opens a tab at an element for the owner, and showing a worker's question only in
+terminal scrollback; remove when Orca has them.
 
 ## Known behaviour
 
