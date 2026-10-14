@@ -40,11 +40,10 @@ a report. It reads no config.
   concerns is committed once with an honest message, or its split is handed to the owner: hunks
   picked by an agent are unverifiable.
 - **What is staged is what you meant**: the unit you intended, with no conflict markers, debug
-  logging or focused tests in it. The diff is read by index before content, so the grouping keeps
-  the context it needs.
+  logging or focused tests in it.
 - **A rejected commit is retried, not bypassed.** When a hook rejects it, no commit was created.
-  What a hook rewrote is re-staged by path and the same commit retried with the same message; what
-  a hook reports has its cause fixed first. `--no-verify` is never used.
+  What a hook rewrote is re-staged by path and committed with the same message; what a hook
+  reports is fixed at its cause. `--no-verify` is never used.
 - **A commit is amended only when the owner asks and it is unpushed.** Otherwise a correction is a
   new commit.
 
@@ -75,10 +74,9 @@ bug.` (past tense, capitalized, period).
 
 The message reaches git on stdin (`git commit -F -`) from a heredoc with a quoted delimiter, which
 keeps `"`, `'`, `` ` `` and `$(…)` literal; a message committed more than once may come from a file
-in scratch instead. Never `-m` with a command substitution. Workaround for bash 3.2, still
-`/bin/bash` on macOS, misreading a heredoc inside `"$(…)"`, so that one `"` in the message ends the
-command with ``unexpected EOF while looking for matching `)'``; remove when no agent runs commands
-in bash 3.2.
+instead. Never `-m` with a command substitution. Workaround for bash 3.2, still `/bin/bash` on
+macOS, misreading a heredoc inside `"$(…)"`, so that one `"` in the message ends the command with
+``unexpected EOF while looking for matching `)'``; remove when no agent runs commands in bash 3.2.
 
 ## Push
 

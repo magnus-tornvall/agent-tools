@@ -14,9 +14,9 @@ what is published outside the repo; reading the codebase is other tools' work. I
 ## Objectives
 
 - **Every search answers one reading of the question.** When the question leaves open something
-  that would change what is searched, such as which criterion "should we" is judged by, the owner
-  is asked before any search goes out. Otherwise research takes the likeliest reading and states
-  it at the top of the report.
+  that would change what is searched, such as which criterion "should we" is judged by, no search
+  goes out on a reading the owner has not settled. Otherwise research takes the likeliest reading
+  and states it at the top of the report.
 - **Only admitted sources are cited.** A source is admitted when it is primary (a lab's,
   company's, standard body's or project's own publication of what it produced, blog or not, or
   the original paper or data), a peer-reviewed paper, a preprint (marked as not peer-reviewed),

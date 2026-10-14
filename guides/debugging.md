@@ -1,11 +1,11 @@
 # debugging
 
-Domain: Change. Find why something fails, with evidence, before changing anything to make it pass.
-It is for a failure nobody expected: a test that should pass fails, a build or command breaks, code
-does what it was not written to do. A test written to fail before it passes is not one; it is doing
-its job. It takes the failure, and the request that reports it or asks why; it returns the root
-cause with its evidence and, unless only a diagnosis was asked for, one fix proven against the
-failure, with a report. It reads no config.
+Domain: Change. Find why something fails, with evidence, so that a fix changes the cause and not a
+symptom. It is for a failure nobody expected: a test that should pass fails, a build or command
+breaks, code does what it was not written to do. A test written to fail before it passes is not
+one; it is doing its job. It takes the failure, and the request that reports it or asks why; it
+returns the root cause with its evidence and, unless only a diagnosis was asked for, one fix proven
+against the failure, with a report. It reads no config.
 
 ## Principles
 
@@ -20,13 +20,13 @@ failure, with a report. It reads no config.
 
 ## Objectives
 
-- **The failure is reproduced before it is explained**: triggered on demand by the exact command or
+- **What is explained is a reproduced failure**: one triggered on demand by the exact command or
   input, with whether it fails every time, and its whole error read: the message, the stack trace,
   each file and line, the exit code. A failure that will not reproduce is not guessed at: the
   evidence is what differs between the runs that fail and those that pass.
-- **The root cause is found before any fix.** A bad value is traced back through whatever passed it
-  to where it originates, and fixed there. A guard, a retry, a longer timeout or a skipped test at
-  the point of failure leaves the cause to fail somewhere else.
+- **Every fix is at a root cause that has evidence.** A bad value is traced back through whatever
+  passed it to where it originates, and fixed there. A guard, a retry, a longer timeout or a
+  skipped test at the point of failure leaves the cause to fail somewhere else.
 - **Every claim about the cause rests on evidence.** What changed, in the history, the diff,
   dependencies, config and environment; working code nearby that does the same thing, and every
   way it differs; and, when the failure crosses components, what enters and leaves each boundary
@@ -51,8 +51,8 @@ failure, with a report. It reads no config.
 
 ## Guardrails
 
-- **No changes in response to the failure before the root cause has evidence**, except
-  probes, each made to answer one hypothesis and undone after it where it can be. A probe that
+- **Nothing changes in response to the failure without a root cause that has evidence**, except
+  probes, each made to answer one hypothesis and undone once answered where it can be. A probe that
   cannot be undone, such as a cleared cache or a restarted service, is named in the report.
 - **A failing test is not edited to pass.** When the test itself is wrong, that is a finding of its
   own, and changing what an existing test asserts is a one-way door.
