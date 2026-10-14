@@ -28,7 +28,6 @@ It reads no config.
   such as its runner's config, a shared base class or the test script, is a one-way door like
   changing what a test asserts (`mt get door-rule`).
 - **No non-goal is built.** The constraints, decisions and the owner's rulings are followed.
-- **A change outside the touchpoints has a reason.**
 - **When fixing, only the findings are fixed.** The owner's rulings decide any finding they cover.
   A finding you judge wrong is not fixed, and the report says why.
 - **The repo's own checks pass before you claim success.** Find them in its manifests and agent
@@ -46,5 +45,4 @@ It reads no config.
 
 Besides what orca-worker asks: each requirement's status and the evidence for it; the oracle tests'
 run through the suite's command and its result, when the branch has an oracle commit; each
-finding's fix and commit, or why it was not fixed; each check and its result; each file outside
-the touchpoints and why.
+finding's fix and commit, or why it was not fixed; each check and its result.

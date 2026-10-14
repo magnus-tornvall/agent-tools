@@ -1,18 +1,17 @@
 /**
  * `mt shape`, which cli/mt loads only when it is called.
  *
- *   mt shape check [--draft] <file>        nothing and exit 0 on a shape, or with --draft on a
- *                                          draft, otherwise one `path: message` line per violation
- *                                          and exit 1
+ *   mt shape check <file>                  nothing and exit 0 on a shape, otherwise one
+ *                                          `path: message` line per violation and exit 1
  *   mt shape slice <file> --keys <a,b>     the shape with only those top-level keys, as YAML; the
  *                                          file need only be a YAML map, not pass the check
  *
  * A file of `-` is read from stdin. Usage errors exit 2.
  */
 import { readFileSync } from "node:fs";
-import { parseDocument, parseDraft, parseShape, SHAPE_KEYS, type Violation } from "./shape.ts";
+import { parseDocument, parseShape, SHAPE_KEYS, type Violation } from "./shape.ts";
 
-const USAGE = `usage: mt shape check [--draft] <file>
+const USAGE = `usage: mt shape check <file>
        mt shape slice <file> --keys <key,...>
 A file of - is read from stdin.
 `;
@@ -40,18 +39,16 @@ export function isFile(arg: string): boolean {
 }
 
 function check(args: readonly string[]): number {
-  let draft = false;
   const files: string[] = [];
   for (const arg of args) {
-    if (arg === "--draft") draft = true;
-    else if (isFile(arg)) files.push(arg);
+    if (isFile(arg)) files.push(arg);
     else throw new UsageError(`unknown option '${arg}'`);
   }
   const [file, ...rest] = files;
   if (file === undefined || rest.length > 0) throw new UsageError("check takes one file");
   const yaml = readShape(file);
   if (yaml === undefined) return 1;
-  const parsed = draft ? parseDraft(yaml) : parseShape(yaml);
+  const parsed = parseShape(yaml);
   if (parsed.ok) return 0;
   report(parsed.violations);
   return 1;

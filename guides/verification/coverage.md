@@ -9,9 +9,8 @@ runs the repo's code and edits nothing. It reads no config.
 
 - **Given** the shape's `outcome`, `requirements`, `non_goals`, `constraints` and `decisions`, the
   owner's rulings and the change reports.
-- **Withheld** the shape's `purpose` and `touchpoints`, and the change worker's reasoning beyond
-  its report. `purpose` is no end state, so nothing on the branch can show it holds, and where the
-  change lands is judged by the other perspectives.
+- **Withheld** the shape's `purpose`, and the change worker's reasoning beyond its report.
+  `purpose` is no end state, so nothing on the branch can show it holds.
 
 Fixed: changing it is the owner's call.
 

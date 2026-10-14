@@ -23,10 +23,6 @@ non_goals:
     reason: No operator has asked for it yet.
 constraints:
   C1: The export's column order does not change; cancel_reason is appended.
-touchpoints:
-  - app/Models/Order.php:cancel
-  - reports/OrderExport.php
-  - database/migrations/
 decisions:
   D1:
     decision: The reason is a nullable column on orders.
@@ -35,11 +31,9 @@ decisions:
       - Keeping the reason only in the event log
     provenance: Finance imports the nightly export by column position, and the event log is pruned after 90 days.
     door: one_way
-    decided_by: owner
   D3:
     decision: The API returns the reason as a plain string.
     rejected:
       - A reason code from a fixed list
     provenance: The operator's cancel form already sends free text.
     door: two_way
-    decided_by: silence

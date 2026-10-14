@@ -1,8 +1,8 @@
 import { describe, expect, spyOn, test } from "bun:test";
 import { readFileSync } from "node:fs";
-import { isTouchpoint, parseDraft, parseShape, type Violation } from "./shape.ts";
+import { parseShape, type Violation } from "./shape.ts";
 
-const EXAMPLE = readFileSync(new URL("../../guides/mvc/example.md", import.meta.url), "utf8");
+const EXAMPLE = readFileSync(new URL("./example.yaml", import.meta.url), "utf8");
 
 type Fields = Record<string, unknown>;
 
@@ -38,16 +38,16 @@ describe("parseShape", () => {
     expect(parseShape(EXAMPLE)).toMatchObject({ ok: true });
   });
 
-  test("accepts empty non-goals, decisions, constraints and touchpoints", () => {
-    const shape = { ...example(), non_goals: {}, decisions: {}, constraints: {}, touchpoints: [] };
+  test("accepts empty non-goals, decisions and constraints", () => {
+    const shape = { ...example(), non_goals: {}, decisions: {}, constraints: {} };
 
     expect(paths(shape)).toEqual([]);
   });
 
   test("names each missing top-level field", () => {
-    const { outcome: _outcome, touchpoints: _touchpoints, ...rest } = example();
+    const { outcome: _outcome, constraints: _constraints, ...rest } = example();
 
-    expect(paths(rest)).toEqual(["outcome", "touchpoints"]);
+    expect(paths(rest)).toEqual(["outcome", "constraints"]);
   });
 
   test("reports an unknown key at its own path, at every level", () => {
@@ -90,13 +90,11 @@ describe("parseShape", () => {
     ]);
   });
 
-  test("reports a decision's door or decided_by outside its values", () => {
+  test("reports a decision's door outside its values", () => {
     const shape = example();
-    const d3 = decision(shape, "D3");
-    d3.door = "one-way";
-    d3.decided_by = "user";
+    decision(shape, "D3").door = "one-way";
 
-    expect(paths(shape).sort()).toEqual(["decisions.D3.decided_by", "decisions.D3.door"]);
+    expect(paths(shape)).toEqual(["decisions.D3.door"]);
   });
 
   test("reports a decision with no door", () => {
@@ -162,24 +160,6 @@ describe("parseShape", () => {
 
     expect(violationsOf(shape)).toEqual([{ path: "constraints.D1", message: "must be C followed by a number from 1" }]);
   });
-
-  test.each(["R1 passes", "order 812 was cancelled as in R1", "R3 holds"])("reports a given of %p, which leans on another requirement", (given: string) => {
-    const shape = example();
-    fields(fields(shape.requirements, "requirements").R2, "R2").given = given;
-    const named = /R\d+/.exec(given)?.[0];
-
-    expect(violationsOf(shape)).toEqual([{ path: "requirements.R2.given", message: `must set up its own state, not name ${named}` }]);
-  });
-
-  test.each(["the R2D2 tenant's order 812 was cancelled", "order 812 sits in an R9 bucket", "order 812 is the one R2 cancels"])(
-    "accepts a given of %p, which names no other requirement",
-    (given: string) => {
-      const shape = example();
-      fields(fields(shape.requirements, "requirements").R2, "R2").given = given;
-
-      expect(paths(shape)).toEqual([]);
-    },
-  );
 
   test.each(["", "  "])("reports an outcome of %p as empty", (empty: string) => {
     expect(violationsOf({ ...example(), outcome: empty })).toEqual([{ path: "outcome", message: "must not be empty" }]);
@@ -290,104 +270,7 @@ describe("parseShape", () => {
     expect(parseShape(yaml)).toEqual({ ok: false, violations: [{ path: "requirements", message: "key appears more than once" }] });
   });
 
-  test("accepts a zero-indented sequence of strings that share the text before their first colon", () => {
-    const yaml = EXAMPLE.replace(/^touchpoints:\n(?:  .*\n)+/m, 'touchpoints:\n- "app/Order.php:cancel"\n- "app/Order.php:create"\n- \'app/Order.php:reinstate\'\n');
-
-    const parsed = parseShape(yaml);
-
-    expect(parsed.ok).toBe(true);
-  });
-
   test("reports a document that is not a map", () => {
     expect(paths(["a list"])).toEqual([""]);
-  });
-});
-
-describe("parseShape on a draft", () => {
-  test("lists the draft line before every other violation", () => {
-    const yaml = Bun.YAML.stringify({ draft: { budget: 3, rounds_spent: 1, open: [] } });
-    const parsed = parseShape(yaml);
-
-    expect(parsed.ok).toBe(false);
-    const violations = parsed.ok ? [] : parsed.violations;
-    expect(violations.length).toBeGreaterThan(1);
-    expect(violations[0]).toEqual({ path: "draft", message: "a draft is not a shape; check it with --draft" });
-  });
-});
-
-describe("parseDraft", () => {
-  const block = { budget: 3, rounds_spent: 1, open: [{ question: "Who reads the export?", stance: "Finance only." }] };
-
-  function draftPaths(document: unknown): string[] {
-    const parsed = parseDraft(Bun.YAML.stringify(document));
-    return parsed.ok ? [] : parsed.violations.map((violation) => violation.path);
-  }
-
-  test("accepts a draft block alone, with no commit and no shape field yet", () => {
-    expect(draftPaths({ draft: block })).toEqual([]);
-  });
-
-  test("accepts a whole shape with a draft block", () => {
-    expect(draftPaths({ ...example(), draft: { ...block, commit: "21d46e6", open: [] } })).toEqual([]);
-  });
-
-  test("accepts a draft with a purpose, a budget, a rounds_spent and its open questions", () => {
-    expect(draftPaths({ purpose: "Finance reconciles cancelled orders by hand.", draft: block })).toEqual([]);
-  });
-
-  test("reports an empty purpose in a draft at purpose", () => {
-    expect(draftPaths({ purpose: " ", draft: block })).toEqual(["purpose"]);
-  });
-
-  test("accepts empty requirements, which a shape may not have", () => {
-    expect(draftPaths({ outcome: "x", requirements: {}, draft: block })).toEqual([]);
-  });
-
-  test("reports a document with no draft block", () => {
-    expect(draftPaths(example())).toEqual(["draft"]);
-  });
-
-  test("reports each malformed field of the draft block at its own path", () => {
-    const document = { draft: { commit: "", budget: -1, rounds_spent: 1.5, open: [{ question: "Asked?" }], saved: "now" } };
-
-    expect(draftPaths(document).sort()).toEqual(["draft.budget", "draft.commit", "draft.open.0.stance", "draft.rounds_spent", "draft.saved"]);
-  });
-
-  test("reports a key the schema does not define, at the top level too", () => {
-    expect(draftPaths({ draft: block, assumptions: {} })).toEqual(["assumptions"]);
-  });
-
-  test("reports a repeated top-level key", () => {
-    const yaml = `outcome: a\noutcome: b\n${Bun.YAML.stringify({ draft: block }, null, 2)}\n`;
-
-    expect(parseDraft(yaml)).toEqual({ ok: false, violations: [{ path: "outcome", message: "key appears more than once" }] });
-  });
-});
-
-describe("isTouchpoint", () => {
-  test.each([
-    "cli/mt",
-    "README.md",
-    ".gitignore",
-    "guides/mvc/",
-    "app/Models/Order.php:cancel",
-    "src/order.ts:Order.cancel",
-    "src/Order.php:Order::cancel",
-  ])("accepts %p", (touchpoint: string) => {
-    expect(isTouchpoint(touchpoint)).toBe(true);
-  });
-
-  test.each([
-    "",
-    "the export",
-    "/etc/hosts",
-    "../other/file.ts",
-    "./cli/mt",
-    "guides//mvc.md",
-    "app/Order.php:",
-    "app/Order.php:the cancel method",
-    ":cancel",
-  ])("rejects %p", (touchpoint: string) => {
-    expect(isTouchpoint(touchpoint)).toBe(false);
   });
 });

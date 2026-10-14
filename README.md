@@ -1,7 +1,7 @@
 # agent-tools
 
-Skills for agents working in Orca, and `mt`, which loads them on demand, checks and slices shapes
-and drafts, prints the owner's config, and updates its own clone. Install it with one line (see
+Skills for agents working in Orca, and `mt`, which loads them on demand, checks and slices shapes,
+prints the owner's config, and updates its own clone. Install it with one line (see
 Install):
 
 ```sh
@@ -11,7 +11,7 @@ curl -fsSL https://raw.githubusercontent.com/magnus-tornvall/agent-tools/main/in
 ## The shape
 
 A shape is one YAML document: the outcome, optionally its `purpose`, why the outcome matters,
-requirements keyed `R1…`, non-goals keyed `N1…`, constraints keyed `C1…`, touchpoints, and
+requirements keyed `R1…`, non-goals keyed `N1…`, constraints keyed `C1…`, and
 decisions keyed `D1…`. Oracles are not part of it: they are tests in the repo, written as their
 own commit on the work branch (`mt get oracle`).
 The schema in `src/shape/shape.ts` is the contract: a shape is what `mt shape check`
@@ -20,10 +20,6 @@ accepts, and `mt get mvc --ref example` prints a filled-in example.
 Any producer whose shape passes `mt shape check` is a valid producer. mvc is one producer,
 not the contract.
 
-A draft is an unfinished shape: the same document with a top-level `draft` block holding the
-`commit` it was written at, if any, the round `budget`, the `rounds_spent`, and the `open`
-questions, each a `question` as it was asked with its `stance`. A draft is never a shape:
-`mt shape check` fails on the `draft` key, and `mt shape check --draft` checks the partial form.
 `mt` keeps no drafts and no shapes; whoever produces one stores it.
 
 ## mt
@@ -54,9 +50,7 @@ mt list                       every guide, once, with its stub's description, or
                               guide's first paragraph when it has no stub
 mt get <name>                 print the tool's guide, and log the load
 mt get <name> [--ref <ref>]   print one of the tool's references instead, and log the ref
-mt shape check [--draft] <file>
-                              check that a file is a shape, or with --draft a draft;
-                              - reads stdin
+mt shape check <file>         check that a file is a shape; - reads stdin
 mt shape slice <file> --keys <key,...>
                               print the shape with only those top-level keys; - reads stdin
 mt config [<key>]             print the owner's config, or one key's value
@@ -66,8 +60,9 @@ mt --help                     print the usage
 ```
 
 A reference is a file under `guides/<name>/<ref>.md`, for example
-`mt get to-orca --ref overlay`. An unknown tool or ref exits 1 with a message on stderr;
-the attempt is still logged, with `found` false.
+`mt get to-orca --ref overlay`, except that `mt get mvc --ref example` prints
+`src/shape/example.yaml`. An unknown tool or ref exits 1 with a message on stderr; the attempt is
+still logged, with `found` false.
 
 ### Contracts
 
@@ -92,8 +87,8 @@ exit code.
 columns, then its stub's description, or its first paragraph when it has no stub, and exits 0.
 Words after `list` are ignored.
 
-**`mt shape check [--draft] <file>`**, read-only. Takes a file, or `-` for stdin. Prints nothing
-and exits 0 when it is a shape, or with `--draft` a draft. A file that cannot be read, or is not
+**`mt shape check <file>`**, read-only. Takes a file, or `-` for stdin. Prints nothing
+and exits 0 when it is a shape. A file that cannot be read, or is not
 one, prints a line on stderr per violation, or the reason it cannot be read, and exits 1. No file,
 two files or an unknown option exits 2. See Shapes.
 
@@ -150,9 +145,7 @@ If the log cannot be written, `mt` says so on stderr and still prints the guide.
 
 `mt shape check <file>` prints nothing and exits 0 when the file is a shape. Otherwise it
 prints one `path: message` line per violation on stderr and exits 1; a file that is not YAML
-is one violation, on `(document)`, and a `draft` key is one on `draft`. With `--draft` it
-checks a draft instead: the `draft` block is required and checked, and every other key is
-optional but checked when present, `requirements` with no minimum. A key repeated in
+is one violation, on `(document)`. A key repeated in
 `requirements`, `non_goals`, `constraints` or `decisions` is a violation on that key, found in
 block-style maps; YAML keeps only the last of a repeated key, so without this one entry would be
 dropped silently.

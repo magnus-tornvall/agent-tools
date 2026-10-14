@@ -88,15 +88,13 @@ Re-invoked on a settled shape, mvc asks nothing and goes straight to the report,
   given everything else that ships.
 - **The owner sees the closed shape as a digest.** Once the shape passes `mt shape check`, or is
   marked unchecked without it, the closing reply shows the outcome, each requirement, non-goal
-  and constraint in one line, the touchpoints, and each decision decided by silence, and holds no
+  and constraint in one line, and each decision decided by silence, and holds no
   YAML, also when the shape has been written, whose path it names. When it has not been written,
   the reply says so in one line and offers the YAML or a file, and neither is shown or written
   unasked. Asked for the shape, the next message shows the whole checked YAML.
-- **A grill parks on the owner's word, and only then.** The draft is the shape so far with its
-  `draft` block, with its `commit`, `budget`, `rounds_spent` and `open` questions. Answers,
+- **A grill parks on the owner's word, and only then.** The draft is the shape so far. Answers,
   assumptions, facts and exclusions are already decisions, their provenance and non-goals. Each
-  park replaces the last whole, and what is written still passes `mt shape check --draft` when read
-  back. It goes where the owner's instructions put parked work; with none, to `mvc-<slug>.yaml` at
+  park replaces the last whole. It goes where the owner's instructions put parked work; with none, to `mvc-<slug>.yaml` at
   the default location, the slug safe as a file name, the same for every park of the grill and
   taken by no other file there. The reply names where it went. Workaround for no tool keeping a
   grill's drafts; remove when `mt` or Orca parks and lists them.
@@ -115,7 +113,7 @@ Re-invoked on a settled shape, mvc asks nothing and goes straight to the report,
   on a settled decision goes to the owner with both sources, as a contradiction does. The owner
   sees the record, the open questions and the rounds left before anything new is asked, and
   nothing is asked until the owner says go. The budget carries over: parking earns no rounds.
-- **A parked grill closes with its shape.** The shape is the draft without its `draft` block; it
+- **A parked grill closes with its shape.** The closed shape
   lands where the draft was, replacing it, and read back from there it passes `mt shape check`. A
   parked grill that ends in a decomposition, or that the owner drops, has no shape to close with:
   its draft stays open, and the reply says so.
@@ -148,14 +146,14 @@ Re-invoked on a settled shape, mvc asks nothing and goes straight to the report,
 
 - **The shape** is what mvc hands on: one YAML document that passes `mt shape check`, with no
   comments or placeholders, so a consumer copies it rather than translates it. Its keys are
-  `outcome`, `purpose`, `requirements`, `non_goals`, `constraints`, `touchpoints` and `decisions`;
+  `outcome`, `purpose`, `requirements`, `non_goals`, `constraints` and `decisions`;
   the schema behind `mt shape check` owns their format, and the example (`mt get mvc --ref
   example`) shows them filled in. Whatever the schema enforces is left to it; what follows is the
   intent no check can see. A scalar containing ` #` is quoted, since YAML otherwise reads the rest
   as a comment and truncates it. Workaround for `mt shape check` not noticing a truncated
   scalar; remove when it does.
-- `outcome`, `requirements` and `non_goals` are what the change does; `constraints`,
-  `touchpoints` and `decisions` are how. A file, symbol, technology or value is how, never a
+- `outcome`, `requirements` and `non_goals` are what the change does; `constraints` and
+  `decisions` are how. A file, symbol, technology or value is how, never a
   requirement. A mechanism the change must use is a decision, with what it rejected; one it need
   not use is left out. Earlier decision records are constraints, not decisions.
 - Each requirement's `given` sets up its own state, never another requirement passing, so one
@@ -163,8 +161,7 @@ Re-invoked on a settled shape, mvc asks nothing and goes straight to the report,
   fires both. A settled example lands as a requirement as asked.
 - A boundary non-goal says what still holds, so its absence can be checked: what is still refused,
   or still unchanged.
-- `touchpoints` are the expected blast radius.
-- An empty `non_goals`, `constraints`, `touchpoints` or `decisions` is a statement: none.
+- An empty `non_goals`, `constraints` or `decisions` is a statement: none.
 - A risk has no key of its own: mitigated, it is a constraint; avoided, a non-goal; accepted, a
   decision that says what accepting it costs.
 - **to-orca**, or any other consumer, starts from the closed shape as reported or written. A
@@ -172,8 +169,7 @@ Re-invoked on a settled shape, mvc asks nothing and goes straight to the report,
 - **Oracles** are tests in the repo, never part of the shape: an oracle Task the owner opts into
   writes failing tests for the requirements the repo's e2e or integration suite can observe
   (`mt get oracle`), so each requirement is written to be observed where it can be.
-- **`mt shape check <file>`** runs on the shape before it is reported or written, and
-  **`mt shape check --draft <file>`** on a draft before it is parked and when it is resumed. A file
+- **`mt shape check <file>`** runs on the shape before it is reported or written. A file
   of `-` is read from stdin, so a document held outside a file needs no temp file; mt reads only a
   whole YAML document, so one held inside other text is taken out of it first. Each line on stderr
   is `path: message`. A fix changes form, never content: a violation only new content would fix
