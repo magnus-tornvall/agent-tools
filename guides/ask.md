@@ -38,7 +38,7 @@ stance goes in plain text, never a picker, so "you are asking the wrong thing" i
 as an answer.
 
 When a message holds more than the tool's questions, such as a line the tool has no field for or
-a grill's map, each question the tool carries is written out complete in the text, with its lines,
+a grill's facts and assumptions, each question the tool carries is written out complete in the text, with its lines,
 in the order the questions are asked and before anything else the message holds; the tool only
 repeats the question and its options. Workaround for question tools showing after the message's
 text and lacking a field for a line, such as a position or an option's description; remove when
