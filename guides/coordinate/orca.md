@@ -8,8 +8,8 @@ mid-Run. It reads no config.
 
 ## Principles
 
-- **Design by contract.** The Verbs, Spec head and A view for the owner sections are its contract: what
-  each verb takes, what every spec carries and how a view reaches the owner.
+- **Design by contract.** The Verbs, Spec head and A view for the owner sections are its contract:
+  what each verb takes, what every spec carries and how a view reaches the owner.
 - **Source criticism.** Known behaviour is true of the version stamped on it, and no other.
 
 ## Verbs
