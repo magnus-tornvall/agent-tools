@@ -9,8 +9,8 @@ curl -fsSL https://raw.githubusercontent.com/magnus-tornvall/agent-tools/main/in
 
 ## The shape
 
-A shape is one YAML document: the outcome, optionally its `purpose`, why the outcome matters,
-requirements keyed `R1…`, non-goals keyed `N1…`, constraints keyed `C1…`, and decisions keyed `D1…`.
+A shape is one YAML document: the outcome, its `purpose`, why the outcome matters, requirements
+keyed `R1…`, non-goals keyed `N1…`, constraints keyed `C1…`, and decisions keyed `D1…`.
 Oracles are not part of it: they are tests in the repo, written as their own commit on the work
 branch (`mt get oracle`). The schema in `src/shape/shape.ts` is the contract: a shape is what
 `mt shape check` accepts, and `mt get mvc --ref example` prints a filled-in example.

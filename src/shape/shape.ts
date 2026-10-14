@@ -54,7 +54,7 @@ const Requirements = z.record(idKey("R"), Requirement);
 export const Shape = z.strictObject({
   outcome: Text,
   /** Why the outcome matters, as the owner states it. It is no end state. */
-  purpose: Text.optional(),
+  purpose: Text,
   requirements: Requirements.refine((requirements) => Object.keys(requirements).length > 0, "must have at least one requirement"),
   non_goals: z.record(idKey("N"), NonGoal),
   constraints: z.record(idKey("C"), Text),

@@ -120,6 +120,15 @@ describe("mt shape check", () => {
     ]);
   });
 
+  test("fails a shape without a purpose, on one line at purpose", () => {
+    const { purpose: _purpose, ...shape } = example();
+
+    const result = check(shape);
+
+    expect(result.code).toBe(1);
+    expect(stderrLines(result.stderr)).toEqual([expect.stringMatching(/^purpose: /)]);
+  });
+
   test("fails a shape whose purpose is empty, on one line at purpose", () => {
     const result = check({ ...example(), purpose: "" });
 

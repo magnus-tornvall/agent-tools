@@ -16,7 +16,7 @@ agent composes better.
 | Domain | Principles from |
 |---|---|
 | Intent | commander's intent, observable end state, MVP deletion test, non-goals |
-| Decision | reversibility (one-/two-way doors), value of information |
+| Decision | reversibility (one-/two-way doors), value of information, opportunity cost, pre-mortem |
 | Verification | test oracle, separation of duties, Goodhart's law, falsifiability |
 | Change | minimal change, root cause by the scientific method |
 | Evidence | source criticism, evidence hierarchy |

@@ -35,6 +35,8 @@ it leaves until asked, and how the owner asks. It reads no config.
 - **A fact is cited with only the clause the owner needs.** A fact from the repo comes with its
   `file:line` and the clause of it the decision turns on, never its whole content; any other source
   comes the same way. The rest of it is one request away.
+- **A requirement is shown to the owner as one sentence of what is true at the end.** The given,
+  when and then split is what the whole shape carries, shown on request.
 - **Whatever a message left out is one question away.** The owner asks in their own words; an ID
   is a handle they may use, never one they must. The next message answers it with the full content
   and its sources, read afresh from those sources rather than recalled, and names the IDs of the

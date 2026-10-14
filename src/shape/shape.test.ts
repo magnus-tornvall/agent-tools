@@ -38,6 +38,12 @@ describe("parseShape", () => {
     expect(parseShape(EXAMPLE)).toMatchObject({ ok: true });
   });
 
+  test("the example decides to proceed, rejecting doing nothing and deferring", () => {
+    const rejected = Object.values(fields(example().decisions, "decisions")).map((value) => String(fields(value, "a decision").rejected));
+
+    expect(rejected).toContainEqual(expect.stringMatching(/doing nothing.*defer|defer.*doing nothing/is));
+  });
+
   test("accepts empty non-goals, decisions and constraints", () => {
     const shape = { ...example(), non_goals: {}, decisions: {}, constraints: {} };
 
@@ -169,10 +175,10 @@ describe("parseShape", () => {
     expect(paths({ ...example(), purpose: "Finance reconciles cancelled orders by hand." })).toEqual([]);
   });
 
-  test("accepts a shape without a purpose, which is optional", () => {
+  test("reports a shape without a purpose at purpose", () => {
     const { purpose: _purpose, ...shape } = example();
 
-    expect(paths(shape)).toEqual([]);
+    expect(paths(shape)).toEqual(["purpose"]);
   });
 
   test.each([[""], ["  "], [3], [["why"]], [{ why: "it matters" }]])("reports a purpose of %p at purpose", (purpose: unknown) => {
