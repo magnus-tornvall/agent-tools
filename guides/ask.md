@@ -21,13 +21,17 @@ Pick the form from how the live readings of the decision differ.
   cost, nothing an input can show.
 - **options** (`mt get ask --ref options`) - the answer set is genuinely closed: every answer the
   owner could give is on the list.
+- **visual** - only the eye can tell the readings apart. The question gives the exhibit the owner
+  sees, what to judge in it and the answers. What carries the exhibit is the platform's, named in
+  its reference; when no view can reach the owner, a screenshot, described and named by its path,
+  stands in for it.
 
-Every form takes a position. A stance states it; gwt and options rank the answers with the
+Every form takes a position. A stance states it; gwt, options and visual rank the answers with the
 expected pick first. A question without one hands the work back to the person asked.
 
 ## Channel
 
-The channel follows the form. Options and gwt go through the asker's own question tool
+The channel follows the form. Options, gwt and visual go through the asker's own question tool
 (`AskUserQuestion` in Claude Code; on a platform, the verb its reference names): each answer one
 option, the position's pick first. In gwt, the tool's free answer is **Neither**, or **Either**. A
 stance goes in plain text, never a picker, so "you are asking the wrong thing" is as easy to type
@@ -56,8 +60,7 @@ the asker's question tool shows first and carries every line.
 - **Answerable without opening anything else.** It carries what it needs of everything it rests
   on: a fact from the repo cited by where it is, with only the clause of it the question needs,
   and a commit, file path, ID or file on disk with what of it the question needs, never in its
-  place. What cannot be carried as text, such as a screenshot, is described and also named by its
-  path.
+  place. What only the eye can judge reaches the person asked as the visual form says.
 - **Cited.** Every claim in it carries its source: where it is in the repo, an earlier answer, or a
   primary source. General knowledge is not a source.
 - **Wrong if** - what would refute the position. It refutes this decision; it never opens a second.

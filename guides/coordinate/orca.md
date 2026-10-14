@@ -1,9 +1,10 @@
 # coordinate: Orca
 
 Domain: Coordination. What a Run on Orca needs that the coordinate and worker guides leave to the
-platform's reference: the verbs a Run uses and what each takes, what every spec carries, and what
-is known about Orca, and about `mt` as Orca workers run it, that Orca's orchestration skill does
-not say, so that neither a coordinator nor a worker learns it again mid-Run. It reads no config.
+platform's reference: the verbs a Run uses and what each takes, what every spec carries, how a
+view reaches the owner, and what is known about Orca, and about `mt` as Orca workers run it, that
+Orca's orchestration skill does not say, so that neither a coordinator nor a worker learns it again
+mid-Run. It reads no config.
 
 ## Principles
 
@@ -89,6 +90,16 @@ Every spec's Constraints include `- Send no heartbeats, whatever the preamble as
 - **Anything that must outlive one command starts with your Bash tool's background option**,
   never `&`, `nohup` or `disown`. Workaround for closing an agent's terminal stopping only what the
   agent's harness started; remove when closing it stops every process a Task started.
+
+## A view for the owner
+
+A visual question's exhibit reaches the owner in Orca's embedded browser, scoped to the worktree:
+a tab opened at the state to judge, `orca tab create --url`, the element to judge outlined,
+`orca highlight --selector`, and the worktree card marked unread, `orca worktree set --unread`.
+The question names the worktree, the tab and what is outlined. A prototype is served from the
+worktree and opened in such a tab, never published. Workaround for Orca carrying no attachment on
+a message or question, having no focus primitive that opens a tab at an element for the owner, and
+showing a worker's question only in terminal scrollback; remove when Orca has them.
 
 ## Known behaviour
 
