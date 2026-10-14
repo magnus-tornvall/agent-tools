@@ -33,7 +33,8 @@ it, and how, is yours to compose.
   shape held outside a file is the one at its reference: what is checked and sliced is read from
   there, piped to `mt shape` as `-`.
 - **The platform** is the one the request, the owner's instructions or the session's own
-  environment names. A Run asks, before any Task starts, only when none of these names one.
+  environment names. A Run asks, before any Task starts, only when none of these names one, or when
+  the platform named has no reference: `mt get coordinate --ref <platform>` exits 1.
 - **Every worker** is a Task on that platform whose spec carries what its reference says every
   spec carries, read afresh for each Task, since a copy from memory goes stale when a guide changes
   mid-Run. `T<n>` is numbered in the order you create Tasks, so workers' IDs trace back to it.

@@ -7,8 +7,9 @@ shape carries the owner's intent to whoever builds the change, so that they can 
 is silent without asking again. A grill is started by the owner, or by an agent that finds
 decisions open that only the owner can settle, one working with the owner directly, such as a
 coordinator. A dispatched worker at such a decision asks its coordinator, as the door rule says
-(`mt get door-rule`). A grill takes intent in any form and returns the closed shape, or a
-decomposition when the change is too big to settle as one.
+(`mt get door-rule`). A grill takes intent in any form and returns the closed shape, a
+decomposition when the change is too big to settle as one, or the owner's decision not to commit,
+to do nothing or to defer, reported with its reasons and evidence.
 
 ## Principles
 
@@ -85,8 +86,8 @@ decomposition when the change is too big to settle as one.
   the owner decides; mvc never admits it on its own reasoning.
 - **A grill parks on the owner's word, and resumes from what was parked.** Where mvc parks a draft,
   how a draft looks and how a parked draft is told from a closed shape are the agent's judgment or
-  the owner's instruction. Workaround for no tool keeping a grill's drafts; remove when `mt` or Orca
-  parks and lists them.
+  the owner's instruction. Workaround for no tool keeping a grill's drafts; remove when a tool or
+  the platform parks and lists them.
 - **A resumed grill stands on current facts.** Each fact it cites holds against the record and the
   sources as they are now, or is named with what changed. A change that bears on a settled
   decision goes to the owner as a contradiction does.
@@ -94,7 +95,9 @@ decomposition when the change is too big to settle as one.
   open question has the owner's answer or is a deferral with its reason. A question carrying a risk
   is never deferred, and a one-way door only on the owner's word, what it blocks becoming a
   constraint. A change too big to settle with the attention the owner can give is reported as its
-  parts instead, independent or a strict sequence, each to be shaped on its own.
+  parts instead, independent or a strict sequence, each to be shaped on its own. A grill may also
+  end with the owner's decision not to commit, to do nothing or to defer, reported with its
+  reasons and evidence.
 - **At close the owner sees the shape in brief**, as the brief guide lays it out, including which
   decisions rest on assumptions nobody confirmed. The whole shape is the owner's on request.
 - **mvc produces nothing but the shape**: the closed shape on request, once it passes

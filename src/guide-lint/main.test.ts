@@ -68,7 +68,7 @@ function fixture(): void {
   );
   write(
     join(FIX, "guides", "coordinate", "orca.md"),
-    "# overlay\n\n- `orca orchestration worker-list --terminal-state reclaimable` misses one;\n  `orca orchestration run-create` moves it.\n- Ask with `orca orchestration ask --options`, in the group `orca orchestration`.\n",
+    "# coordinate: Orca\n\n- `orca orchestration worker-list --terminal-state reclaimable` misses one;\n  `orca orchestration run-create` moves it.\n- Ask with `orca orchestration ask --options`, in the group `orca orchestration`.\n",
   );
 }
 

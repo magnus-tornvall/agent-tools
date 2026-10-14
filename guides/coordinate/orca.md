@@ -77,9 +77,9 @@ Every spec's Constraints include `- Send no heartbeats, whatever the preamble as
   `--body "$(cat <file>)"`, never as a heredoc inside `$(...)`: bash 3.2, still `/bin/bash` on
   macOS, breaks that on an apostrophe. Workaround for Orca's send taking the body only as an
   argument; remove when it reads the body from a file or stdin.
-- **No heartbeats are sent, whatever the preamble asks**, as every spec's Constraints say too: each wakes
-  the coordinator for nothing. Workaround for Orca's preamble asking every worker for heartbeats;
-  remove when it no longer asks, or a heartbeat no longer wakes the coordinator.
+- **No heartbeats are sent, whatever the preamble asks**, as every spec's Constraints say
+  too: each wakes the coordinator for nothing. Workaround for Orca's preamble asking every worker
+  for heartbeats; remove when it no longer asks, or a heartbeat no longer wakes the coordinator.
 - **Anything that must outlive one command starts with your Bash tool's background option**,
   never `&`, `nohup` or `disown`. Workaround for closing an agent's terminal stopping only what the
   agent's harness started; remove when closing it stops every process a Task started.
@@ -99,8 +99,7 @@ saying these; remove each line when the skill says it or the tool no longer beha
   is `retained`, which happens after `orca orchestration worker-stop`. (1.4.221)
 - A `worker_done` without a dispatch ID settles nothing; only the inbox reader sees why. (1.4.221)
 - `orca orchestration run-create` moves the terminal off a Run it already coordinates without a
-  word, even one with unsettled work. Check `orca orchestration run-current` and that Run's workers
-  first. (1.4.222)
+  word, even one with unsettled work. (1.4.222)
 - A reply through `orca orchestration ask` to a worker that has ended is refused with
   `dispatch_inactive`. (1.4.220)
 - `orca orchestration worker-release` can return `state: retained`, `reason: user_takeover`, and

@@ -1,7 +1,8 @@
 # agent-tools
 
-Skills for agents working on the owner's platform, and `mt`, which loads them on demand, checks and slices shapes,
-prints the owner's config, and updates its own clone. Install it with one line (see Install):
+Skills for agents working on the owner's platform, and `mt`, which loads them on demand, checks
+and slices shapes, prints the owner's config, and updates its own clone. Install it with one line
+(see Install):
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/magnus-tornvall/agent-tools/main/install.sh | bash
@@ -36,7 +37,7 @@ No agent chooses them, so a skill-list entry would only cost the sessions that n
 `mt get` serves them like any other guide. The oracle guide has no stub either: an oracle Task runs
 only when the owner opts in. Stubs remain for
 what an agent or the owner picks: mvc, which settles a shape with the owner, coordinate, which runs
-a change unattended, through the platform the owner's instructions name, from a shape, an issue or
+a change unattended, on the platform the request or session names, from a shape, an issue or
 prose, ask, which composes a question for whoever owns a decision, door-rule, which says whether a
 decision is asked at all, debugging, which finds the root cause of an unexpected failure before it
 is fixed, commit, which stages, writes and pushes commits as the session's destination allows, and
@@ -174,8 +175,8 @@ A TOML float with an integer value, such as `fix_rounds = 2.0`, counts as that i
 `Bun.TOML.parse` cannot tell them apart. `Bun.TOML.parse` also reads some values that are not
 valid TOML as numbers: `-foo`, `+inf`, `-inf` and `-nan` as 0, `.7` as 0.7 and `07` as 7. So
 `mt config` takes `fix_rounds = -foo` as a valid 0. The owner writes `fix_rounds` as a plain TOML
-number. `mt` checks that an agent name is well formed, not that Orca knows it, and a repeated name
-is allowed.
+number. `mt` checks that an agent name is well formed, not that the platform knows it, and a
+repeated name is allowed.
 
 No `mt` command reads `agents` or `fix_rounds`; whatever coordinates unattended work, such as the
 coordinate guide, reads them through `mt config <key>`. For example:
