@@ -54,12 +54,12 @@ the asker's question tool shows first and carries every line.
   number. "How important is latency?" invites "very"; "What is the largest tenant this search
   serves?" invites the fact the decision turns on.
 - **Answerable without opening anything else.** It carries what it needs of everything it rests
-  on: a fact from the repo comes with its `file:line` and only the clause of it the question needs,
+  on: a fact from the repo cited by where it is, with only the clause of it the question needs,
   and a commit, file path, ID or file on disk with what of it the question needs, never in its
   place. What cannot be carried as text, such as a screenshot, is described and also named by its
   path.
-- **Cited.** Every claim in it carries its source: `file:line`, an earlier answer, or a primary
-  source. General knowledge is not a source.
+- **Cited.** Every claim in it carries its source: where it is in the repo, an earlier answer, or a
+  primary source. General knowledge is not a source.
 - **Wrong if** - what would refute the position. It refutes this decision; it never opens a second.
 - **Rules out** - what agreeing costs.
 - **Risk** - only when the question bears on one: the risk and its source, under Rules out.
