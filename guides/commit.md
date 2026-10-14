@@ -40,7 +40,7 @@ a report. It reads no config.
   concerns is committed once with an honest message, or its split is handed to the owner: hunks
   picked by an agent are unverifiable.
 - **What is staged is what you meant**: the unit you intended, with no conflict markers, debug
-  logging or focused tests in it.
+  logging or focused tests in it; the grouping is judged with the context it needs, no more.
 - **A rejected commit is retried, not bypassed.** When a hook rejects it, no commit was created.
   What a hook rewrote is re-staged by path and committed with the same message; what a hook
   reports is fixed at its cause. `--no-verify` is never used.
