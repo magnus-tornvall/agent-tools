@@ -46,7 +46,8 @@ The commit is the oracle's record: whatever builds the change leaves every file 
   the suite reaches. The outcome, a requirement no caller can observe, a non-goal and a constraint
   get none; the change's own tests and the judges cover those. A requirement the suite cannot
   reach gets none either, and the report names it with why.
-- **Each test names the requirement it covers**, by its key, in its name.
+- **Each test names the requirement it covers in words**, by what it observes, never by a shape
+  key: the shape is never committed, so a key in a test's name points at nothing in the repo.
 - **Each test reads on its own** in the suite's test framework: what it sets up, does and asserts
   is in the test, so the owner understands it without knowing a second or third language or tool
   that runs part of it.
@@ -69,7 +70,7 @@ The commit is the oracle's record: whatever builds the change leaves every file 
 
 ## Report
 
-The suite's command and where it was found; each test with the requirement it covers, and how it
-failed at base; the commit; and each observable requirement given no test, with why. When nothing
-is written, why: no oracle-enabling test strategy, with what was looked for and where; the command
-and its output when the suite failed at base; or no requirement the suite reaches.
+The suite's command and where it was found; each test with the key of the requirement it covers,
+and how it failed at base; the commit; and each observable requirement given no test, with why.
+When nothing is written, why: no oracle-enabling test strategy, with what was looked for and where;
+the command and its output when the suite failed at base; or no requirement the suite reaches.
