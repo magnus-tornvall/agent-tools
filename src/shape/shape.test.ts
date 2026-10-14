@@ -38,12 +38,6 @@ describe("parseShape", () => {
     expect(parseShape(EXAMPLE)).toMatchObject({ ok: true });
   });
 
-  test("the example decides to proceed, rejecting doing nothing and deferring", () => {
-    const rejected = Object.values(fields(example().decisions, "decisions")).map((value) => String(fields(value, "a decision").rejected));
-
-    expect(rejected).toContainEqual(expect.stringMatching(/doing nothing.*defer|defer.*doing nothing/is));
-  });
-
   test("accepts empty non-goals, decisions and constraints", () => {
     const shape = { ...example(), non_goals: {}, decisions: {}, constraints: {} };
 
@@ -284,5 +278,16 @@ describe("parseShape", () => {
 
   test("reports a document that is not a map", () => {
     expect(paths(["a list"])).toEqual([""]);
+  });
+});
+
+describe("the example", () => {
+  test("proceeds in D4, rejecting doing nothing and deferring", () => {
+    const d4 = decision(example(), "D4");
+    const rejected = Array.isArray(d4.rejected) ? d4.rejected.map(String) : [];
+
+    expect(String(d4.decision)).toMatch(/\b(proceed|build)/i);
+    expect(rejected).toContainEqual(expect.stringMatching(/doing nothing/i));
+    expect(rejected).toContainEqual(expect.stringMatching(/defer/i));
   });
 });

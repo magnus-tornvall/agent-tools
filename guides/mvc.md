@@ -17,20 +17,20 @@ decomposition when the change is too big to settle as one.
   lean where the shape is silent.
 - **Observable end state.** The outcome is an end state the owner would call done, observable
   whichever way the change is built, with no weasel words. Each requirement is one such end state,
-  seen from an input; one that nobody can observe says why, and is judged by reading instead.
+  seen from an input; one that no one using the change can observe says why, and is judged by reading instead.
 - **The MVP deletion test.** What ships is what the purpose needs: remove it and the outcome no
   longer holds or no longer serves the purpose. Merely slower, uglier or less pleasant without it
   makes it a non-goal. Every item that ships still passes the test given everything else that ships.
 - **Non-goals.** What is excluded is said, so that its absence can be checked: a boundary, never
   this change, saying what still holds; or a deferral, not now, with why.
-- **Opportunity cost**, from the Decision domain, **and cost of delay.** Committing spends what the
-  next best use would have had, doing nothing included, and waiting forgoes what the change would
-  have returned meanwhile; proceeding, deferring and doing nothing are weighed on the same evidence.
+- **Opportunity cost**, from the Decision domain. Committing spends what the next best use would
+  have had, doing nothing included, and deferring forgoes what the change would have returned
+  meanwhile; proceeding, deferring and doing nothing are weighed on the same evidence.
 - **Falsifiability**, from the Verification domain. A claim of value that no observation could
   show false tells the owner nothing about whether the commitment paid.
-- **Pre-mortem**, from the Decision domain, and **separation of duties**, from the Verification
-  domain. Imagining the idea has failed and explaining why finds what its advocate misses, and a
-  case is judged by hearing it argued against, never only by whoever argues for it.
+- **Pre-mortem** and **devil's advocate (red teaming)**, from the Decision domain. Imagining the
+  idea has failed and explaining why finds what its advocate misses, and a case is judged by
+  hearing it argued against, never only by whoever argues for it.
 - **Value of information**, from the Decision domain. The owner's attention is the cost. A
   question is worth asking only when its answer could change the shape by more than the attention
   it takes, and a search only while the fact it seeks is still open and could still change it.
@@ -58,7 +58,7 @@ decomposition when the change is too big to settle as one.
   is the owner's own words, never written for them and never turned into a requirement, and names
   who gains, what they would do differently and how that would show. It is the test each
   requirement and decision is judged against during the grill, the tie-breaker for whoever builds
-  the change where the shape is silent, and the record of why the owner committed, re-read when the
+  the change where the shape is silent, and the account of why the owner committed, re-read when the
   change costs more than expected.
 - **Every shape carries the decision to proceed**, with doing nothing and deferring among the
   alternatives it rejected and the reason each lost. Its provenance is the cost and value evidence.
@@ -67,9 +67,9 @@ decomposition when the change is too big to settle as one.
   the owner holds is a constraint.
 - **A value claim names what would show it false and when the owner would know.** A value nobody
   could observe is a hope, recorded as an assumption, never the purpose.
-- **No decision closes having heard only its advocate.** The grill argues the failure case once,
-  with its best evidence, from whichever side would argue it hardest; the owner answers it or
-  accepts it as a recorded risk.
+- **No decision the owner settles closes having heard only its advocate**, the decision to proceed
+  included. The grill argues the failure case with its best evidence, from whichever side would
+  argue it hardest; the owner answers it or accepts it as a recorded risk.
 - **Every question earns its place.** One that rules nothing out is never asked; one skipped is not
   accepted, and stands until its cause is known. A risk rides on the decision it bears on, never
   scored; one that would need avoiding is its own question.
