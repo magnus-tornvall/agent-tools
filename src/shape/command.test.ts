@@ -134,7 +134,7 @@ describe("mt shape check", () => {
     expect(stderrLines(result.stderr)).toEqual([expect.stringMatching(/^purpose: /)]);
   });
 
-  test("R2: names touchpoints, draft and decided_by as keys the schema does not define", () => {
+  test("names touchpoints, draft and decided_by as keys the schema does not define", () => {
     const shape = example();
     shape.touchpoints = ["reports/OrderExport.php"];
     shape.draft = { budget: 3, rounds_spent: 0, open: [] };
@@ -150,7 +150,7 @@ describe("mt shape check", () => {
     ]);
   });
 
-  test("R3: --draft is an unknown argument, and the usage no longer lists it", () => {
+  test("--draft is an unknown argument, and the usage no longer lists it", () => {
     const result = mt("shape", "check", "--draft", EXAMPLE_FILE);
 
     expect(result.code).toBe(2);
@@ -159,7 +159,7 @@ describe("mt shape check", () => {
     expect(mt("--help").stdout).not.toContain("--draft");
   });
 
-  test("R4: prints nothing and exits 0 when one requirement's given names another's key", () => {
+  test("prints nothing and exits 0 when one requirement's given names another's key", () => {
     const shape = example();
     fields(fields(shape.requirements, "requirements").R2, "R2").given = "R1 passed and order 812 was cancelled";
 

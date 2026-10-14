@@ -270,6 +270,12 @@ describe("parseShape", () => {
     expect(parseShape(yaml)).toEqual({ ok: false, violations: [{ path: "requirements", message: "key appears more than once" }] });
   });
 
+  test("reports a zero-indented sequence of strings that share the text before their first colon as one unknown key", () => {
+    const yaml = `${EXAMPLE}\ntouchpoints:\n- "app/Order.php: cancel"\n- "app/Order.php: create"\n- 'app/Order.php: reinstate'\n`;
+
+    expect(parseShape(yaml)).toEqual({ ok: false, violations: [{ path: "touchpoints", message: "not a key the schema defines" }] });
+  });
+
   test("reports a document that is not a map", () => {
     expect(paths(["a list"])).toEqual([""]);
   });

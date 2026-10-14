@@ -87,36 +87,33 @@ Re-invoked on a settled shape, mvc asks nothing and goes straight to the report,
 - **Nothing in the closed set is redundant.** Every shipping item still passes the deletion test
   given everything else that ships.
 - **The owner sees the closed shape as a digest.** Once the shape passes `mt shape check`, or is
-  marked unchecked without it, the closing reply shows the outcome, each requirement, non-goal
-  and constraint in one line, and each decision decided by silence, and holds no
-  YAML, also when the shape has been written, whose path it names. When it has not been written,
-  the reply says so in one line and offers the YAML or a file, and neither is shown or written
-  unasked. Asked for the shape, the next message shows the whole checked YAML.
+  marked unchecked without it, the closing reply shows the outcome, each requirement, non-goal and
+  constraint in one line, and holds no YAML, also when the shape has been written, whose path it
+  names. When it has not been written, the reply says so in one line and offers the YAML or a file,
+  and neither is shown or written unasked. Asked for the shape, the next message shows the whole
+  checked YAML.
 - **A grill parks on the owner's word, and only then.** The draft is the shape so far. Answers,
-  assumptions, facts and exclusions are already decisions, their provenance and non-goals. Each
-  park replaces the last whole. It goes where the owner's instructions put parked work; with none, to `mvc-<slug>.yaml` at
-  the default location, the slug safe as a file name, the same for every park of the grill and
-  taken by no other file there. The reply names where it went. Workaround for no tool keeping a
-  grill's drafts; remove when `mt` or Orca parks and lists them.
+  assumptions, facts and exclusions are already decisions, their provenance and non-goals. Each park
+  replaces the last whole. It goes where the owner's instructions put parked work; with none, to
+  `mvc-<slug>.yaml` at the default location, the slug safe as a file name, the same for every park
+  of the grill and taken by no other file there. The reply names where it went. Workaround for no
+  tool keeping a grill's drafts; remove when `mt` or Orca parks and lists them.
 - **The default location** is `${XDG_STATE_HOME:-$HOME/.local/state}/mt/mvc/<repo>/`, where
   `<repo>` is the name of the directory `git rev-parse --path-format=absolute --git-common-dir`
   prints, or of its parent when it is named `.git`, so every worktree of the clone finds the same
   drafts and a draft outlives the worktree it was parked from. mvc owns this location; `mt` keeps
   no drafts.
 - **A parked grill resumes from its draft.** Invoked with a reference, the draft is the one there.
-  Asked to resume with none, the owner is offered the drafts at the default location, each by
-  slug, when it was last parked and how many questions it holds open; a closed shape there is not
-  a draft and is not offered.
+  Asked to resume with none, the owner is offered the drafts at the default location, each by slug
+  and when it was last parked; a closed shape there is not a draft and is not offered.
 - **A resumed grill stands on current facts.** Every fact it cites holds against the repo and the
-  sources as they are now, or is named with what changed and whether it still holds; with no
-  recorded commit, or one the repo lacks, every cited file counts as changed. A change that bears
-  on a settled decision goes to the owner with both sources, as a contradiction does. The owner
-  sees the record, the open questions and the rounds left before anything new is asked, and
-  nothing is asked until the owner says go. The budget carries over: parking earns no rounds.
-- **A parked grill closes with its shape.** The closed shape
-  lands where the draft was, replacing it, and read back from there it passes `mt shape check`. A
-  parked grill that ends in a decomposition, or that the owner drops, has no shape to close with:
-  its draft stays open, and the reply says so.
+  sources as they are now, or is named with what changed and whether it still holds. A change that
+  bears on a settled decision goes to the owner with both sources, as a contradiction does. The
+  owner sees the record before anything new is asked, and nothing is asked until the owner says go.
+- **A parked grill closes with its shape.** The closed shape lands where the draft was, replacing
+  it, and read back from there it passes `mt shape check`. A parked grill that ends in a
+  decomposition, or that the owner drops, has no shape to close with: its draft stays open, and the
+  reply says so.
 
 ## Guardrails
 
@@ -146,16 +143,16 @@ Re-invoked on a settled shape, mvc asks nothing and goes straight to the report,
 
 - **The shape** is what mvc hands on: one YAML document that passes `mt shape check`, with no
   comments or placeholders, so a consumer copies it rather than translates it. Its keys are
-  `outcome`, `purpose`, `requirements`, `non_goals`, `constraints` and `decisions`;
-  the schema behind `mt shape check` owns their format, and the example (`mt get mvc --ref
-  example`) shows them filled in. Whatever the schema enforces is left to it; what follows is the
-  intent no check can see. A scalar containing ` #` is quoted, since YAML otherwise reads the rest
-  as a comment and truncates it. Workaround for `mt shape check` not noticing a truncated
-  scalar; remove when it does.
-- `outcome`, `requirements` and `non_goals` are what the change does; `constraints` and
-  `decisions` are how. A file, symbol, technology or value is how, never a
-  requirement. A mechanism the change must use is a decision, with what it rejected; one it need
-  not use is left out. Earlier decision records are constraints, not decisions.
+  `outcome`, `purpose`, `requirements`, `non_goals`, `constraints` and `decisions`; the schema
+  behind `mt shape check` owns their format, and the example (`mt get mvc --ref example`) shows them
+  filled in. Whatever the schema enforces is left to it; what follows is the intent no check can
+  see. A scalar containing ` #` is quoted, since YAML otherwise reads the rest as a comment and
+  truncates it. Workaround for `mt shape check` not noticing a truncated scalar; remove when it
+  does.
+- `outcome`, `requirements` and `non_goals` are what the change does; `constraints` and `decisions`
+  are how. A file, symbol, technology or value is how, never a requirement. A mechanism the change
+  must use is a decision, with what it rejected; one it need not use is left out. Earlier decision
+  records are constraints, not decisions.
 - Each requirement's `given` sets up its own state, never another requirement passing, so one
   failure never fails two; requirements whose givens are alternatives never overlap, so no input
   fires both. A settled example lands as a requirement as asked.
@@ -169,12 +166,11 @@ Re-invoked on a settled shape, mvc asks nothing and goes straight to the report,
 - **Oracles** are tests in the repo, never part of the shape: an oracle Task the owner opts into
   writes failing tests for the requirements the repo's e2e or integration suite can observe
   (`mt get oracle`), so each requirement is written to be observed where it can be.
-- **`mt shape check <file>`** runs on the shape before it is reported or written. A file
-  of `-` is read from stdin, so a document held outside a file needs no temp file; mt reads only a
-  whole YAML document, so one held inside other text is taken out of it first. Each line on stderr
-  is `path: message`. A fix changes form, never content: a violation only new content would fix
-  goes to the owner. Without `mt shape`, the shape is reported marked unchecked and no file is
-  written.
+- **`mt shape check <file>`** runs on the shape before it is reported or written. A file of `-` is
+  read from stdin, so a document held outside a file needs no temp file; mt reads only a whole YAML
+  document, so one held inside other text is taken out of it first. Each line on stderr is
+  `path: message`. A fix changes form, never content: a violation only new content would fix goes to
+  the owner. Without `mt shape`, the shape is reported marked unchecked and no file is written.
 - **The door rule** (`mt get door-rule`) says what is settled, a two-way door or a one-way door,
   and who pays to undo it.
 - **The ask guide** (`mt get ask`) composes every question: its form, its channel and what each
@@ -184,7 +180,7 @@ Re-invoked on a settled shape, mvc asks nothing and goes straight to the report,
 
 ## Config
 
-mvc reads no config. A round budget is a limit for one grill, so it lives in that grill's draft.
+mvc reads no config.
 
 ## Report
 
