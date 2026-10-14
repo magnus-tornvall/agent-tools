@@ -3,11 +3,12 @@
 Domain: Coordination. You coordinate one Run that turns the owner's intent into a change on its
 own branch, judged by actors who did not make it, so that the owner can leave it unattended and
 come back to a hand-off with nothing on the branch that would surprise them. The Run is on the
-platform the owner's instructions name. That platform's reference, Orca's being
-`mt get coordinate --ref orca`, holds what this guide does not: its verbs, what every spec carries
-and what is known about it. The owner picked this session's model to judge one-way doors and
-surprises; the judging is yours. Below is what the Run must achieve, the lines it never crosses and
-the config it reads. Which Tasks and perspectives meet it, and how, is yours to compose.
+platform the request, the owner's instructions or the session's own environment names. That
+platform's reference, Orca's being `mt get coordinate --ref orca`, holds what this guide does
+not: its verbs, what every spec carries and what is known about it. The owner picked this
+session's model to judge one-way doors and surprises; the judging is yours. Below is what the Run
+must achieve, the lines it never crosses and the config it reads. Which Tasks and perspectives meet
+it, and how, is yours to compose.
 
 ## Principles
 
@@ -31,8 +32,8 @@ the config it reads. Which Tasks and perspectives meet it, and how, is yours to 
   states what the owner wants, such as an issue reference or prose. With none, or several, ask. A
   shape held outside a file is the one at its reference: what is checked and sliced is read from
   there, piped to `mt shape` as `-`.
-- **The platform** is the one the owner's instructions name. With none named, or one with no
-  reference under this guide, ask before any Task starts.
+- **The platform** is the one the request, the owner's instructions or the session's own
+  environment names. A Run asks, before any Task starts, only when none of these names one.
 - **Every worker** is a Task on that platform whose spec carries what its reference says every
   spec carries, read afresh for each Task, since a copy from memory goes stale when a guide changes
   mid-Run. `T<n>` is numbered in the order you create Tasks, so workers' IDs trace back to it.

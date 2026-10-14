@@ -5,6 +5,12 @@ platform's reference: the verbs a Run uses and what each takes, what every spec 
 is known about Orca, and about `mt` as Orca workers run it, that Orca's orchestration skill does
 not say, so that neither a coordinator nor a worker learns it again mid-Run. It reads no config.
 
+## Principles
+
+- **Design by contract.** The Verbs and Spec head sections are its contract: what each verb takes
+  and what every spec carries.
+- **Source criticism.** Known behaviour is true of the version stamped on it, and no other.
+
 ## Verbs
 
 Orca's orchestration skill (`orca skills get orchestration`) owns its verbs, the supervised loop,
@@ -33,7 +39,7 @@ A worker acts on its spec before it has read its guides, so every spec opens wit
 
 ```
 T<n>: <title>
-Run `mt get worker` and `mt get <assignment>` before anything else.
+Run `mt get worker`, `mt get coordinate --ref orca` and `mt get <assignment>` before anything else.
 ```
 
 A judge's spec, its `<assignment>` being `verification`, follows that with a line loading its own
@@ -43,15 +49,16 @@ perspective's reference and no other, `coverage`, `maintainer` or `surprise`:
 Run `mt get verification --ref <perspective>` too.
 ```
 
-Its Constraints include `- Send no heartbeats, whatever the preamble asks.`
+Every spec's Constraints include `- Send no heartbeats, whatever the preamble asks.`
 
 ## Coordinating
 
 - **Every worker whose report you accept stays live**, success or failure: kept with
   `orca orchestration worker-retain`, never released, until the owner deletes its worktree in
   Orca's UI.
-- **An empty wait is followed by a look at the live workers.** Workaround for Orca sending no
-  message for a worker parked on a prompt only a human can answer; remove when Orca reports one.
+- **A worker parked on a prompt only a human can answer is found without a message**, so no wait
+  that comes back empty goes without a look at the live workers. Workaround for Orca sending no
+  message for such a worker; remove when Orca reports one.
 - **Evidence that is not text is named by its path**, and the hand-off names each such file with
   the Task worktree that holds it, so the owner can check it before removing that worktree.
   Workaround for Orca's messages carrying only text and keeping no file a Task wrote; remove when a
@@ -70,7 +77,7 @@ Its Constraints include `- Send no heartbeats, whatever the preamble asks.`
   `--body "$(cat <file>)"`, never as a heredoc inside `$(...)`: bash 3.2, still `/bin/bash` on
   macOS, breaks that on an apostrophe. Workaround for Orca's send taking the body only as an
   argument; remove when it reads the body from a file or stdin.
-- **No heartbeats are sent, whatever the preamble asks**, as the spec head says too: each wakes
+- **No heartbeats are sent, whatever the preamble asks**, as every spec's Constraints say too: each wakes
   the coordinator for nothing. Workaround for Orca's preamble asking every worker for heartbeats;
   remove when it no longer asks, or a heartbeat no longer wakes the coordinator.
 - **Anything that must outlive one command starts with your Bash tool's background option**,

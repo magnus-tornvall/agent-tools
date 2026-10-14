@@ -1,6 +1,6 @@
 # agent-tools
 
-Skills for agents working in Orca, and `mt`, which loads them on demand, checks and slices shapes,
+Skills for agents working on the owner's platform, and `mt`, which loads them on demand, checks and slices shapes,
 prints the owner's config, and updates its own clone. Install it with one line (see Install):
 
 ```sh
@@ -165,10 +165,10 @@ holds, at `${XDG_CONFIG_HOME:-$HOME/.config}/mt/config.toml`. `mt --help` names 
 and an agent proposes a change with evidence. There is one file per user and no per-repo override.
 The owner's explicit choice for a Run beats it.
 
-| key                 | kind     | value                                                         |
-| ------------------- | -------- | ------------------------------------------------------------- |
-| `agents`            | binding  | the Orca agents unattended work may run on, a non-empty list  |
-| `fix_rounds`        | binding  | fix rounds before the owner gets a finding, an integer from 0 |
+| key                 | kind     | value                                                                  |
+| ------------------- | -------- | ---------------------------------------------------------------------- |
+| `agents`            | binding  | the agents a Task on the owner's platform may run on, a non-empty list |
+| `fix_rounds`        | binding  | fix rounds before the owner gets a finding, an integer from 0          |
 
 A TOML float with an integer value, such as `fix_rounds = 2.0`, counts as that integer, since
 `Bun.TOML.parse` cannot tell them apart. `Bun.TOML.parse` also reads some values that are not
@@ -204,8 +204,9 @@ exit 2.
 ### Install
 
 Install is for Claude Code: it links the stub skills where Claude Code finds them and adds `mt`'s
-rules to Claude Code's settings. For another agent it only links the stubs into a folder you name
-with `SKILLS_DIR`.
+rules to Claude Code's settings. `SKILLS_DIR` only changes where the stubs go, a folder you name
+instead of Claude Code's; the rest of install still runs, linking `mt` onto your PATH and offering
+to add its rules to Claude Code's settings.
 
 `mt` is TypeScript run by [Bun](https://bun.sh). Bun must be on the PATH that agents and Orca
 workers launch with, not only on your interactive shell's, or every `mt` command they run

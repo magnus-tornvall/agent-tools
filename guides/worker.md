@@ -3,10 +3,10 @@
 Domain: Coordination. How to work a Task, so that the coordinator can leave you to it and trust
 what comes back: every decision you took alone is visible and traceable to the Task. What the work
 is, and how to check it, is the spec's and its assignment guide's; how to sequence it is yours. The
-platform you run on is the one the owner's instructions name. That platform's reference, Orca's
-being `mt get coordinate --ref orca`, holds what this guide does not: how you ask, how you report,
-and what is known about working there. This guide says what the report holds. `mt list` shows
-every guide there is.
+platform you run on is the one the request, the owner's instructions or the session's own
+environment names. That platform's reference, Orca's being `mt get coordinate --ref orca`, holds
+what this guide does not: how you ask, how you report, and what is known about working there. This
+guide says what the report holds. `mt list` shows every guide there is.
 
 ## Principles
 
