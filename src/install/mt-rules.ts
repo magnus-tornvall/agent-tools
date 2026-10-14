@@ -26,6 +26,8 @@ type Edits = { allow: Edit; ask: Edit; deny: Edit };
 
 const LISTS = ["allow", "ask", "deny"] as const;
 
+const NONE: Edit = { add: [], remove: [] };
+
 const VARIABLE: Record<Mode, string> = { add: "ADD_MT_RULES", remove: "REMOVE_MT_RULES" };
 
 function isObject(value: unknown): value is Json {
@@ -67,6 +69,18 @@ function planEdits(mode: Mode, allow: readonly string[], ask: readonly string[],
     ask: { add: [], remove: ASK_RULES.filter((rule) => ask.includes(rule)) },
     deny: { add: [], remove: EARLIER_DENY_RULES.filter((rule) => deny.includes(rule)) },
   };
+}
+
+/**
+ * The edits asked about, each with its own y/N. On install the earlier deny rules are asked about
+ * apart from the rules, so an owner who keeps them can still take the rules.
+ */
+function questions(mode: Mode, edits: Edits): Edits[] {
+  if (mode === "remove") return [edits];
+  return [
+    { ...edits, deny: NONE },
+    { allow: NONE, ask: NONE, deny: edits.deny },
+  ];
 }
 
 function describe(edits: Edits): string {
@@ -141,20 +155,28 @@ function main(args: readonly string[]): number {
     lists[list] = rules;
   }
   const { allow = [], ask = [], deny = [] } = lists;
-  const edits = planEdits(mode, allow, ask, deny);
-  const description = describe(edits);
-  if (description === "") return 0;
-  if (!approved(mode, answer, file, edits)) {
-    process.stdout.write(`${declined(edits)}\n`);
-    return 0;
+  const edits: Edits = { allow: NONE, ask: NONE, deny: NONE };
+  const descriptions: string[] = [];
+  for (const question of questions(mode, planEdits(mode, allow, ask, deny))) {
+    const description = describe(question);
+    if (description === "") continue;
+    if (!approved(mode, answer, file, question)) {
+      process.stdout.write(`${declined(question)}\n`);
+      continue;
+    }
+    for (const list of LISTS) {
+      if (question[list] !== NONE) edits[list] = question[list];
+    }
+    descriptions.push(description);
   }
+  if (descriptions.length === 0) return 0;
   const next: Json = { ...permissions, allow: applyEdit(allow, edits.allow) };
   if (permissions.ask !== undefined || edits.ask.add.length > 0) next.ask = applyEdit(ask, edits.ask);
   if (permissions.deny !== undefined) next.deny = applyEdit(deny, edits.deny);
   settings.permissions = next;
   mkdirSync(dirname(file), { recursive: true });
   writeFileSync(file, `${JSON.stringify(settings, null, 2)}\n`);
-  process.stdout.write(`${mode === "add" ? "added" : "removed"} in ${file}: ${description}\n`);
+  process.stdout.write(`${mode === "add" ? "added" : "removed"} in ${file}: ${descriptions.join("; ")}\n`);
   return 0;
 }
 

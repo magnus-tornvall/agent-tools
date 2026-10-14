@@ -42,11 +42,12 @@ run_make() { # target home [make args...] -> runs make with that HOME, output in
 install() { run_make install "$@"; }
 uninstall() { run_make uninstall "$@"; }
 
-answering() { # target answer home -> make target on a terminal, typing answer at the prompt
-  local target=$1 answer=$2 home=$3
+answering() { # target answers home -> make target on a terminal, typing each comma-separated answer
+  local target=$1 answer=$2 home=$3 # at a prompt in turn, the last at every prompt after it
   HOME=$home SHELL=/bin/bash python3 -I -c '
 import errno, os, pty, subprocess, sys
-answer, *cmd = sys.argv[1:]
+answers, *cmd = sys.argv[1:]
+answers = answers.split(",")
 master, slave = pty.openpty()
 proc = subprocess.Popen(cmd, stdin=slave, stdout=slave, stderr=slave)
 os.close(slave)
@@ -58,12 +59,12 @@ def read():
         if error.errno == errno.EIO:
             return b""
         raise
-while b"[y/N]" not in out and (chunk := read()):
-    out += chunk
-if b"[y/N]" in out:
-    os.write(master, answer.encode() + b"\n")
+asked = 0
 while chunk := read():
     out += chunk
+    while out.count(b"[y/N]") > asked:
+        os.write(master, answers[min(asked, len(answers) - 1)].encode() + b"\n")
+        asked += 1
 rc = proc.wait()
 sys.stdout.write(out.decode())
 sys.exit(rc)' "$answer" make -s -C "$ROOT" "$target" >"$TMP/out" 2>&1
@@ -319,11 +320,35 @@ check "declining leaves the earlier deny rules"
 assert_contains "declining names the deny rules kept" "$(cat "$TMP/out")" \
   "kept in permissions.deny: Bash(mt oracle:*), Bash(mt get oracle:*)"
 install_answering y "$H"; rc=$?
+assert_contains "the earlier deny rules are asked about again while they are there" "$(cat "$TMP/out")" \
+  "remove Bash(mt oracle:*), Bash(mt get oracle:*) from permissions.deny?"
 assert_eq "accepting the removal exits 0" 0 "$rc"
 assert_eq "both earlier deny rules are gone, the owner's stays" "Bash(rm:*)" "$(deny_list "$H/.claude/settings.json")"
 out=$(MT_LOG=$TMP/usage.jsonl XDG_STATE_HOME=$TMP/state HOME=$H "$H/.local/bin/mt" get oracle); rc=$?
 assert_eq "mt get oracle exits 0" 0 "$rc"
 assert_eq "mt get oracle prints the oracle guide" "$(cat "$ROOT/guides/oracle.md")" "$out"
+
+# T6/F3: the earlier deny rules are asked about apart from the rules, each with its own y/N
+H=$TMP/earlier-deny-apart
+new_home "$H"
+mkdir -p "$H/.claude"
+printf '{"permissions": {"allow": ["Bash(mt:*)"], "deny": ["Bash(mt oracle:*)", "Bash(mt get oracle:*)"]}}\n' \
+  >"$H/.claude/settings.json"
+install_answering y,n "$H"; rc=$?
+assert_eq "accepting the rules and declining the removal exits 0" 0 "$rc"
+assert_contains "the rules are asked about without the deny rules" "$(cat "$TMP/out")" \
+  "add Bash(mt update:*) to permissions.ask? [y/N]"
+assert_contains "the deny rules are asked about on their own" "$(cat "$TMP/out")" \
+  "remove Bash(mt oracle:*), Bash(mt get oracle:*) from permissions.deny? [y/N]"
+assert_eq "the accepted ask rule is added" "Bash(mt update:*)" "$(ask_list "$H/.claude/settings.json")"
+assert_eq "the declined deny rules stay" "$(printf 'Bash(mt oracle:*)\nBash(mt get oracle:*)')" \
+  "$(deny_list "$H/.claude/settings.json")"
+printf '{"permissions": {"allow": ["Bash(mt:*)"], "deny": ["Bash(mt oracle:*)", "Bash(mt get oracle:*)"]}}\n' \
+  >"$H/.claude/settings.json"
+install_answering n,y "$H"; rc=$?
+assert_eq "declining the rules and accepting the removal exits 0" 0 "$rc"
+assert_eq "the declined ask rule is not added" "" "$(ask_list "$H/.claude/settings.json")"
+assert_eq "the accepted removal takes out both deny rules" "" "$(deny_list "$H/.claude/settings.json")"
 
 # settings from an install before the ask rule get it alone, and declining it says what that leaves
 H=$TMP/before-ask

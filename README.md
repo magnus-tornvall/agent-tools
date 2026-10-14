@@ -228,7 +228,7 @@ curl -fsSL https://raw.githubusercontent.com/magnus-tornvall/agent-tools/main/in
 
 `install.sh` clones this repo into `${XDG_DATA_HOME:-$HOME/.local/share}/agent-tools` with the
 newest release checked out, the highest `vMAJOR.MINOR.PATCH` tag, and runs `make install` there,
-asking its question on your terminal. It installs none of git, make and Bun: one missing, it says
+asking its questions on your terminal. It installs none of git, make and Bun: one missing, it says
 which and clones nothing. A folder already in the clone's place that is not a clone of this repo is
 left as it is, and it fails naming it; a clone whose origin spells this repo's GitHub URL another
 way, over ssh or without `.git`, is a clone of it. While `~/.local/bin/mt` links into another
@@ -259,10 +259,14 @@ pull or on a machine that is half set up; it changes only what is missing or sta
   prompts even in auto mode; it matches the command as written, so `mt` by its path or inside
   `sh -c` still runs unasked, and an agent that does not read these settings is not asked. A file
   that still holds `Bash(mt get:*)`, `Bash(mt list)` or `Bash(mt shape:*)` from an earlier install
-  has them replaced, and one that still holds `Bash(mt oracle:*)` or `Bash(mt get oracle:*)` in
-  `permissions.deny` has them removed. A yes keeps everything else in the file; it is not asked
-  again once the rules are there. `ADD_MT_RULES=yes` or `ADD_MT_RULES=no` answers without asking,
-  and with no terminal to ask on nothing is written;
+  has them replaced. A yes keeps everything else in the file; it is not asked again once the rules
+  are there;
+- asks, in a y/N of its own, whether to remove `Bash(mt oracle:*)` and `Bash(mt get oracle:*)`
+  from `permissions.deny`, where an earlier install put them, so an agent can load the oracle guide.
+  Your other denies stay. Declining keeps them and changes no other rule, and every later install
+  or `mt update` asks again while they are there.
+  `ADD_MT_RULES=yes` or `ADD_MT_RULES=no` answers both questions without asking, and with no
+  terminal to ask on nothing is written;
 - checks that a login shell started from your profile alone finds `mt` and Bun. Orca starts a
   worker in a terminal running your shell, so this is the PATH workers get.
 

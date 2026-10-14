@@ -38,7 +38,7 @@ machine.
 `CLAUDE_SKILLS_DIR` and `SETTINGS`, the places to link `mt`, link the stubs, link Claude Code's
 skills and edit the rules, defaulting to `~/.local/bin`, `~/.agents/skills`, `~/.claude/skills`
 and `~/.claude/settings.json`; `ADD_MT_RULES` and `REMOVE_MT_RULES`, `yes` or `no`, answer the
-settings question without asking. With `SKILLS_DIR` not given and no `~/.agents/skills` folder as
+settings questions without asking. With `SKILLS_DIR` not given and no `~/.agents/skills` folder as
 make starts, `SKILLS_DIR` is `CLAUDE_SKILLS_DIR`, so the stubs are linked straight into Claude
 Code's folder and `~/.agents` is not created. Install and uninstall touch `CLAUDE_SKILLS_DIR` only
 when `SKILLS_DIR` is not given: an override, for another agent, works on that folder alone. Install
@@ -48,7 +48,7 @@ needs Bun 1.2.23 or later on PATH.
   exits 1 naming it and creates nothing. It clones `AGENT_TOOLS_URL`, or this repo on GitHub, into
   `${XDG_DATA_HOME:-$HOME/.local/share}/agent-tools` with the highest `vMAJOR.MINOR.PATCH` tag
   checked out, other tags ignored, and runs `make install` there with its input from the terminal
-  when there is one, so the settings question is asked under `curl | bash`. A clone of that repo
+  when there is one, so the settings questions are asked under `curl | bash`. A clone of that repo
   already there, its origin spelled with or without a trailing `/` or `.git`, or over ssh for
   GitHub, is updated by its own `mt update`, whose exit code it returns: refused or failed before
   `make install`, the clone stays as it was, and when `make install` fails after the move, the
@@ -103,5 +103,6 @@ before `Bash(mt:*)` wrote; remove when no such install is left.
 
 A settings file that still holds `Bash(mt oracle:*)` or `Bash(mt get oracle:*)` in
 `permissions.deny` has them removed on install and on uninstall, so an agent can load the oracle
-guide; the owner's other denies stay. Workaround for settings an install before `mt oracle` was
+guide; the owner's other denies stay. Install asks about them in a y/N of their own, apart from the
+rules, on every run while they are there. Workaround for settings an install before `mt oracle` was
 removed wrote; remove when no such install is left.
