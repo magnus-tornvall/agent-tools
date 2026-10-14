@@ -177,7 +177,8 @@ done
 "$MT" frobnicate >/dev/null 2>&1; rc=$?
 assert_eq "unknown command exits 2" 2 "$rc"
 
-# no command writes anything under an empty HOME, whatever the caller's environment carries
+# get, list and --help, run in a cleared environment, write nothing under an empty HOME and
+# print nothing on stderr but the not-found line
 EMPTY_HOME=$TMP/empty-home
 mkdir -p "$EMPTY_HOME"
 NOT_FOUND_NOPE="mt: no guide for tool 'nope'. Run 'mt list' to see the tools."
