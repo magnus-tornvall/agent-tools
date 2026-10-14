@@ -22,9 +22,9 @@ Pick the form from how the live readings of the decision differ.
 - **options** (`mt get ask --ref options`) - the answer set is genuinely closed: every answer the
   owner could give is on the list.
 - **visual** - only the eye can tell the readings apart. The question gives the exhibit the owner
-  sees, what to judge in it and the answers. What carries the exhibit is the platform's, named in
-  its reference; when no view can reach the owner, a screenshot, described and named by its path,
-  stands in for it.
+  sees, where to look and what to judge in it, and the answers. What carries the exhibit is the
+  platform's, named in its reference; when no view can reach the owner, a screenshot, described and
+  named by its path, stands in for it.
 
 Every form takes a position. A stance states it; gwt, options and visual rank the answers with the
 expected pick first. A question without one hands the work back to the person asked.

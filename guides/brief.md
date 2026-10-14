@@ -43,9 +43,8 @@ it leaves until asked, and how the owner asks. It reads no config.
   items it draws on, so the owner can ask after any of them again.
 - **Detail reaches the owner in a reply.** No file or page is written for the owner to open in
   place of asking.
-- **A question is answerable from what reaches the owner.** When the decision is visual, what
-  reaches them is the view, not a description of it, with the text saying where to look and what
-  to judge, as the ask guide's visual form carries it.
+- **A question is answerable from what reaches the owner.** When the decision is visual, the ask
+  guide's visual form says what reaches them, fallback included (`mt get ask`).
 
 ## Contract
 
