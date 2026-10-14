@@ -1,4 +1,4 @@
-# to-orca overlay
+# coordinate: Orca
 
 Domain: Coordination. What is known about Orca, and about `mt` as Orca workers run it, that Orca's
 orchestration skill does not say, each with the version or commit it was seen on, so that a

@@ -1,4 +1,4 @@
-# orca-worker
+# worker
 
 Domain: Coordination. How to work an Orca Task, so that the coordinator can leave you to it and
 trust what comes back: every decision you took alone is visible and traceable to the Task. What the

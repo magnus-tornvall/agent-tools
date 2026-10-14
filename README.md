@@ -29,14 +29,14 @@ agent's skill list stays short, the guide enters context only when the tool is u
 load is logged.
 
 Every stub has a guide. A guide that only a spec or another guide loads has no stub:
-orca-worker; brief, which the ask, mvc and to-orca guides load to lay out every message to the
+worker; brief, which the ask, mvc and coordinate guides load to lay out every message to the
 owner; and the assignments change and verification, whose references are its judging
 perspectives coverage, maintainer and surprise.
 No agent chooses them, so a skill-list entry would only cost the sessions that never use them;
 `mt get` serves them like any other guide. The oracle guide has no stub either: an oracle Task runs
 only when the owner opts in. Stubs remain for
-what an agent or the owner picks: mvc, which settles a shape with the owner, to-orca, which runs a
-change through Orca from a shape, an issue or prose, ask, which composes a question for whoever owns
+what an agent or the owner picks: mvc, which settles a shape with the owner, coordinate, which runs
+a change through Orca from a shape, an issue or prose, ask, which composes a question for whoever owns
 a decision, door-rule, which says whether a decision is asked at all, debugging, which finds the
 root cause of an unexpected failure before it is fixed, commit, which stages, writes and pushes
 commits as the session's destination allows, and research, which answers the owner's question from
@@ -57,7 +57,7 @@ mt update                     move this clone forward along the channel it has c
 mt --help                     print the usage
 ```
 
-A reference is a file under `guides/<name>/<ref>.md`, for example `mt get to-orca --ref overlay`,
+A reference is a file under `guides/<name>/<ref>.md`, for example `mt get coordinate --ref orca`,
 except that `mt get mvc --ref example` prints `src/shape/example.yaml`. An unknown tool or ref exits
 1 with a message on stderr; the attempt is still logged, with `found` false.
 
@@ -178,7 +178,7 @@ number. `mt` checks that an agent name is well formed, not that Orca knows it, a
 is allowed.
 
 No `mt` command reads `agents` or `fix_rounds`; whatever coordinates unattended work, such as the
-to-orca guide, reads them through `mt config <key>`. For example:
+coordinate guide, reads them through `mt config <key>`. For example:
 
 ```toml
 agents = ["claude"]

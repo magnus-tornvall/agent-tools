@@ -42,14 +42,14 @@ print("<null>" if v is None else v)' "$1" "$2"
 log_lines() { wc -l <"$MT_LOG" | tr -d ' '; }
 last_line() { tail -n 1 "$MT_LOG"; }
 
-mkdir -p "$REPO/cli" "$REPO/guides/to-orca" "$REPO/skills/door-rule" "$REPO/skills/to-orca" \
+mkdir -p "$REPO/cli" "$REPO/guides/relay" "$REPO/skills/door-rule" "$REPO/skills/relay" \
   "$REPO/skills/solo" "$REPO/skills/orphan-stub"
 cp "$MT_SRC" "$REPO/cli/mt"
 chmod +x "$REPO/cli/mt"
 
 printf '# Door rule\nbody line\n' >"$REPO/guides/door-rule.md"
-printf '# To orca\n' >"$REPO/guides/to-orca.md"
-printf '# Overlay\noverlay body\n' >"$REPO/guides/to-orca/overlay.md"
+printf '# To orca\n' >"$REPO/guides/relay.md"
+printf '# Overlay\noverlay body\n' >"$REPO/guides/relay/overlay.md"
 printf '# Solo, no stub\n\nDomain: Tools. A guide only a spec loads,\n  over two lines.\n\n## Later\nnot read\n' >"$REPO/guides/no-stub.md"
 printf '# Solo\n' >"$REPO/guides/solo.md"
 
@@ -62,9 +62,9 @@ description: Use when deciding whether to ask or to carry on.
 # Door rule stub
 description: this body line must not be read
 SK
-cat >"$REPO/skills/to-orca/SKILL.md" <<'SK'
+cat >"$REPO/skills/relay/SKILL.md" <<'SK'
 ---
-name: to-orca
+name: relay
 description: >-
   Use when a shape should run as one
   driven Orca Run, with review rounds.
@@ -144,21 +144,21 @@ assert_eq "path-like tool prints nothing" "" "$out"
 assert_eq "path-like tool is logged as asked" "../README" "$(json_get "$(last_line)" tool)"
 
 # R4: ref
-out=$("$MT" get to-orca --ref overlay 2>/dev/null); rc=$?
+out=$("$MT" get relay --ref overlay 2>/dev/null); rc=$?
 assert_eq "R4 prints the reference" "$(printf '# Overlay\noverlay body')" "$out"
 assert_eq "R4 exits 0" 0 "$rc"
 line=$(last_line)
-assert_eq "R4 log tool" to-orca "$(json_get "$line" tool)"
+assert_eq "R4 log tool" relay "$(json_get "$line" tool)"
 assert_eq "R4 log names the ref" overlay "$(json_get "$line" ref)"
 assert_eq "R4 log found" True "$(json_get "$line" found)"
 
 # unknown ref
 before=$(log_lines)
-out=$("$MT" get to-orca --ref missing 2>"$TMP/err"); rc=$?
+out=$("$MT" get relay --ref missing 2>"$TMP/err"); rc=$?
 assert_eq "unknown ref exits non-zero" 1 "$rc"
 assert_eq "unknown ref stdout empty" "" "$out"
 assert_contains "unknown ref stderr names the ref" "$(cat "$TMP/err")" "missing"
-assert_contains "unknown ref stderr names the tool" "$(cat "$TMP/err")" "to-orca"
+assert_contains "unknown ref stderr names the tool" "$(cat "$TMP/err")" "relay"
 assert_contains "unknown ref stderr points at mt list" "$(cat "$TMP/err")" "mt list"
 assert_eq "unknown ref is logged" $((before + 1)) "$(log_lines)"
 line=$(last_line)
@@ -169,7 +169,7 @@ assert_eq "unknown ref log found" False "$(json_get "$line" found)"
 before=$(log_lines)
 "$MT" get --ref overlay >/dev/null 2>&1; rc=$?
 assert_eq "get without a tool exits 2" 2 "$rc"
-"$MT" get to-orca --ref >/dev/null 2>&1; rc=$?
+"$MT" get relay --ref >/dev/null 2>&1; rc=$?
 assert_eq "--ref without a value exits 2" 2 "$rc"
 assert_eq "usage errors are not logged" "$before" "$(log_lines)"
 

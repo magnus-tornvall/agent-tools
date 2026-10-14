@@ -44,6 +44,6 @@ the owner wants the change says which way to lean. It reads no config.
 
 ## Report
 
-Besides what orca-worker asks: each requirement's status and the evidence for it; the oracle tests'
-run through the suite's command and its result, when the branch has an oracle commit; each
+Besides what the worker guide asks: each requirement's status and the evidence for it; the oracle
+tests' run through the suite's command and its result, when the branch has an oracle commit; each
 finding's fix and commit, or why it was not fixed; each check and its result.

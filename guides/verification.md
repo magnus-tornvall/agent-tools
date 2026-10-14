@@ -40,5 +40,5 @@ and what the repo's own checks and builds write.
 
 ## Report
 
-Besides what orca-worker asks: the findings, or none. A perspective's reference says what else its
-report holds.
+Besides what the worker guide asks: the findings, or none. A perspective's reference says what
+else its report holds.

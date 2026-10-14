@@ -50,8 +50,8 @@ it leaves until asked, and how the owner asks. It reads no config.
   it holds; **returns** that message, laid out as the objectives say. Takes a question from the
   owner about something a message left out; returns the answer.
 - **The guide that sends a message** says what it holds: the ask guide for a question, the mvc
-  guide (`mt get mvc`) for a grill's rounds and its closing reply, the to-orca guide
-  (`mt get to-orca`) for a Run's plan, messages and hand-off. Where that guide asks for something
+  guide (`mt get mvc`) for a grill's rounds and its closing reply, the coordinate guide
+  (`mt get coordinate`) for a Run's plan, messages and hand-off. Where that guide asks for something
   in full, it is shown in full.
 - **Not a report between agents.** What a worker or judge reports to its coordinator holds what
   its own guide says, and a report whose guide lists what it holds, such as research's, holds that

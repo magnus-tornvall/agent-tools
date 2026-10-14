@@ -119,7 +119,7 @@ assert_eq "commit is linked to the clone" "$ROOT/skills/commit" "$(readlink "$H/
 out=$(MT_LOG=$TMP/usage.jsonl XDG_STATE_HOME=$TMP/state HOME=$H "$H/.local/bin/mt" get commit); rc=$?
 assert_eq "mt get commit exits 0" 0 "$rc"
 assert_eq "mt get commit prints the commit guide" "$(cat "$ROOT/guides/commit.md")" "$out"
-[ -L "$H/.claude/skills/orca-worker" ] && fail "orca-worker is linked, but it has no stub"
+[ -L "$H/.claude/skills/worker" ] && fail "worker is linked, but it has no stub"
 check "guides without a stub are not linked"
 case $(cat "$TMP/out") in *"removed stale"*) fail "a fresh install removed links it made" ;; esac
 check "a fresh install removes nothing"
@@ -438,7 +438,7 @@ install "$H"; rc=$?
 check "install over a real skill folder fails"
 assert_contains "the failure names the folder" "$(cat "$TMP/out")" "$H/.agents/skills/mvc is a real folder"
 assert_eq "the folder holds only what it held" "SKILL.md" "$(ls "$H/.agents/skills/mvc")"
-assert_eq "the other stubs are linked" "$ROOT/skills/to-orca" "$(readlink "$H/.agents/skills/to-orca")"
+assert_eq "the other stubs are linked" "$ROOT/skills/coordinate" "$(readlink "$H/.agents/skills/coordinate")"
 
 # a real folder where a stub goes in Claude Code's folder is left alone too
 H=$TMP/claude-folder
@@ -489,8 +489,8 @@ ln -s "$TMP/elsewhere/skill" "$H/.claude/skills/someone-elses"
 install "$H" ADD_MT_RULES=yes >/dev/null || fail "install before uninstall"
 rm "$H/.claude/skills/commit"
 ln -s ../../.agents/skills/commit "$H/.claude/skills/commit"
-ln -s "$ROOT/skills/to-orca" "$H/.claude/skills/to-orca-by-hand"
-ln -s "$(relative "$ROOT/skills/to-orca" "$H/.claude/skills")" "$H/.claude/skills/to-orca-relative"
+ln -s "$ROOT/skills/coordinate" "$H/.claude/skills/coordinate-by-hand"
+ln -s "$(relative "$ROOT/skills/coordinate" "$H/.claude/skills")" "$H/.claude/skills/coordinate-relative"
 uninstall_answering y "$H"; rc=$?
 assert_eq "uninstall exits 0" 0 "$rc"
 [ -e "$H/.local/bin/mt" ] && fail "uninstall left the mt link"
@@ -506,7 +506,7 @@ for link in "$H/.claude/skills"/* "$H/.agents/skills"/*; do
   esac
 done
 check "uninstall leaves no link in either skills folder to the clone or to a stub"
-[ -L "$H/.claude/skills/to-orca-relative" ] && fail "uninstall left a relative link into the clone in ~/.claude/skills"
+[ -L "$H/.claude/skills/coordinate-relative" ] && fail "uninstall left a relative link into the clone in ~/.claude/skills"
 check "uninstall removes a relative link into the clone in ~/.claude/skills"
 [ -L "$H/.agents/skills/someone-elses" ] && [ -d "$H/.agents/skills/caveman" ] || fail "uninstall removed a skill it did not install"
 [ -L "$H/.claude/skills/someone-elses" ] && [ -d "$H/.claude/skills/caveman" ] || fail "uninstall removed a skill in ~/.claude/skills it did not install"

@@ -1,4 +1,4 @@
-# to-orca
+# coordinate
 
 Domain: Coordination. You coordinate one Orca Run that turns the owner's intent into a change on
 its own branch, judged by actors who did not make it, so that the owner can leave it unattended and
@@ -193,9 +193,9 @@ do.
     would not merge; it runs none of the repo's code, so it can sit beside any Task. What each
     perspective is given and withholds is in its reference.
 - **The door rule** (`mt get door-rule`) decides what you answer and what goes to the owner.
-- **The orca-worker guide** (`mt get orca-worker`) is what every worker follows for questions,
+- **The worker guide** (`mt get worker`) is what every worker follows for questions,
   assumptions and the report.
-- **The overlay** (`mt get to-orca --ref overlay`) lists what is known about Orca that its own
+- **The overlay** (`mt get coordinate --ref orca`) lists what is known about Orca that its own
   skill does not say.
 - **The shape format** is the schema `mt shape check <file>` checks against, and the filled-in
   example `mt get mvc --ref example`.
@@ -207,6 +207,6 @@ do.
 - **The brief guide** (`mt get brief`) lays out every message to the owner: what it shows first,
   what it leaves until asked, and how the owner asks for it.
 
-Every spec carries what `mt get to-orca --ref spec-head` prints, run afresh for each Task: a copy
+Every spec carries what `mt get coordinate --ref spec-head` prints, run afresh for each Task: a copy
 from memory goes stale when a guide changes mid-Run. `T<n>` is numbered in the order you create
 Tasks, so workers' IDs trace back to it.
