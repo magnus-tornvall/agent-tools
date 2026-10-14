@@ -42,5 +42,5 @@ decisions:
     rejected:
       - Doing nothing, leaving finance to ask support about every cancellation
       - Deferring to next quarter, after the export moves to the new warehouse
-    provenance: Finance logs about six hours a week asking support about cancellations; the change is about three developer days and one column to maintain, and the export move keeps its columns.
+    provenance: Finance logs about six hours a week asking support about cancellations; the change costs the orders team about three developer days and one column to maintain, and the export move keeps its columns.
     door: two_way

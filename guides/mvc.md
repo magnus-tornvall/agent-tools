@@ -17,7 +17,8 @@ decomposition when the change is too big to settle as one.
   lean where the shape is silent.
 - **Observable end state.** The outcome is an end state the owner would call done, observable
   whichever way the change is built, with no weasel words. Each requirement is one such end state,
-  seen from an input; one that no one using the change can observe says why, and is judged by reading instead.
+  seen from an input; one that no one using the change can observe says why, and is judged by
+  reading instead.
 - **The MVP deletion test.** What ships is what the purpose needs: remove it and the outcome no
   longer holds or no longer serves the purpose. Merely slower, uglier or less pleasant without it
   makes it a non-goal. Every item that ships still passes the test given everything else that ships.
@@ -28,7 +29,7 @@ decomposition when the change is too big to settle as one.
   meanwhile; proceeding, deferring and doing nothing are weighed on the same evidence.
 - **Falsifiability**, from the Verification domain. A claim of value that no observation could
   show false tells the owner nothing about whether the commitment paid.
-- **Pre-mortem** and **devil's advocate (red teaming)**, from the Decision domain. Imagining the
+- **Pre-mortem**, from the Decision domain, and **devil's advocate (red teaming)**. Imagining the
   idea has failed and explaining why finds what its advocate misses, and a case is judged by
   hearing it argued against, never only by whoever argues for it.
 - **Value of information**, from the Decision domain. The owner's attention is the cost. A

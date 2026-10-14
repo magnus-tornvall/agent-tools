@@ -48,7 +48,8 @@ file it added unchanged.
   judges cover those. A requirement the suite cannot reach gets none; the report names it with
   why.
 - **Each test names the requirement it covers in words**, by what it observes, never by an ID from
-  the intent: it is never committed, so an ID in a test's name points at nothing in the repo.
+  the intent: the intent is never committed, so an ID in a test's name points at nothing in the
+  repo.
 - **Each test reads on its own** in the suite's test framework: what it sets up, does and asserts
   is in the test, so the owner understands it without knowing a second or third language or tool
   that runs part of it.
