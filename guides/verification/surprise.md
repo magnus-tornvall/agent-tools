@@ -11,8 +11,8 @@ none of the repo's code, so it can sit beside any Task; it edits nothing. It rea
 
 - **Given** the shape's `outcome`, `purpose`, `non_goals`, `touchpoints` and `decisions`, the
   owner's rulings, and the assumptions and questions from the change reports.
-- **Withheld** the shape's `requirements`, `constraints`, `oracles` and `unchecked`, since a worker
-  cannot unsee what anchors it.
+- **Withheld** the shape's `requirements` and `constraints`, since a worker cannot unsee what
+  anchors it.
 
 Fixed: changing it is the owner's call.
 

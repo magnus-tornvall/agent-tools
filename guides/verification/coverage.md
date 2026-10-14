@@ -7,8 +7,8 @@ runs the repo's code and edits nothing. It reads no config.
 
 ## Given and withheld
 
-- **Given** the shape's `outcome`, `requirements`, `non_goals`, `constraints`, `decisions`,
-  `oracles` and `unchecked`, the owner's rulings and the change reports.
+- **Given** the shape's `outcome`, `requirements`, `non_goals`, `constraints` and `decisions`, the
+  owner's rulings and the change reports.
 - **Withheld** the shape's `purpose` and `touchpoints`, and the change worker's reasoning beyond
   its report. `purpose` is no end state, so nothing on the branch can show it holds, and where the
   change lands is judged by the other perspectives.
@@ -18,20 +18,17 @@ Fixed: changing it is the owner's call.
 ## Objectives
 
 - **Every requirement has evidence**: a test that asserts it, or your own observation from running
-  it. The shape's oracles are the owner's to run, so you run none through `mt oracle` or by its
-  own command; one the repo's checks pick up runs with them, as any test does. A requirement
-  reported done without evidence is a finding, and so is evidence weaker than the requirement.
-- **No oracle is tampered**: each file an oracle pins has on the branch the sha256 the shape pins
-  for it. A tampered oracle is a finding, and so is an edit no ruling allowed to what an oracle
-  runs through but does not pin, such as its runner's config or shared setup. A pinned file no
-  commit on the branch ever held is reported absent, not tampered.
-- **Each oracle checks what its key says.** One that passes by construction, asserts less than its
-  key, or mocks what it judges is a finding.
+  it. A requirement reported done without evidence is a finding, and so is evidence weaker than
+  the requirement.
+- **No oracle is tampered**: each file the oracle commit added is unchanged on the branch. A
+  changed one is a finding, and so is an edit no ruling allowed to what an oracle test runs
+  through, such as its runner's config or shared setup.
+- **Each oracle test checks what the requirement it names says.** One that passes by construction,
+  asserts less than its requirement, or mocks what it judges is a finding.
 - **No non-goal is built.**
 - **The outcome, constraints and decisions are what the branch does.**
 
 ## Report
 
 Besides what the verification guide asks: each requirement, whether it holds and its evidence, and,
-when the shape has oracles, each pinned file whose sha256 differs from the one the shape pins, and
-each one that is absent.
+when the branch has an oracle commit, each file it added that the branch changes.

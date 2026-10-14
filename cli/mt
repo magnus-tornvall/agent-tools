@@ -1,8 +1,8 @@
 #!/usr/bin/env bun
 // mt: load the know-how of the owner's tools on demand, record every load, check and slice shapes
-// and drafts, run a shape's oracles, print the owner's config, and update the clone it runs from.
-// get, list and update need nothing beyond this file; shape, oracle and config load src/shape/,
-// src/oracle/ and src/config/ only when they are called.
+// and drafts, print the owner's config, and update the clone it runs from. get, list and update
+// need nothing beyond this file; shape and config load src/shape/ and src/config/ only when they
+// are called.
 
 import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, statSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
@@ -14,13 +14,6 @@ const USAGE = `usage: mt get <tool> [--ref <ref>]   print the guide for a tool, 
                                      - reads stdin
        mt shape slice <file> --keys <key,...>
                                      print only those top-level keys of a shape; - reads stdin
-       mt oracle hash <file>...      print each file's path from the repo root and sha256,
-                                     to pin it under an oracle
-       mt oracle run [--base] [--timeout <seconds>] <shape>
-                                     check each oracle's pinned files and run it from the
-                                     repo root, from any folder of the repo; --base checks
-                                     what each does at the base commit instead of that it
-                                     passes; - reads stdin
        mt config [<key>]             print the config file's path and each key, binding or
                                      advisory, with its value; or one key's value alone
        mt update                     move this clone to origin's newest release, or with main
@@ -184,11 +177,6 @@ async function cmdShape(args: string[]): Promise<number> {
   return runShape(args);
 }
 
-async function cmdOracle(args: string[]): Promise<number> {
-  const { runOracleCommand }: typeof import("../src/oracle/command.ts") = await import(join(ROOT, "src/oracle/command.ts"));
-  return runOracleCommand(args);
-}
-
 async function cmdConfig(args: string[]): Promise<number> {
   const { runConfig }: typeof import("../src/config/config.ts") = await import(join(ROOT, "src/config/config.ts"));
   return runConfig(args);
@@ -306,8 +294,6 @@ async function main(args: string[]): Promise<number> {
       return cmdList();
     case "shape":
       return cmdShape(rest);
-    case "oracle":
-      return cmdOracle(rest);
     case "config":
       return cmdConfig(rest);
     case "update":

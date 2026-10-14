@@ -1,69 +1,62 @@
 # oracle
 
-Domain: Verification. Turn a closed shape into oracles: acceptance checks, written before the change
-exists, that any implementation is then held to. They are the outer loop of the change: whoever
-builds it is done when its oracles pass, so the owner's intent is checked by something its builder
-did not write. It reads no config.
+Domain: Verification. Write failing acceptance tests for a closed shape before its change is built,
+through the repo's own e2e or integration suite, so that whoever builds the change is held to tests
+it did not write, and the owner can read each one. It runs only when the owner opts in, and writes
+only where the repo has a working suite that drives the system the way its users do; elsewhere it
+writes nothing and says why. It reads no config.
 
 ## Principles
 
-- **Test oracle.** An oracle is a source of the expected result independent of the implementation.
-  It is written from the shape and the repo alone, never from an implementation, so a requirement
-  you cannot check is a finding about the shape.
-- **Falsifiability.** An oracle can fail, and where its key's behaviour is new it fails at base for
-  the reason its key names: on an assertion about what the key observes, never on an error such as
-  a missing class, a crashed fixture or a command that did not start. One that errors at base, or
-  already passes where its `base` says fail, proves nothing about the key, and is wrong, never the
-  shape.
-- **Goodhart's law.** An oracle becomes the builder's target, so passing it must mean the key
+- **Test oracle.** An oracle test is a source of the expected result independent of the
+  implementation: written from the shape and the repo alone, before the change exists.
+- **Falsifiability.** Each test fails at base on an assertion about what its requirement observes,
+  never on an error such as a missing class, a crashed fixture or a command that did not start.
+  One that errors at base, or already passes, proves nothing about the requirement.
+- **Goodhart's law.** A test becomes the builder's target, so passing it must mean the requirement
   holds. It never stubs or mocks what it judges, and never passes by construction: an assertion on
   nothing, a caught failure, a check of its own fixture.
-- **Design by contract.** An oracle observes through a seam that exists at base, or that a decision
-  settles: a public route, command, file format, stored data or screen the code has now, or one a
-  decision in the shape names. Never a name the implementation will choose; that name is the
-  implementer's to pick.
-- **Separation of duties.** An oracle is pinned, so whoever it judges can make it pass, never make
-  it easier.
+- **Design by contract.** A test observes through a seam that exists at base, or that a decision in
+  the shape names: a route, command, screen, file format or stored data. Never a name the
+  implementation will choose; that name is the implementer's to pick.
 
 ## Contract
 
-Takes a closed shape that passes `mt shape check`, and the repo with its product code at the base
-commit; when given them, a branch to commit the oracle files on and the path to write the shape
-to. Returns the shape with its oracles: one YAML document that passes `mt shape check` but for the
-keys it sends back as shape defects, and the oracle files. Writes only the oracle files and the
-shape's `oracles` and `unchecked` blocks: no product code, no other test, no other key of the
-shape. It never patches a requirement, decides an interface or adds scope.
+Takes a closed shape that passes `mt shape check`, the repo at the base commit, and the work branch
+to commit on. Returns one commit on the work branch that adds the tests, or none, and the report.
+The commit is the oracle's record: whatever builds the change leaves every file it added unchanged.
 
 ## Objectives
 
-- **Every key is covered or unchecked.** The outcome, each requirement, each boundary non-goal and
-  each constraint is covered by an oracle, or listed under `unchecked` with why none can be
-  written: no caller can observe it, it needs judgement, or no seam reaches it. A deferral needs
-  neither. `mt shape check` enforces this.
-- **Each oracle stands alone.** It sets up its own state, and no oracle's result depends on another
-  passing. One key per oracle where it can be, so a failure names what failed; the outcome gets
-  its own end-to-end oracle.
-- **A boundary is checked by its absence**: its oracle passes while the boundary holds, such as a
-  request that is still refused or a format that is still unchanged.
-- **Each oracle does at base what its `base` says**, shown by `mt oracle run --base` while the
-  product code is still the base commit's. New behaviour fails; preserved behaviour, constraints
-  and boundaries pass.
-- **Oracles are the repo's own tests**: its test runner, conventions and test folders, so they ship
-  with the change and run in its checks. Each writes a JUnit report when the runner can, named in
-  `junit`, so a failure is told apart from an error. A script follows automake's exit codes, as
-  `mt oracle run` reads them: 0 passes, 77 is blocked, 99 is broken, as are 126 and 127 (the
-  command did not start) and 128 and up (a signal ended it); anything else fails.
-- **Blocked is not failed.** A check that needs what the change does not own, such as an external
-  service or a credential, skips or exits 77 when it is missing, and the report names what it
-  blocks.
-- **Every file only oracles use is pinned**: each oracle's tests, helpers and fixtures. `files` maps
-  each one to the sha256 `mt oracle hash` prints for it as it is committed, after the repo's
-  formatter and commit hooks have run on it. On a branch given to you, the oracle files are
-  committed in a commit of their own, never on the base branch.
-- **A key you cannot check independently goes back to the owner** as a shape defect, asked as a
-  question: the key, why no independent check exists, and what would make one possible, such as a
-  decision that settles the route. It stays out of `oracles` and `unchecked` until the owner rules,
-  so the shape fails `mt shape check` on that key until then.
+- **Only a suite that drives the system the way its users do enables oracles**: a browser for a
+  UI, HTTP for an API, and for a CLI a test framework that runs its binary. Unit tests do not, and
+  neither do shell scripts that run a CLI. With no such suite, the report says the repo has no
+  oracle-enabling test strategy, and nothing is written.
+- **Every command you run comes from the repo**: its manifests, agent instructions or CI, cited by
+  `file:line`. None is invented.
+- **The suite works at base before any test is written.** Its command, run at base, reaches its
+  tests' assertions. One that fails for another reason, such as not starting, an unreachable
+  environment or a missing browser, is reported with the command and its output, and nothing is
+  written. You install, configure and start nothing to make it run.
+- **Which suite is the owner's to pick.** With more than one way to run it, such as two configs or
+  two target environments, the owner picks before any test is written, asked as the ask guide
+  composes it (`mt get ask`). A pick the owner already made for this Run, such as in the plan they
+  approved, is that answer.
+- **Only observable requirements get a test**: a requirement in its given, when and then form that
+  the suite reaches. The outcome, a requirement no caller can observe, a non-goal and a constraint
+  get none; the change's own tests and the judges cover those. A requirement the suite cannot
+  reach gets none either, and the report names it with why.
+- **Each test names the requirement it covers in words**, by what it observes, never by a shape
+  key: the shape is never committed, so a key in a test's name points at nothing in the repo.
+- **Each test reads on its own** in the suite's test framework: what it sets up, does and asserts
+  is in the test, so the owner understands it without knowing a second or third language or tool
+  that runs part of it.
+- **Only tests are written**, each in a file the oracle commit adds, in the suite's own folders
+  and conventions: no product code, no test appended to an existing file, and no change to an
+  existing test or to what the suite runs through, such as its config.
+- **Each test fails at base on an assertion**, shown by running it through the suite's command
+  while the product code is still the base commit's.
+- **The tests are one commit of their own on the work branch**, never on the base branch.
 - **Your runs never write to the owner's `mt` usage log.** Every manual run of `mt`, and every run
   of a script or test that may call it, sets `MT_LOG` and `XDG_STATE_HOME` to scratch locations on
   its own command line. Loading your guides with the installed `mt get` is not such a run; it
@@ -72,16 +65,12 @@ shape. It never patches a requirement, decides an interface or adds scope.
 
 ## Tools
 
-- **`mt shape check <file>`** checks the shape with its oracles.
-- **`mt oracle hash <file>...`** prints each file's path and sha256 in the form `files` takes.
-- **`mt oracle run --base <file>`**, run with the product code at base, checks
-  each oracle against its `base`; **`mt oracle run <file>`** checks that each passes. Each prints
-  one line per oracle and exits 1 when any misses.
-- **The example** (`mt get oracle --ref example`) is a shape with its oracles.
-- **The ask guide** (`mt get ask`) composes a shape defect as a question for the owner.
+- **`mt shape check <file>`** checks the shape.
+- **The ask guide** (`mt get ask`) composes the question that picks a suite.
 
 ## Report
 
-The shape with its oracles and where it was written; what `mt oracle run --base` printed; the
-commit of the oracle files, if any; each unchecked key with its reason; and each shape defect, or
-none.
+The suite's command and where it was found; each test with the key of the requirement it covers,
+and how it failed at base; the commit; and each observable requirement given no test, with why.
+When nothing is written, why: no oracle-enabling test strategy, with what was looked for and where;
+the command and its output when the suite failed at base; or no requirement the suite reaches.

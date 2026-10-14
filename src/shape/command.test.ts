@@ -309,13 +309,21 @@ describe("mt shape", () => {
   });
 });
 
-describe("oracle's example", () => {
-  test("mt get oracle --ref example prints a shape with oracles that passes mt shape check", () => {
-    const printed = mt("get", "oracle", "--ref", "example");
-    expect(printed.code).toBe(0);
-    expect(Bun.YAML.parse(printed.stdout)).toHaveProperty("oracles");
+describe("mt shape check on a shape from before oracles left it", () => {
+  test("R5: fails, naming oracles and unchecked", () => {
+    const oracles = {
+      O1: {
+        covers: ["outcome", "R1", "R2", "N1", "C1"],
+        base: "fail",
+        run: "php artisan test tests/Feature/CancelReasonTest.php",
+        files: { "tests/Feature/CancelReasonTest.php": "14c2529eb4498c5d1ffd6915d05bf58a91bdda796af59f41d480d11c099d0479" },
+      },
+    };
 
-    expect(mt("shape", "check", file(printed.stdout))).toEqual({ code: 0, stdout: "", stderr: "" });
+    const result = check({ ...example(), oracles, unchecked: { R3: "No caller can observe where the reason is stored." } });
+
+    expect(result.code).toBe(1);
+    expect(stderrLines(result.stderr)).toEqual(["oracles: not a key the schema defines", "unchecked: not a key the schema defines"]);
   });
 });
 

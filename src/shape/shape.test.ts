@@ -3,7 +3,6 @@ import { readFileSync } from "node:fs";
 import { isTouchpoint, parseDraft, parseShape, type Violation } from "./shape.ts";
 
 const EXAMPLE = readFileSync(new URL("../../guides/mvc/example.md", import.meta.url), "utf8");
-const WITH_ORACLES = readFileSync(new URL("../../guides/oracle/example.md", import.meta.url), "utf8");
 
 type Fields = Record<string, unknown>;
 
@@ -19,15 +18,6 @@ function fields(value: unknown, at: string): Fields {
 /** A fresh copy of the example as plain data, to change one thing in. */
 function example(): Fields {
   return fields(Bun.YAML.parse(EXAMPLE), "the example");
-}
-
-/** A fresh copy of the example with oracles, as plain data. */
-function withOracles(): Fields {
-  return fields(Bun.YAML.parse(WITH_ORACLES), "the example with oracles");
-}
-
-function oracle(shape: Fields, id: string): Fields {
-  return fields(fields(shape.oracles, "oracles")[id], id);
 }
 
 function decision(shape: Fields, id: string): Fields {
@@ -156,6 +146,10 @@ describe("parseShape", () => {
     expect(violationsOf({ ...example(), approach: ["A nullable column."] })).toEqual([
       { path: "approach", message: "not a key the schema defines" },
     ]);
+  });
+
+  test.each(["oracles", "unchecked"])("R5: reports %s as a key the schema does not define, since oracles live in the repo", (key: string) => {
+    expect(violationsOf({ ...example(), [key]: {} })).toEqual([{ path: key, message: "not a key the schema defines" }]);
   });
 
   test("reports constraints written as a list, since each needs a C key", () => {
@@ -306,155 +300,6 @@ describe("parseShape", () => {
 
   test("reports a document that is not a map", () => {
     expect(paths(["a list"])).toEqual([""]);
-  });
-});
-
-describe("parseShape on oracles", () => {
-  test("its example is the mvc example plus oracles and unchecked, so the two never drift apart", () => {
-    const { oracles: _oracles, unchecked: _unchecked, ...shape } = withOracles();
-
-    expect(shape).toEqual(example());
-  });
-
-  test("accepts the example whose oracles cover every key but one, which is unchecked", () => {
-    expect(parseShape(WITH_ORACLES)).toMatchObject({ ok: true });
-  });
-
-  test("accepts a shape without oracles, whatever they would cover", () => {
-    const { oracles: _oracles, unchecked: _unchecked, ...shape } = withOracles();
-
-    expect(paths(shape)).toEqual([]);
-  });
-
-  test("reports each key no oracle covers and nothing lists as unchecked, at its own path", () => {
-    const shape = withOracles();
-    const oracles = fields(shape.oracles, "oracles");
-    delete oracles.O3;
-    delete oracles.O4;
-    delete oracles.O5;
-    shape.unchecked = {};
-
-    expect(violationsOf(shape)).toEqual([
-      { path: "outcome", message: "covered by no oracle and not unchecked" },
-      { path: "requirements.R3", message: "covered by no oracle and not unchecked" },
-      { path: "non_goals.N1", message: "covered by no oracle and not unchecked" },
-      { path: "constraints.C1", message: "covered by no oracle and not unchecked" },
-    ]);
-  });
-
-  test("asks nothing of a deferral, which is not built either way", () => {
-    expect(fields(fields(withOracles().non_goals, "non_goals").N2, "N2").type).toBe("deferral");
-    expect(paths(withOracles())).toEqual([]);
-  });
-
-  test("reports a covered key and an unchecked key that the shape does not have", () => {
-    const shape = withOracles();
-    oracle(shape, "O1").covers = ["R1", "R9"];
-    fields(shape.unchecked, "unchecked").C4 = "No such constraint.";
-
-    expect(violationsOf(shape)).toEqual([
-      { path: "oracles.O1.covers.1", message: "no such key in the shape" },
-      { path: "unchecked.C4", message: "no such key in the shape" },
-    ]);
-  });
-
-  test("reports purpose as a key an oracle covers or unchecked names, since it is no end state", () => {
-    const shape = withOracles();
-    oracle(shape, "O1").covers = ["purpose"];
-    shape.unchecked = { ...fields(shape.unchecked, "unchecked"), purpose: "it is why, not what" };
-
-    expect(paths(shape)).toContain("oracles.O1.covers.0");
-    expect(paths(shape)).toContain("unchecked.purpose");
-  });
-
-  test("reports a key that is both covered and unchecked", () => {
-    const shape = withOracles();
-    fields(shape.unchecked, "unchecked").R1 = "Judged by eye.";
-
-    expect(violationsOf(shape)).toEqual([{ path: "unchecked.R1", message: "covered by O1; unchecked holds only what no oracle covers" }]);
-  });
-
-  test("reports unchecked on a shape with no oracles", () => {
-    const { oracles: _oracles, ...shape } = withOracles();
-
-    expect(violationsOf(shape)).toEqual([{ path: "unchecked", message: "not allowed without oracles" }]);
-  });
-
-  test("reports each malformed field of an oracle at its own path", () => {
-    const shape = withOracles();
-    const o1 = oracle(shape, "O1");
-    o1.covers = ["D1"];
-    o1.base = "red";
-    o1.run = " ";
-    o1.junit = "/tmp/report.xml";
-    o1.files = { "../outside.php": "ABC" };
-    oracle(shape, "O2").files = {};
-    oracle(shape, "O4").covers = [];
-
-    expect(paths(shape).sort()).toEqual([
-      "constraints.C1",
-      "oracles.O1.base",
-      "oracles.O1.covers.0",
-      "oracles.O1.files.../outside.php",
-      "oracles.O1.junit",
-      "oracles.O1.run",
-      "oracles.O2.files",
-      "oracles.O4.covers",
-      "requirements.R1",
-    ]);
-  });
-
-  test("reports what no oracle covers alongside a violation elsewhere, not after it is fixed", () => {
-    const shape = withOracles();
-    delete fields(shape.oracles, "oracles").O2;
-    oracle(shape, "O1").base = "maybe";
-    fields(shape.decisions, "decisions").X1 = decision(shape, "D3");
-
-    expect(paths(shape).sort()).toEqual(["decisions.X1", "oracles.O1.base", "requirements.R2"]);
-  });
-
-  test.each(["O5", "O1"])("reports a junit report that is a file %s pins, since each run deletes it", (owner: string) => {
-    const shape = withOracles();
-    oracle(shape, "O5").junit = Object.keys(fields(oracle(shape, owner).files, "files"))[0];
-
-    expect(violationsOf(shape)).toEqual([{ path: "oracles.O5.junit", message: "must not be a file an oracle pins" }]);
-  });
-
-  test("reports an empty oracles block, which leaves nothing to run", () => {
-    const { unchecked: _unchecked, ...shape } = withOracles();
-
-    expect(violationsOf({ ...shape, oracles: {} })).toEqual([
-      { path: "oracles", message: "must have at least one oracle" },
-      ...["outcome", "requirements.R1", "requirements.R2", "requirements.R3", "non_goals.N1", "constraints.C1"].map((path) => ({ path, message: "covered by no oracle and not unchecked" })),
-    ]);
-  });
-
-  test.each([null, "all", ["O1"]])("reports an oracles block of %p once, not every key as uncovered", (oracles: unknown) => {
-    expect(paths({ ...withOracles(), oracles })).toEqual(["oracles"]);
-  });
-
-  test.each([null, "none", ["R3"]])("reports an unchecked block of %p once, not every key as uncovered", (unchecked: unknown) => {
-    expect(paths({ ...withOracles(), unchecked })).toEqual(["unchecked"]);
-  });
-
-  test("reports an oracle key that does not match its prefix", () => {
-    const shape = withOracles();
-    const oracles = fields(shape.oracles, "oracles");
-    oracles.T1 = oracles.O1;
-
-    expect(violationsOf(shape)).toEqual([{ path: "oracles.T1", message: "must be O followed by a number from 1" }]);
-  });
-
-  test.each([
-    ["oracles", "O1"],
-    ["unchecked", "R3"],
-  ])("reports a repeated %s key as a violation on that key", (section: string, id: string) => {
-    const at = WITH_ORACLES.indexOf(`\n${section}:`) + 1;
-    const entry = new RegExp(`^  ${id}:.*(?:\\n    .*)*\\n`, "m").exec(WITH_ORACLES.slice(at));
-    if (entry === null) throw new Error(`no ${id} entry under ${section}`);
-    const repeated = WITH_ORACLES.slice(0, at) + WITH_ORACLES.slice(at).replace(entry[0], entry[0] + entry[0]);
-
-    expect(parseShape(repeated)).toEqual({ ok: false, violations: [{ path: `${section}.${id}`, message: "key appears more than once" }] });
   });
 });
 
