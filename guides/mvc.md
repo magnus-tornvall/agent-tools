@@ -3,9 +3,10 @@
 Domain: Intent. Settle with the owner the shape of a minimal viable change: what ships, what does
 not and why, and what each decision ruled out. The shape carries the owner's intent to whoever
 builds the change, so that they can act on it where it is silent without asking again. A grill is
-started by the owner, or by an agent that finds decisions open that only the owner can settle. It
-takes intent in any form and returns the closed shape, or a decomposition when the change is too
-big to settle as one.
+started by the owner, or by an agent that finds decisions open that only the owner can settle, one
+working with the owner directly, such as a coordinator. A dispatched worker at such a decision asks
+its coordinator, as the door rule says (`mt get door-rule`). A grill takes intent in any form and
+returns the closed shape, or a decomposition when the change is too big to settle as one.
 
 ## Principles
 
@@ -30,14 +31,12 @@ big to settle as one.
 
 ## Objectives
 
-- **The owner is asked only what nothing else can answer.** The repo, the conversation and primary
-  sources answer first. What they settle reaches the owner as a fact with its source, or as an
-  assumption the owner corrects by its ID. A decision already on record is a fact, never asked
-  again, so a shape already settled is reported without a question.
-- **The repo and the primary sources are known before anything is asked**, as far as the open
-  questions turn on them; the questions drive the search. Every fact cites `file:line`, the owner's
-  word or a primary source, and general knowledge is none of these. A fact looked for and not found
-  is unknown, which is itself a finding. An assumption cites the settled material it follows from.
+- **No question reaches the owner that the repo, the conversation or a primary source could
+  answer.** What they settle reaches the owner as a fact with its source, or as an assumption the
+  owner corrects by its ID. A decision already on record is a fact, never asked again, so a shape
+  already settled is reported without a question. Every fact cites `file:line`, the owner's word or
+  a primary source, and general knowledge is none of these. A fact looked for and not found is
+  unknown, which is itself a finding. An assumption cites the settled material it follows from.
 - **Every one-way door, and all intent only the owner holds, is the owner's to decide**: why the
   change matters, priorities, constraints from outside the repo, direction the code cannot show.
   However predictable the answer, it is asked. Silence accepts an assumption; it never settles a
@@ -63,7 +62,7 @@ big to settle as one.
   parks and lists them.
 - **A resumed grill stands on current facts.** Each fact it cites holds against the repo and the
   sources as they are now, or is named with what changed. A change that bears on a settled
-  decision goes to the owner as a contradiction does, before anything new is asked.
+  decision goes to the owner as a contradiction does.
 - **The shape closes passing `mt shape check`, or a decomposition is reported.** At close each
   open question has the owner's answer or is a deferral with its reason. A question carrying a risk
   is never deferred, and a one-way door only on the owner's word, what it blocks becoming a
@@ -72,8 +71,11 @@ big to settle as one.
 - **At close the owner sees the shape in brief**, as the brief guide lays it out, including which
   decisions rest on assumptions nobody confirmed. The whole shape is the owner's on request.
 - **mvc writes no code, no plan, no Tasks and no file but the shape**: the closed shape on request,
-  once it passes `mt shape check`, and the draft parked on the owner's word. It replaces no other
-  existing file without the owner's word.
+  once it passes `mt shape check`, and the draft parked on the owner's word. It makes no git write:
+  it commits nothing and stages nothing. It replaces no other existing file without the owner's
+  word.
+- **The reply names every file mvc wrote**, the closed shape or a parked draft, by its path, since
+  without a default location the reply is the only way a later session finds it.
 
 ## Contract
 
