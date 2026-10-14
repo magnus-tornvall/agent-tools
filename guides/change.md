@@ -35,12 +35,6 @@ the owner wants the change says which way to lean. It reads no config.
   instructions; never invent them. A failing check is not success.
 - **Commits stay on the work branch, unpushed.** Never push or merge it. The commit guide
   (`mt get commit`) defers to the Task's spec for that.
-- **Your runs never write to the owner's `mt` usage log.** Every manual run of `mt`, and every run
-  of a script, test or mutant that may call it, sets `MT_LOG` and `XDG_STATE_HOME` to scratch
-  locations on its own command line. Loading your guides with the installed `mt get` is not such a
-  run; it stays logged. Workaround for `mt` logging every run to the owner's usage log, with no way
-  to tell a development or test run from a use; remove when `mt` keeps such runs out of that log
-  itself.
 
 ## Report
 

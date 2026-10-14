@@ -26,8 +26,7 @@ not the contract.
 `mt` is a loader. A tool's know-how lives in a guide under `guides/`. A tool an agent or the
 owner picks also has a stub skill under `skills/<name>/`: its description says when to use the
 tool, and its body only tells the agent to run `mt get <name>` and follow what it prints. The
-agent's skill list stays short, the guide enters context only when the tool is used, and each
-load is logged.
+agent's skill list stays short, and the guide enters context only when the tool is used.
 
 Every stub has a guide. A guide that only a spec or another guide loads has no stub:
 worker; brief, which the ask, mvc and coordinate guides load to lay out every message to the
@@ -47,8 +46,8 @@ it, by typing `/research`. `mt list` shows every guide.
 ```
 mt list                       every guide, once, with its stub's description, or the
                               guide's first paragraph when it has no stub
-mt get <name>                 print the tool's guide, and log the load
-mt get <name> [--ref <ref>]   print one of the tool's references instead, and log the ref
+mt get <name>                 print the tool's guide
+mt get <name> [--ref <ref>]   print one of the tool's references instead
 mt shape check <file>         check that a file is a shape; - reads stdin
 mt shape slice <file> --keys <key,...>
                               print the shape with only those top-level keys; - reads stdin
@@ -60,26 +59,22 @@ mt --help                     print the usage
 
 A reference is a file under `guides/<name>/<ref>.md`, for example `mt get coordinate --ref orca`,
 except that `mt get mvc --ref example` prints `src/shape/example.yaml`. An unknown tool or ref exits
-1 with a message on stderr; the attempt is still logged, with `found` false.
+1 with a message on stderr.
 
 ### Contracts
 
 Each command's contract: its purpose, what it takes, what it prints, how it exits, and its
-side-effect class. A class is read-only, which reads and prints and writes nothing; local write,
-which writes on this machine only; or network, which reaches off this machine. The classes are
-declared once in `src/install/side-effects.ts`. The one allow rule `Bash(mt:*)` covers every
-command, and an ask rule per network command, `Bash(mt update:*)`, makes Claude Code ask before an
-agent runs it (see Install). Every usage error prints `mt: <reason>` and a usage on stderr,
+side-effect class. A class is read-only, which reads and prints and writes nothing, or network,
+which reaches off this machine. The classes are declared once in `src/install/side-effects.ts`. The
+one allow rule `Bash(mt:*)` covers every command, and an ask rule per network command,
+`Bash(mt update:*)`, makes Claude Code ask before an agent runs it (see Install). Every usage error prints `mt: <reason>` and a usage on stderr,
 nothing on stdout, and exits 2. Only `mt config` reads the owner's config (see Config); every other
 command behaves the same whatever the config holds.
 
-**`mt get <tool> [--ref <ref>]`**, local write. Prints a tool's guide, `guides/<tool>.md`, or one
+**`mt get <tool> [--ref <ref>]`**, read-only. Prints a tool's guide, `guides/<tool>.md`, or one
 of its references, `guides/<tool>/<ref>.md`, on stdout and exits 0. A tool or ref with no such
 file prints one line on stderr naming it and pointing at `mt list`, and exits 1. A missing tool, a
-`--ref` without a value, an unknown option or a second tool exits 2. Each load, found or not, but
-no usage error, appends a line to the usage log, read from `MT_LOG`, `XDG_STATE_HOME` and the
-session variables (see Usage log); a log that cannot be written is said on stderr and changes no
-exit code.
+`--ref` without a value, an unknown option or a second tool exits 2.
 
 **`mt list`**, read-only. Prints one line per guide under `guides/`, its name padded to 20
 columns, then its stub's description, or its first paragraph when it has no stub, and exits 0.
@@ -115,29 +110,10 @@ or make is not on PATH; and when a fetch from origin fails, naming it. An argume
 are asked before they run it (see Install).
 
 **`mt`, `mt help`, `mt -h` and `mt --help`**, read-only. Print the usage on stdout and exit 0.
-The usage lists every command, and names the usage log's path and the config file's path.
+The usage lists every command, and names the config file's path.
 
 **`mt <anything else>`**, read-only. An unknown command prints `mt: unknown command '<command>'`
 and the usage on stderr, and exits 2.
-
-### Usage log
-
-Every `mt get` appends one JSON line to `$MT_LOG`, or to
-`${XDG_STATE_HOME:-$HOME/.local/state}/mt/usage.jsonl` when it is unset. This is the log's
-format, JSON Lines at that path with these keys; whatever reads the log relies on it:
-
-| key        | value                                                          |
-| ---------- | -------------------------------------------------------------- |
-| `time`     | UTC time of the load, ISO 8601                                 |
-| `tool`     | the tool asked for                                             |
-| `ref`      | the reference asked for, or `null`                             |
-| `found`    | `true` when a guide was printed, `false` when there was none   |
-| `commit`   | `HEAD` of this repo when the guide was read, or `null`         |
-| `session`  | `$CLAUDE_CODE_SESSION_ID`, or `null`                           |
-| `terminal` | `$ORCA_TERMINAL_HANDLE`, or `null`                             |
-| `worktree` | `$ORCA_WORKTREE_ID`, or `null`                                 |
-
-If the log cannot be written, `mt` says so on stderr and still prints the guide.
 
 ### Shapes
 
@@ -285,8 +261,8 @@ it spells the path and even one made by hand, so a skill or `mt` installed some 
 With `~/.agents/skills` gone, it also removes the links in `~/.claude/skills` to it. It asks before
 removing the rules, and any of the earlier ones, from the settings, keeping every other rule;
 `REMOVE_MT_RULES=yes` or `=no` answers without asking. It leaves Bun, the clone and its
-`node_modules`, your shell profile and the usage log. Pass the same `BIN_DIR`, `SKILLS_DIR`,
-`CLAUDE_SKILLS_DIR` and `SETTINGS` you installed with.
+`node_modules`, and your shell profile. Pass the same `BIN_DIR`, `SKILLS_DIR`, `CLAUDE_SKILLS_DIR`
+and `SETTINGS` you installed with.
 
 A skill already linked from a clone becomes a stub when that clone pulls this layout, and the
 stub runs `mt get`. Run `make install` with the pull, or every agent that loads the skill fails on
@@ -315,12 +291,12 @@ bun test
 bun run typecheck
 ```
 
-`test/mt.sh` checks `mt get` and `mt list`, and needs `python3` on PATH to parse the log's JSON
-lines; `mt` itself needs only Bun. `test/install.sh` runs `make install` and `make uninstall`
-against throwaway home folders, and needs `python3` too. `test/update.sh` runs `install.sh` and
-`mt update` against a local origin, made from this worktree's files, and throwaway home folders, and
-needs `python3` and Bun's package cache to hold this repo's dependencies: it reaches no network, so
-`bun install` fails on a package the cache lacks.
+`test/mt.sh` checks `mt get` and `mt list`; `mt` itself needs only Bun. `test/install.sh` runs
+`make install` and `make uninstall` against throwaway home folders, and needs `python3` on PATH.
+`test/update.sh` runs `install.sh` and `mt update` against a local origin, made from this
+worktree's files, and throwaway home folders, and needs `python3` and Bun's package cache to hold
+this repo's dependencies: it reaches no network, so `bun install` fails on a package the cache
+lacks.
 `src/install/PART.md` and `src/guide-lint/PART.md` hold the contracts of install and guide-lint.
 `test/guides.sh` is guide-lint, whose code is `src/guide-lint/`. It fails, one ``file:line:
 `mention`: reason`` line each, when a guide, stub skill or `AGENTS.md` mentions in backticks an `mt
@@ -333,12 +309,12 @@ path first, then long flags. An `mt get` mention with a `<placeholder>` for its 
 placeholder ref is dropped with its flag and the guide is still checked. Its success line counts the
 mentions it checked and says how many placeholder mentions it skipped.
 
-It runs only `mt get` and `mt --help`, with `MT_LOG` on a throwaway file, so it leaves the usage log
-alone. Without `orca` on PATH it checks the `mt` mentions only and says so in one line. It fails
-when `mt --help` prints no usage, when it finds no guides, and when `orca agent-context --json`
-exits non-zero, prints something that is not a JSON object, reports a schema version other than 1,
-or lists its commands in a shape the lint does not read (no `commands` array, or a command without a
-string `command` and an array `path`), each as one line instead of one per mention.
+It runs only `mt get` and `mt --help`. Without `orca` on PATH it checks the `mt` mentions only and
+says so in one line. It fails when `mt --help` prints no usage, when it finds no guides, and when
+`orca agent-context --json` exits non-zero, prints something that is not a JSON object, reports a
+schema version other than 1, or lists its commands in a shape the lint does not read (no `commands`
+array, or a command without a string `command` and an array `path`), each as one line instead of
+one per mention.
 
 `bun test` runs guide-lint against fixture repos and a fake `orca`, and checks the shape
 schema and `mt shape`, `mt config` against a throwaway `XDG_CONFIG_HOME`, and that every command in

@@ -59,11 +59,6 @@ file it added unchanged.
 - **Each test fails at base on an assertion**, shown by running it through the suite's command
   while the product code is still the base commit's.
 - **The tests are one commit of their own on the work branch**, never on the base branch.
-- **Your runs never write to the owner's `mt` usage log.** Every manual run of `mt`, and every run
-  of a script or test that may call it, sets `MT_LOG` and `XDG_STATE_HOME` to scratch locations on
-  its own command line. Loading your guides with the installed `mt get` is not such a run; it
-  stays logged. Workaround for `mt` logging every run to the owner's usage log, with no way to tell
-  a development or test run from a use; remove when `mt` keeps such runs out of that log itself.
 
 ## Tools
 

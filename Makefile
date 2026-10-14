@@ -118,7 +118,7 @@ path:
 # Removes only links into this clone, and links in Claude Code's folder to a stub in SKILLS_DIR, so
 # a skill or mt installed some other way stays. With ~/.agents/skills gone, a link in Claude Code's
 # folder to a skill there is removed too, since it no longer leads anywhere. Leaves Bun, the clone
-# and its node_modules, your shell profile and mt's usage log.
+# and its node_modules, and your shell profile.
 uninstall:
 	@if [ "$$(readlink "$(BIN_DIR)/mt")" = "$(REPO)/cli/mt" ]; then rm "$(BIN_DIR)/mt"; echo "removed $(BIN_DIR)/mt"; fi
 	@$(STUB_LINK); \

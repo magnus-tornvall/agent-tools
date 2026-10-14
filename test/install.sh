@@ -116,7 +116,7 @@ check "with no ~/.agents, every stub that has a guide is linked straight into ~/
 [ -e "$H/.agents" ] && fail "install created ~/.agents"
 check "with no ~/.agents, install does not create it"
 assert_eq "commit is linked to the clone" "$ROOT/skills/commit" "$(readlink "$H/.claude/skills/commit")"
-out=$(MT_LOG=$TMP/usage.jsonl XDG_STATE_HOME=$TMP/state HOME=$H "$H/.local/bin/mt" get commit); rc=$?
+out=$(HOME=$H "$H/.local/bin/mt" get commit); rc=$?
 assert_eq "mt get commit exits 0" 0 "$rc"
 assert_eq "mt get commit prints the commit guide" "$(cat "$ROOT/guides/commit.md")" "$out"
 [ -L "$H/.claude/skills/worker" ] && fail "worker is linked, but it has no stub"
@@ -324,7 +324,7 @@ assert_contains "the earlier deny rules are asked about again while they are the
   "remove Bash(mt oracle:*), Bash(mt get oracle:*) from permissions.deny?"
 assert_eq "accepting the removal exits 0" 0 "$rc"
 assert_eq "both earlier deny rules are gone, the owner's stays" "Bash(rm:*)" "$(deny_list "$H/.claude/settings.json")"
-out=$(MT_LOG=$TMP/usage.jsonl XDG_STATE_HOME=$TMP/state HOME=$H "$H/.local/bin/mt" get oracle); rc=$?
+out=$(HOME=$H "$H/.local/bin/mt" get oracle); rc=$?
 assert_eq "mt get oracle exits 0" 0 "$rc"
 assert_eq "mt get oracle prints the oracle guide" "$(cat "$ROOT/guides/oracle.md")" "$out"
 

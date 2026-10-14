@@ -26,7 +26,7 @@ Fixed: changing it is the owner's call.
 - **Every surprise that is not a door is found**: work beyond the outcome, a different mechanism
   than the decisions chose, code that does not read like the code around it.
 - **What the merge does where the tools are already installed is considered**: links into skill
-  folders, what must be on PATH, the usage log.
+  folders and what must be on PATH.
 
 ## Report
 

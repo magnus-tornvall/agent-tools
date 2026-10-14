@@ -3,18 +3,17 @@
  * install builds from them. The README's contract for each command states the same class.
  *
  *   read-only     reads files and prints; writes nothing
- *   local write   writes on this machine only, such as the usage log
  *   network       reaches off this machine, such as `mt update` fetching from the clone's origin
  *
  * Every command is allowed, and Claude Code asks before an agent runs one that reaches off this
  * machine.
  */
 
-export type SideEffect = "read-only" | "local write" | "network";
+export type SideEffect = "read-only" | "network";
 
 /** Each command as its words after `mt`, the way its usage line names it. */
 export const COMMANDS: Readonly<Record<string, SideEffect>> = {
-  get: "local write",
+  get: "read-only",
   list: "read-only",
   "shape check": "read-only",
   "shape slice": "read-only",

@@ -1,10 +1,9 @@
 #!/usr/bin/env bun
-// mt: load the know-how of the owner's tools on demand, record every load, check and slice shapes,
-// print the owner's config, and update the clone it runs from. get, list and update
-// need nothing beyond this file; shape and config load src/shape/ and src/config/ only when they
-// are called.
+// mt: load the know-how of the owner's tools on demand, check and slice shapes, print the owner's
+// config, and update the clone it runs from. get, list and update need nothing beyond this file;
+// shape and config load src/shape/ and src/config/ only when they are called.
 
-import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, realpathSync, statSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 
 const USAGE = `usage: mt get <tool> [--ref <ref>]   print the guide for a tool, or one of its references
@@ -18,7 +17,6 @@ const USAGE = `usage: mt get <tool> [--ref <ref>]   print the guide for a tool, 
                                      checked out to origin's main, and run make install
        mt --help                     show this usage
 
-Every \`get\` is appended to $MT_LOG, or \${XDG_STATE_HOME:-$HOME/.local/state}/mt/usage.jsonl.
 The owner's config is \${XDG_CONFIG_HOME:-$HOME/.config}/mt/config.toml; mt only reads it.
 `;
 
@@ -30,37 +28,6 @@ class UsageError extends Error {}
 
 function isFile(path: string): boolean {
   return existsSync(path) && statSync(path).isFile();
-}
-
-function nonEmpty(value: string | undefined): string | null {
-  return value ? value : null;
-}
-
-function headCommit(): string | null {
-  if (Bun.which("git") === null) return null;
-  const result = Bun.spawnSync(["git", "-C", ROOT, "rev-parse", "HEAD"], { stderr: "ignore" });
-  return result.success ? nonEmpty(result.stdout.toString().trim()) : null;
-}
-
-function logGet(tool: string, ref: string, found: boolean): void {
-  const env = process.env;
-  const log = env.MT_LOG || join(env.XDG_STATE_HOME || join(env.HOME ?? "", ".local/state"), "mt/usage.jsonl");
-  const entry = {
-    time: new Date().toISOString().replace(/\.\d{3}Z$/, "Z"),
-    tool,
-    ref: nonEmpty(ref),
-    found,
-    commit: headCommit(),
-    session: nonEmpty(env.CLAUDE_CODE_SESSION_ID),
-    terminal: nonEmpty(env.ORCA_TERMINAL_HANDLE),
-    worktree: nonEmpty(env.ORCA_WORKTREE_ID),
-  };
-  try {
-    mkdirSync(dirname(log), { recursive: true });
-    appendFileSync(log, `${JSON.stringify(entry)}\n`);
-  } catch {
-    process.stderr.write(`mt: could not write usage log ${log}\n`);
-  }
 }
 
 function validName(name: string): boolean {
@@ -94,12 +61,10 @@ function cmdGet(args: string[]): number {
   }
 
   if (file !== "" && isFile(file)) {
-    logGet(tool, ref, true);
     process.stdout.write(readFileSync(file));
     return 0;
   }
 
-  logGet(tool, ref, false);
   if (haveRef) process.stderr.write(`mt: no reference '${ref}' for tool '${tool}'. Run 'mt list' to see the tools.\n`);
   else process.stderr.write(`mt: no guide for tool '${tool}'. Run 'mt list' to see the tools.\n`);
   return 1;

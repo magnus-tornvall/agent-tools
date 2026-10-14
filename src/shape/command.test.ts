@@ -37,12 +37,12 @@ function file(contents: string): string {
 }
 
 function mt(...args: string[]) {
-  const result = Bun.spawnSync([MT, ...args], { env: { ...process.env, MT_LOG: join(TMP, "usage.jsonl") } });
+  const result = Bun.spawnSync([MT, ...args]);
   return { code: result.exitCode, stdout: result.stdout.toString(), stderr: result.stderr.toString() };
 }
 
 function mtWith(stdin: string, ...args: string[]) {
-  const result = Bun.spawnSync([MT, ...args], { env: { ...process.env, MT_LOG: join(TMP, "usage.jsonl") }, stdin: Buffer.from(stdin) });
+  const result = Bun.spawnSync([MT, ...args], { stdin: Buffer.from(stdin) });
   return { code: result.exitCode, stdout: result.stdout.toString(), stderr: result.stderr.toString() };
 }
 

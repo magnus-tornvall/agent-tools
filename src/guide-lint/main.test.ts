@@ -1,5 +1,5 @@
 import { afterAll, beforeEach, describe, expect, test } from "bun:test";
-import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -9,9 +9,6 @@ const TMP = mkdtempSync(join(tmpdir(), "guide-lint-"));
 const FIX = join(TMP, "repo");
 const WITH_ORCA = join(TMP, "with-orca");
 const NO_ORCA = join(TMP, "no-orca");
-const OWNER_LOG = join(TMP, "owner.jsonl");
-const STATE = join(TMP, "state");
-const DEFAULT_LOG = join(STATE, "mt", "usage.jsonl");
 
 afterAll(() => rmSync(TMP, { recursive: true, force: true }));
 
@@ -72,24 +69,15 @@ function fixture(): void {
   );
 }
 
-function lineCount(path: string): number {
-  return readFileSync(path, "utf8").split("\n").length - 1;
-}
-
-/** Runs guide-lint on the fixture with only `pathDir` on PATH, the owner's log at MT_LOG and at its default path. */
-function lint(pathDir: string, { mtLog = true } = {}) {
-  const env: Record<string, string> = { PATH: pathDir, HOME: TMP, XDG_STATE_HOME: STATE };
-  if (mtLog) env.MT_LOG = OWNER_LOG;
-  const result = Bun.spawnSync([process.execPath, MAIN, FIX], { env, stdin: "ignore" });
+/** Runs guide-lint on the fixture with only `pathDir` on PATH. */
+function lint(pathDir: string) {
+  const result = Bun.spawnSync([process.execPath, MAIN, FIX], { env: { PATH: pathDir, HOME: TMP }, stdin: "ignore" });
   return { status: result.exitCode, out: result.stdout.toString() + result.stderr.toString() };
 }
 
 beforeEach(() => {
   mkdirSync(WITH_ORCA, { recursive: true });
   mkdirSync(NO_ORCA, { recursive: true });
-  mkdirSync(join(STATE, "mt"), { recursive: true });
-  writeFileSync(DEFAULT_LOG, "{}\n{}\n{}\n");
-  writeFileSync(OWNER_LOG, "{}\n{}\n");
   fakeOrca([WORKER_LIST, RUN_CREATE, ASK, SKILLS_GET]);
   fixture();
 });
@@ -306,18 +294,5 @@ describe("the Orca schema version", () => {
     const { status, out } = lint(WITH_ORCA);
     expect(status).toBe(1);
     expect(out).toBe("guide-lint: `orca agent-context --json` exited 3: boom\n");
-  });
-});
-
-describe("the usage log", () => {
-  test("keeps its lines at MT_LOG and at its default path", () => {
-    expect(lint(WITH_ORCA).status).toBe(0);
-    expect(lineCount(OWNER_LOG)).toBe(2);
-    expect(lineCount(DEFAULT_LOG)).toBe(3);
-  });
-
-  test("keeps the default path's lines when MT_LOG is unset", () => {
-    expect(lint(WITH_ORCA, { mtLog: false }).status).toBe(0);
-    expect(lineCount(DEFAULT_LOG)).toBe(3);
   });
 });
