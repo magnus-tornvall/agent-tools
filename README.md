@@ -66,10 +66,11 @@ except that `mt get mvc --ref example` prints `src/shape/example.yaml`. An unkno
 Each command's contract: its purpose, what it takes, what it prints, how it exits, and its
 side-effect class. A class is read-only, which reads and prints and writes nothing, or network,
 which reaches off this machine. The classes are declared once in `src/install/side-effects.ts`. The
-one allow rule `Bash(mt:*)` covers every command, and an ask rule per network command, `Bash(mt
-update:*)`, makes Claude Code ask before an agent runs it (see Install). Every usage error prints
-`mt: <reason>` and a usage on stderr, nothing on stdout, and exits 2. Only `mt config` reads the
-owner's config (see Config); every other command behaves the same whatever the config holds.
+one allow rule `Bash(mt:*)` covers every command, and an ask rule per network command,
+`Bash(mt update:*)`, makes Claude Code ask before an agent runs it (see Install). Every usage
+error prints `mt: <reason>` and a usage on stderr, nothing on stdout, and exits 2. Only
+`mt config` reads the owner's config (see Config); every other command behaves the same whatever
+the config holds.
 
 **`mt get <tool> [--ref <ref>]`**, read-only. Prints a tool's guide, `guides/<tool>.md`, or one
 of its references, `guides/<tool>/<ref>.md`, on stdout and exits 0. A tool or ref with no such
