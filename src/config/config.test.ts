@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
 const MT = new URL("../../cli/mt", import.meta.url).pathname;
-const EXAMPLE = readFileSync(new URL("../../guides/mvc/example.md", import.meta.url).pathname, "utf8");
+const EXAMPLE = readFileSync(new URL("../shape/example.yaml", import.meta.url).pathname, "utf8");
 const TMP = realpathSync(mkdtempSync(join(tmpdir(), "mt-config-")));
 const HOME = join(TMP, "home");
 const CONFIG_HOME = join(TMP, "config");

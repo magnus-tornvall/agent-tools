@@ -63,12 +63,12 @@ function fixture(): void {
     "---\ndescription: Settle a shape.\n---\n\nRun `mt get mvc` and follow what it prints.\n",
   );
   write(
-    join(FIX, "guides", "to-orca.md"),
-    "# to-orca\n\nA worker runs `mt get <name>` and `mt list`; read `orca skills get orchestration`.\n",
+    join(FIX, "guides", "coordinate.md"),
+    "# coordinate\n\nA worker runs `mt get <name>` and `mt list`; read `orca skills get orchestration`.\n",
   );
   write(
-    join(FIX, "guides", "to-orca", "overlay.md"),
-    "# overlay\n\n- `orca orchestration worker-list --terminal-state reclaimable` misses one;\n  `orca orchestration run-create` moves it.\n- Ask with `orca orchestration ask --options`, in the group `orca orchestration`.\n",
+    join(FIX, "guides", "coordinate", "orca.md"),
+    "# coordinate: Orca\n\n- `orca orchestration worker-list --terminal-state reclaimable` misses one;\n  `orca orchestration run-create` moves it.\n- Ask with `orca orchestration ask --options`, in the group `orca orchestration`.\n",
   );
 }
 
@@ -222,7 +222,7 @@ describe("Orca mentions", () => {
     const { status, out } = lint(WITH_ORCA);
     expect(status).toBe(1);
     expect(out).toBe(
-      "guides/to-orca/overlay.md:3: `orca orchestration worker-list --terminal-state reclaimable`: orca orchestration worker-list has no flag --terminal-state\n",
+      "guides/coordinate/orca.md:3: `orca orchestration worker-list --terminal-state reclaimable`: orca orchestration worker-list has no flag --terminal-state\n",
     );
   });
 
@@ -230,14 +230,14 @@ describe("Orca mentions", () => {
     fakeOrca([WORKER_LIST, ASK, SKILLS_GET]);
     const { status, out } = lint(WITH_ORCA);
     expect(status).toBe(1);
-    expect(out).toBe("guides/to-orca/overlay.md:4: `orca orchestration run-create`: orca has no command 'orchestration run-create'\n");
+    expect(out).toBe("guides/coordinate/orca.md:4: `orca orchestration run-create`: orca has no command 'orchestration run-create'\n");
   });
 
   test("checks --options inside orca orchestration ask --options", () => {
     fakeOrca([WORKER_LIST, RUN_CREATE, { ...ASK, flags: ["help"] }, SKILLS_GET]);
     const { status, out } = lint(WITH_ORCA);
     expect(status).toBe(1);
-    expect(out).toBe("guides/to-orca/overlay.md:5: `orca orchestration ask --options`: orca orchestration ask has no flag --options\n");
+    expect(out).toBe("guides/coordinate/orca.md:5: `orca orchestration ask --options`: orca orchestration ask has no flag --options\n");
   });
 
   test("fails a mention that opens with a flag, telling the author how to write it", () => {

@@ -3,7 +3,7 @@
 Domain: Verification. Judges a change on its branch from one perspective, so that the work is
 weighed by someone other than whoever made it, against something other than its maker's account of
 it. Each perspective is a reference to this guide: `coverage` judges whether the branch does what
-the shape says, `maintainer` whether a maintainer of the repo would merge it, and `surprise` what
+the intent says, `maintainer` whether a maintainer of the repo would merge it, and `surprise` what
 the owner would not expect on it. This guide holds what every perspective shares; a perspective's
 reference holds what it is given, what it withholds and what it judges. It reads no config.
 
@@ -13,10 +13,10 @@ reference holds what it is given, what it withholds and what it judges. It reads
   A judge after fixes runs in a fresh context, never one that judged the work before them, so an
   earlier verdict does not anchor the next. Fixed: changing it is the owner's call.
 - **Blinding.** What a judge is given anchors it and it cannot unsee it, so it works from the
-  parts of the shape and the reports its perspective is given and never seeks out the parts it
+  parts of the intent and the reports its perspective is given and never seeks out what it
   withholds.
 - **Test oracle.** A verdict needs a source of the expected result that the work did not write:
-  the shape, the repo's own checks and conventions, what running the change shows. A maker's
+  the intent, the repo's own checks and conventions, what running the change shows. A maker's
   report says what was claimed, never that it holds.
 - **Goodhart's law.** A check that became the target can pass while what it stands for fails. A
   passing check is evidence only as far as it asserts what it stands for.
@@ -40,5 +40,5 @@ and what the repo's own checks and builds write.
 
 ## Report
 
-Besides what orca-worker asks: the findings, or none. A perspective's reference says what else its
-report holds.
+Besides what the worker guide asks: the findings, or none. A perspective's reference says what
+else its report holds.

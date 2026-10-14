@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
-// mt: load the know-how of the owner's tools on demand, record every load, check and slice shapes
-// and drafts, print the owner's config, and update the clone it runs from. get, list and update
+// mt: load the know-how of the owner's tools on demand, record every load, check and slice shapes,
+// print the owner's config, and update the clone it runs from. get, list and update
 // need nothing beyond this file; shape and config load src/shape/ and src/config/ only when they
 // are called.
 
@@ -9,9 +9,7 @@ import { basename, dirname, join } from "node:path";
 
 const USAGE = `usage: mt get <tool> [--ref <ref>]   print the guide for a tool, or one of its references
        mt list                       list every tool with when to use it
-       mt shape check [--draft] <file>
-                                     check that a file is a shape, or with --draft a draft;
-                                     - reads stdin
+       mt shape check <file>         check that a file is a shape; - reads stdin
        mt shape slice <file> --keys <key,...>
                                      print only those top-level keys of a shape; - reads stdin
        mt config [<key>]             print the config file's path and each key, binding or
@@ -25,6 +23,8 @@ The owner's config is \${XDG_CONFIG_HOME:-$HOME/.config}/mt/config.toml; mt only
 `;
 
 const ROOT = dirname(dirname(realpathSync(import.meta.path)));
+// The shape's example lives with its schema, not under guides/.
+const SHAPE_EXAMPLE = join(ROOT, "src/shape/example.yaml");
 
 class UsageError extends Error {}
 
@@ -89,6 +89,7 @@ function cmdGet(args: string[]): number {
   let file = "";
   if (validName(tool)) {
     if (!haveRef) file = join(ROOT, "guides", `${tool}.md`);
+    else if (tool === "mvc" && ref === "example") file = SHAPE_EXAMPLE;
     else if (validName(ref)) file = join(ROOT, "guides", tool, `${ref}.md`);
   }
 

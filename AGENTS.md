@@ -16,7 +16,7 @@ agent composes better.
 | Domain | Principles from |
 |---|---|
 | Intent | commander's intent, observable end state, MVP deletion test, non-goals |
-| Decision | reversibility (one-/two-way doors), value of information |
+| Decision | reversibility (one-/two-way doors), value of information, opportunity cost, pre-mortem |
 | Verification | test oracle, separation of duties, Goodhart's law, falsifiability |
 | Change | minimal change, root cause by the scientific method |
 | Evidence | source criticism, evidence hierarchy |
@@ -43,7 +43,7 @@ part. Only the owner changes a fixed rule.
 - **Acceptance obligations** hold on the final branch, fix commits included: the repo's checks
   pass; evidence is as strong as each requirement; no oracle is tampered, each file the oracle
   commit added unchanged; nothing in the diff would stop a maintainer merging; nothing surprises
-  the owner. Which Tasks meet them is composed. Home: the to-orca guide (`mt get to-orca`).
+  the owner. Which Tasks meet them is composed. Home: the coordinate guide (`mt get coordinate`).
 - **A separate actor per verification perspective**, so work is never judged by whoever made it,
   and a judge after fixes runs in a fresh context. Home: the verification guide
   (`mt get verification`).
@@ -52,12 +52,13 @@ part. Only the owner changes a fixed rule.
   (`mt get verification --ref <perspective>`).
 - **One-way doors go to the owner.** A one-way door is asked of whoever owns the decision.
   Home: the door-rule guide (`mt get door-rule`).
-- **Surprise review always runs**, on the final branch. Home: the to-orca guide. A judge separate
-  from the author is a principle (separation of duties); "always runs" is a workaround: workers
-  decide one-way doors
-  without asking, and the judge holding the least found the most (`docs/guides-behaviour.md`).
+- **Surprise review always runs**, on the final branch. Home: the coordinate guide. A judge
+  separate from the author is a principle (separation of duties); "always runs" is a workaround:
+  workers decide one-way doors without asking, and the judge holding the least found the most
+  (`docs/guides-behaviour.md`).
   Remove when Runs show workers no longer deciding one-way doors without asking, and the owner
   decides to remove it. A Run without such a door is not evidence.
+- **The oracle runs only when the owner opts in.** Home: the coordinate guide.
 - **The shape's format and validation.** Home: `mt`'s schema and examples, which `mt shape check`
   enforces in place of a mark. Principles for writing good intent belong to the mvc guide. Other
   parts name the shape's keys and never restate its structure or field rules.

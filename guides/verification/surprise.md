@@ -2,17 +2,17 @@
 
 Domain: Verification. Finds what the owner would not expect on the work branch, above all a one-way
 door decided without a question, and what a maintainer would not merge. It rests on separation of
-duties: the judge holds the intent and the record of decisions, not what the change was checked
+duties: the judge holds the end state and the record of decisions, not what the change was checked
 against, so it sees the branch as the owner will. And on reversibility: the door rule
 (`mt get door-rule`) says which decisions were the owner's to make. It reads the branch and runs
 none of the repo's code, so it can sit beside any Task; it edits nothing. It reads no config.
 
 ## Given and withheld
 
-- **Given** the shape's `outcome`, `purpose`, `non_goals`, `touchpoints` and `decisions`, the
-  owner's rulings, and the assumptions and questions from the change reports.
-- **Withheld** the shape's `requirements` and `constraints`, since a worker cannot unsee what
-  anchors it.
+- **Given** the end state, why it is wanted and what it excludes, and the record of decisions:
+  each choice and what it ruled out, the owner's rulings, the reports' assumptions and
+  questions.
+- **Withheld** what the change was checked against, its requirements and bounds.
 
 Fixed: changing it is the owner's call.
 

@@ -1,8 +1,8 @@
 # agent-tools
 
-Skills for agents working in Orca, and `mt`, which loads them on demand, checks and slices shapes
-and drafts, prints the owner's config, and updates its own clone. Install it with one line (see
-Install):
+Skills for agents working on the owner's platform, and `mt`, which loads them on demand, checks
+and slices shapes, prints the owner's config, and updates its own clone. Install it with one line
+(see Install):
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/magnus-tornvall/agent-tools/main/install.sh | bash
@@ -10,20 +10,15 @@ curl -fsSL https://raw.githubusercontent.com/magnus-tornvall/agent-tools/main/in
 
 ## The shape
 
-A shape is one YAML document: the outcome, optionally its `purpose`, why the outcome matters,
-requirements keyed `R1…`, non-goals keyed `N1…`, constraints keyed `C1…`, touchpoints, and
-decisions keyed `D1…`. Oracles are not part of it: they are tests in the repo, written as their
-own commit on the work branch (`mt get oracle`).
-The schema in `src/shape/shape.ts` is the contract: a shape is what `mt shape check`
-accepts, and `mt get mvc --ref example` prints a filled-in example.
+A shape is one YAML document: the outcome, its `purpose`, why the outcome matters, requirements
+keyed `R1…`, non-goals keyed `N1…`, constraints keyed `C1…`, and decisions keyed `D1…`.
+Oracles are not part of it: they are tests in the repo, written as their own commit on the work
+branch (`mt get oracle`). The schema in `src/shape/shape.ts` is the contract: a shape is what
+`mt shape check` accepts, and `mt get mvc --ref example` prints a filled-in example.
 
 Any producer whose shape passes `mt shape check` is a valid producer. mvc is one producer,
 not the contract.
 
-A draft is an unfinished shape: the same document with a top-level `draft` block holding the
-`commit` it was written at, if any, the round `budget`, the `rounds_spent`, and the `open`
-questions, each a `question` as it was asked with its `stance`. A draft is never a shape:
-`mt shape check` fails on the `draft` key, and `mt shape check --draft` checks the partial form.
 `mt` keeps no drafts and no shapes; whoever produces one stores it.
 
 ## mt
@@ -35,28 +30,26 @@ agent's skill list stays short, the guide enters context only when the tool is u
 load is logged.
 
 Every stub has a guide. A guide that only a spec or another guide loads has no stub:
-orca-worker; brief, which the ask, mvc and to-orca guides load to lay out every message to the
+worker; brief, which the ask, mvc and coordinate guides load to lay out every message to the
 owner; and the assignments change and verification, whose references are its judging
 perspectives coverage, maintainer and surprise.
 No agent chooses them, so a skill-list entry would only cost the sessions that never use them;
 `mt get` serves them like any other guide. The oracle guide has no stub either: an oracle Task runs
 only when the owner opts in. Stubs remain for
-what an agent or the owner picks: mvc, which settles a shape with the owner, to-orca, which runs a
-change through Orca from a shape, an issue or prose, ask, which composes a question for whoever owns
-a decision, door-rule, which says whether a decision is asked at all, debugging, which finds the
-root cause of an unexpected failure before it is fixed, commit, which stages, writes and pushes
-commits as the session's destination allows, and research, which answers the owner's question from
-trusted outside sources; only the owner starts it, by typing `/research`. `mt list` shows every
-guide.
+what an agent or the owner picks: mvc, which settles a shape with the owner, coordinate, which runs
+a change unattended, on the platform the request or session names, from a shape, an issue or
+prose, ask, which composes a question for whoever owns a decision, door-rule, which says whether a
+decision is asked at all, debugging, which finds the root cause of an unexpected failure before it
+is fixed, commit, which stages, writes and pushes commits as the session's destination allows, and
+research, which answers the owner's question from trusted outside sources; only the owner starts
+it, by typing `/research`. `mt list` shows every guide.
 
 ```
 mt list                       every guide, once, with its stub's description, or the
                               guide's first paragraph when it has no stub
 mt get <name>                 print the tool's guide, and log the load
 mt get <name> [--ref <ref>]   print one of the tool's references instead, and log the ref
-mt shape check [--draft] <file>
-                              check that a file is a shape, or with --draft a draft;
-                              - reads stdin
+mt shape check <file>         check that a file is a shape; - reads stdin
 mt shape slice <file> --keys <key,...>
                               print the shape with only those top-level keys; - reads stdin
 mt config [<key>]             print the owner's config, or one key's value
@@ -65,9 +58,9 @@ mt update                     move this clone forward along the channel it has c
 mt --help                     print the usage
 ```
 
-A reference is a file under `guides/<name>/<ref>.md`, for example
-`mt get to-orca --ref overlay`. An unknown tool or ref exits 1 with a message on stderr;
-the attempt is still logged, with `found` false.
+A reference is a file under `guides/<name>/<ref>.md`, for example `mt get coordinate --ref orca`,
+except that `mt get mvc --ref example` prints `src/shape/example.yaml`. An unknown tool or ref exits
+1 with a message on stderr; the attempt is still logged, with `found` false.
 
 ### Contracts
 
@@ -92,10 +85,10 @@ exit code.
 columns, then its stub's description, or its first paragraph when it has no stub, and exits 0.
 Words after `list` are ignored.
 
-**`mt shape check [--draft] <file>`**, read-only. Takes a file, or `-` for stdin. Prints nothing
-and exits 0 when it is a shape, or with `--draft` a draft. A file that cannot be read, or is not
-one, prints a line on stderr per violation, or the reason it cannot be read, and exits 1. No file,
-two files or an unknown option exits 2. See Shapes.
+**`mt shape check <file>`**, read-only. Takes a file, or `-` for stdin. Prints nothing and exits 0
+when it is a shape. A file that cannot be read, or is not one, prints a line on stderr per
+violation, or the reason it cannot be read, and exits 1. No file, two files or an unknown option
+exits 2. See Shapes.
 
 **`mt shape slice <file> --keys <key,...>`**, read-only. Takes a file, or `-` for stdin, and the
 top-level keys to keep. Prints those keys as YAML on stdout and exits 0. A key the schema does not
@@ -148,14 +141,11 @@ If the log cannot be written, `mt` says so on stderr and still prints the guide.
 
 ### Shapes
 
-`mt shape check <file>` prints nothing and exits 0 when the file is a shape. Otherwise it
-prints one `path: message` line per violation on stderr and exits 1; a file that is not YAML
-is one violation, on `(document)`, and a `draft` key is one on `draft`. With `--draft` it
-checks a draft instead: the `draft` block is required and checked, and every other key is
-optional but checked when present, `requirements` with no minimum. A key repeated in
-`requirements`, `non_goals`, `constraints` or `decisions` is a violation on that key, found in
-block-style maps; YAML keeps only the last of a repeated key, so without this one entry would be
-dropped silently.
+`mt shape check <file>` prints nothing and exits 0 when the file is a shape. Otherwise it prints one
+`path: message` line per violation on stderr and exits 1; a file that is not YAML is one violation,
+on `(document)`. A key repeated in `requirements`, `non_goals`, `constraints` or `decisions` is a
+violation on that key, found in block-style maps; YAML keeps only the last of a repeated key, so
+without this one entry would be dropped silently.
 
 `mt shape slice <file> --keys outcome,non_goals` prints a YAML document with only those
 top-level keys of the shape, their values unchanged. A key the schema does not define, or a
@@ -176,20 +166,20 @@ holds, at `${XDG_CONFIG_HOME:-$HOME/.config}/mt/config.toml`. `mt --help` names 
 and an agent proposes a change with evidence. There is one file per user and no per-repo override.
 The owner's explicit choice for a Run beats it.
 
-| key                 | kind     | value                                                         |
-| ------------------- | -------- | ------------------------------------------------------------- |
-| `agents`            | binding  | the Orca agents unattended work may run on, a non-empty list  |
-| `fix_rounds`        | binding  | fix rounds before the owner gets a finding, an integer from 0 |
+| key                 | kind     | value                                                                  |
+| ------------------- | -------- | ---------------------------------------------------------------------- |
+| `agents`            | binding  | the agents a Task on the owner's platform may run on, a non-empty list |
+| `fix_rounds`        | binding  | fix rounds before the owner gets a finding, an integer from 0          |
 
 A TOML float with an integer value, such as `fix_rounds = 2.0`, counts as that integer, since
 `Bun.TOML.parse` cannot tell them apart. `Bun.TOML.parse` also reads some values that are not
 valid TOML as numbers: `-foo`, `+inf`, `-inf` and `-nan` as 0, `.7` as 0.7 and `07` as 7. So
 `mt config` takes `fix_rounds = -foo` as a valid 0. The owner writes `fix_rounds` as a plain TOML
-number. `mt` checks that an agent name is well formed, not that Orca knows it, and a repeated name
-is allowed.
+number. `mt` checks that an agent name is well formed, not that the platform knows it, and a
+repeated name is allowed.
 
 No `mt` command reads `agents` or `fix_rounds`; whatever coordinates unattended work, such as the
-to-orca guide, reads them through `mt config <key>`. For example:
+coordinate guide, reads them through `mt config <key>`. For example:
 
 ```toml
 agents = ["claude"]
@@ -213,6 +203,11 @@ invalid in <path>: <why>` on stderr and exits 1, and a key `mt` does not know is
 exit 2.
 
 ### Install
+
+Install is for Claude Code: it links the stub skills where Claude Code finds them and adds `mt`'s
+rules to Claude Code's settings. `SKILLS_DIR` only changes where the stubs go, a folder you name
+instead of Claude Code's; the rest of install still runs, linking `mt` onto your PATH and offering
+to add its rules to Claude Code's settings.
 
 `mt` is TypeScript run by [Bun](https://bun.sh). Bun must be on the PATH that agents and Orca
 workers launch with, not only on your interactive shell's, or every `mt` command they run

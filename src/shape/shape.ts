@@ -2,9 +2,6 @@
  * The shape: the contract between whatever produces a shape and Orca. A user opts in by
  * producing one YAML document that conforms to `Shape`; mvc is one producer, not the contract.
  *
- * A draft is an unfinished shape: the same document with a top-level `draft` block. It is never
- * a shape; `Draft` checks it with every shape field optional.
- *
  * This schema is the one source of truth; `mt shape` uses it.
  */
 import { z } from "zod";
@@ -44,95 +41,35 @@ const NonGoal = z.strictObject({
   reason: Text,
 });
 
-const Decision = z
-  .strictObject({
-    decision: Text,
-    rejected: z.array(Text).min(1, "must name at least one rejected alternative"),
-    /** Evidence for the decision, never a bare question or assumption ID. */
-    provenance: Text,
-    door: z.enum(["one_way", "two_way"]),
-    /** `silence` when the decision was an assumption nobody corrected. */
-    decided_by: z.enum(["owner", "silence"]),
-  })
-  .superRefine((decision, context) => {
-    if (decision.door === "one_way" && decision.decided_by !== "owner") {
-      context.addIssue({ code: "custom", path: ["decided_by"], message: "must be owner when door is one_way" });
-    }
-  });
-
-/** A path relative to the repo root, with no empty, `.` or `..` segment. */
-function isRelativePath(path: string): boolean {
-  if (/\s/.test(path) || path.startsWith("/")) return false;
-  return path.split("/").every((segment) => segment !== "" && segment !== "." && segment !== "..");
-}
-
-/**
- * A path relative to the repo root, or `path:symbol`. A directory may end in `/`. The path is not
- * checked for existence.
- */
-export function isTouchpoint(touchpoint: string): boolean {
-  const colon = touchpoint.indexOf(":");
-  const path = colon === -1 ? touchpoint : touchpoint.slice(0, colon);
-  const symbol = colon === -1 ? undefined : touchpoint.slice(colon + 1);
-  if (symbol !== undefined && !/^\S+$/.test(symbol)) return false;
-  return isRelativePath(path.endsWith("/") ? path.slice(0, -1) : path);
-}
-
-const Touchpoint = z.string().refine(isTouchpoint, "must be a path relative to the repo root, or path:symbol");
-
-const Requirements = z.record(idKey("R"), Requirement).superRefine((requirements, context) => {
-  // A given that leans on another requirement passing makes one failure fail both. Only another
-  // requirement's key counts, so a word such as R2 in a domain name is read as one less often.
-  for (const [key, requirement] of Object.entries(requirements)) {
-    if (!("given" in requirement)) continue;
-    const named = [...requirement.given.matchAll(/\bR[1-9][0-9]*\b/g)].find(([id]) => id !== key && id in requirements);
-    if (named !== undefined) {
-      context.addIssue({ code: "custom", path: [key, "given"], message: `must set up its own state, not name ${named[0]}` });
-    }
-  }
+const Decision = z.strictObject({
+  decision: Text,
+  rejected: z.array(Text).min(1, "must name at least one rejected alternative"),
+  /** Evidence for the decision, never a bare question or assumption ID. */
+  provenance: Text,
+  door: z.enum(["one_way", "two_way"]),
 });
+
+const Requirements = z.record(idKey("R"), Requirement);
 
 export const Shape = z.strictObject({
   outcome: Text,
   /** Why the outcome matters, as the owner states it. It is no end state. */
-  purpose: Text.optional(),
+  purpose: Text,
   requirements: Requirements.refine((requirements) => Object.keys(requirements).length > 0, "must have at least one requirement"),
   non_goals: z.record(idKey("N"), NonGoal),
   constraints: z.record(idKey("C"), Text),
-  touchpoints: z.array(Touchpoint),
   decisions: z.record(idKey("D"), Decision),
 });
 
 export type Shape = z.infer<typeof Shape>;
 
-const Count = z.number().int().nonnegative();
-
-const OpenQuestion = z.strictObject({
-  /** The question as it was asked. */
-  question: Text,
-  /** The position put to the owner with it. */
-  stance: Text,
-});
-
-const DraftBlock = z.strictObject({
-  /** HEAD of the repo when the draft was written; without it, every cited file is read again. */
-  commit: Text.optional(),
-  budget: Count,
-  rounds_spent: Count,
-  open: z.array(OpenQuestion),
-});
-
-export const Draft = Shape.extend({ requirements: Requirements }).partial().extend({ draft: DraftBlock });
-
-export type Draft = z.infer<typeof Draft>;
-
-export const SHAPE_KEYS: readonly string[] = Draft.keyof().options;
+export const SHAPE_KEYS: readonly string[] = Shape.keyof().options;
 
 /** One way a document fails to be a shape. `path` is dotted, empty for the whole document. */
 export type Violation = { readonly path: string; readonly message: string };
 
-export type Parsed<T = Shape> =
-  | { readonly ok: true; readonly shape: T }
+export type Parsed =
+  | { readonly ok: true; readonly shape: Shape }
   | { readonly ok: false; readonly violations: readonly Violation[] };
 
 /** The document as a map, or the one violation that says why it is not. Only a YAML parse error is one. */
@@ -193,27 +130,14 @@ function repeatedKeys(yaml: string): Violation[] {
   return found.filter((violation, i) => found.findIndex((other) => other.path === violation.path) === i);
 }
 
-const NOT_A_SHAPE = "a draft is not a shape; check it with --draft";
-
-/** A shape. A document with a `draft` block fails on that key, whatever else it holds. */
 export function parseShape(yaml: string): Parsed {
   const parsed = parseDocument(yaml);
   if (!parsed.ok) return { ok: false, violations: [parsed.violation] };
-  const { draft, ...document } = parsed.document;
-  const result = checked(Shape, document, repeatedKeys(yaml));
-  if (draft === undefined) return result;
-  return { ok: false, violations: [{ path: "draft", message: NOT_A_SHAPE }, ...(result.ok ? [] : result.violations)] };
+  return checked(parsed.document, repeatedKeys(yaml));
 }
 
-/** A draft: its `draft` block, and whatever shape fields it has so far. */
-export function parseDraft(yaml: string): Parsed<Draft> {
-  const parsed = parseDocument(yaml);
-  if (!parsed.ok) return { ok: false, violations: [parsed.violation] };
-  return checked(Draft, parsed.document, repeatedKeys(yaml));
-}
-
-function checked<T>(schema: z.ZodType<T>, document: Record<string, unknown>, found: readonly Violation[]): Parsed<T> {
-  const result = schema.safeParse(document);
+function checked(document: Record<string, unknown>, found: readonly Violation[]): Parsed {
+  const result = Shape.safeParse(document);
   if (result.success && found.length === 0) return { ok: true, shape: result.data };
   const issues = result.success ? [] : result.error.issues.flatMap(violations);
   const unique = issues.filter((violation, i) => issues.findIndex((other) => other.path === violation.path) === i);

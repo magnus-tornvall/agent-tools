@@ -1,5 +1,5 @@
 outcome: A cancelled order carries the reason it was cancelled, and the nightly export ships it to finance.
-purpose: Finance reconciles every cancelled order by hand, asking support why it was cancelled.
+purpose: Finance reconciles cancelled orders from the nightly export instead of asking support why each was cancelled, so within a month of release support gets no question from finance about a cancellation.
 requirements:
   R1:
     given: order 812 is open
@@ -23,10 +23,6 @@ non_goals:
     reason: No operator has asked for it yet.
 constraints:
   C1: The export's column order does not change; cancel_reason is appended.
-touchpoints:
-  - app/Models/Order.php:cancel
-  - reports/OrderExport.php
-  - database/migrations/
 decisions:
   D1:
     decision: The reason is a nullable column on orders.
@@ -35,11 +31,16 @@ decisions:
       - Keeping the reason only in the event log
     provenance: Finance imports the nightly export by column position, and the event log is pruned after 90 days.
     door: one_way
-    decided_by: owner
   D3:
     decision: The API returns the reason as a plain string.
     rejected:
       - A reason code from a fixed list
     provenance: The operator's cancel form already sends free text.
     door: two_way
-    decided_by: silence
+  D4:
+    decision: Build it this quarter.
+    rejected:
+      - Doing nothing, leaving finance to ask support about every cancellation
+      - Deferring to next quarter, after the export moves to the new warehouse
+    provenance: Finance logs about six hours a week asking support about cancellations; the change costs the orders team about three developer days and one column to maintain, and the export move keeps its columns.
+    door: two_way

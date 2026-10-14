@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 const MT = new URL("../../cli/mt", import.meta.url).pathname;
-const EXAMPLE_FILE = new URL("../../guides/mvc/example.md", import.meta.url).pathname;
+const EXAMPLE_FILE = new URL("./example.yaml", import.meta.url).pathname;
 const EXAMPLE = readFileSync(EXAMPLE_FILE, "utf8");
 const TMP = mkdtempSync(join(tmpdir(), "mt-shape-"));
 
@@ -46,12 +46,6 @@ function mtWith(stdin: string, ...args: string[]) {
   return { code: result.exitCode, stdout: result.stdout.toString(), stderr: result.stderr.toString() };
 }
 
-/** The example made a draft: one open question, no requirements yet. */
-function draft(): Fields {
-  const { requirements: _requirements, ...rest } = example();
-  return { ...rest, draft: { commit: "21d46e6", budget: 3, rounds_spent: 1, open: [{ question: "Is a closed export emailed?", stance: "No; it is downloaded." }] } };
-}
-
 function check(shape: unknown) {
   return mt("shape", "check", file(Bun.YAML.stringify(shape, null, 2)));
 }
@@ -63,23 +57,6 @@ function stderrLines(stderr: string): string[] {
 describe("mt shape check", () => {
   test("prints nothing and exits 0 on a shape that follows the schema", () => {
     expect(mt("shape", "check", EXAMPLE_FILE)).toEqual({ code: 0, stdout: "", stderr: "" });
-  });
-
-  test("rejects a one_way decision decided by silence", () => {
-    const shape = example();
-    decision(shape, "D3").door = "one_way";
-
-    const result = check(shape);
-
-    expect(result.code).toBe(1);
-    expect(stderrLines(result.stderr)).toEqual(["decisions.D3.decided_by: must be owner when door is one_way"]);
-  });
-
-  test("rejects a touchpoint that is neither path nor path:symbol", () => {
-    const result = check({ ...example(), touchpoints: ["reports/OrderExport.php", "the export"] });
-
-    expect(result.code).toBe(1);
-    expect(stderrLines(result.stderr)).toEqual(["touchpoints.1: must be a path relative to the repo root, or path:symbol"]);
   });
 
   test("prints one path: message line per broken rule", () => {
@@ -143,6 +120,15 @@ describe("mt shape check", () => {
     ]);
   });
 
+  test("fails a shape without a purpose, on one line at purpose", () => {
+    const { purpose: _purpose, ...shape } = example();
+
+    const result = check(shape);
+
+    expect(result.code).toBe(1);
+    expect(stderrLines(result.stderr)).toEqual([expect.stringMatching(/^purpose: /)]);
+  });
+
   test("fails a shape whose purpose is empty, on one line at purpose", () => {
     const result = check({ ...example(), purpose: "" });
 
@@ -157,68 +143,36 @@ describe("mt shape check", () => {
     expect(stderrLines(result.stderr)).toEqual([expect.stringMatching(/^purpose: /)]);
   });
 
-  test("fails a shape with a top-level draft key, naming the key", () => {
-    const result = check({ ...example(), draft: { budget: 3, rounds_spent: 0, open: [] } });
+  test("names touchpoints, draft and decided_by as keys the schema does not define", () => {
+    const shape = example();
+    shape.touchpoints = ["reports/OrderExport.php"];
+    shape.draft = { budget: 3, rounds_spent: 0, open: [] };
+    decision(shape, "D1").decided_by = "owner";
+
+    const result = check(shape);
 
     expect(result.code).toBe(1);
-    expect(stderrLines(result.stderr)).toEqual(["draft: a draft is not a shape; check it with --draft"]);
+    expect(stderrLines(result.stderr).sort()).toEqual([
+      "decisions.D1.decided_by: not a key the schema defines",
+      "draft: not a key the schema defines",
+      "touchpoints: not a key the schema defines",
+    ]);
   });
 
-  test("fails a draft on its draft key alongside what it still lacks", () => {
-    const result = check(draft());
-
-    expect(result.code).toBe(1);
-    expect(stderrLines(result.stderr).sort()).toEqual(["draft: a draft is not a shape; check it with --draft", expect.stringMatching(/^requirements: /)]);
-  });
-});
-
-describe("mt shape check --draft", () => {
-  test("prints nothing and exits 0 on a draft with an open question and no requirements", () => {
-    expect(mt("shape", "check", "--draft", file(Bun.YAML.stringify(draft(), null, 2)))).toEqual({ code: 0, stdout: "", stderr: "" });
-  });
-
-  test("prints nothing and exits 0 on a draft with a purpose", () => {
-    const document = { ...draft(), purpose: "Finance reconciles cancelled orders by hand." };
-
-    expect(mt("shape", "check", "--draft", file(Bun.YAML.stringify(document, null, 2)))).toEqual({ code: 0, stdout: "", stderr: "" });
-  });
-
-  test("prints nothing and exits 0 on a draft without a purpose, as drafts were written before it", () => {
-    const { purpose: _purpose, ...document } = draft();
-
-    expect(mt("shape", "check", "--draft", file(Bun.YAML.stringify(document, null, 2)))).toEqual({ code: 0, stdout: "", stderr: "" });
-  });
-
-  test("takes --draft after the file, and the draft from stdin", () => {
-    expect(mtWith(Bun.YAML.stringify(draft(), null, 2), "shape", "check", "-", "--draft")).toEqual({ code: 0, stdout: "", stderr: "" });
-  });
-
-  test("fails a draft whose rounds_spent is not a number, at draft.rounds_spent", () => {
-    const document = draft();
-    fields(document.draft, "draft").rounds_spent = "one";
-
-    const result = mt("shape", "check", "--draft", file(Bun.YAML.stringify(document, null, 2)));
-
-    expect(result.code).toBe(1);
-    expect(result.stdout).toBe("");
-    expect(stderrLines(result.stderr)).toEqual([expect.stringMatching(/^draft\.rounds_spent: /)]);
-  });
-
-  test("checks every shape field the draft has", () => {
-    const document = draft();
-    decision(document, "D3").rejected = [];
-
-    const result = mt("shape", "check", "--draft", file(Bun.YAML.stringify(document, null, 2)));
-
-    expect(result.code).toBe(1);
-    expect(stderrLines(result.stderr)).toEqual(["decisions.D3.rejected: must name at least one rejected alternative"]);
-  });
-
-  test("fails a closed shape, which has no draft block", () => {
+  test("--draft is an unknown argument, and the usage no longer lists it", () => {
     const result = mt("shape", "check", "--draft", EXAMPLE_FILE);
 
-    expect(result.code).toBe(1);
-    expect(stderrLines(result.stderr)).toEqual([expect.stringMatching(/^draft: /)]);
+    expect(result.code).toBe(2);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).toContain("unknown option '--draft'");
+    expect(mt("--help").stdout).not.toContain("--draft");
+  });
+
+  test("prints nothing and exits 0 when one requirement's given names another's key", () => {
+    const shape = example();
+    fields(fields(shape.requirements, "requirements").R2, "R2").given = "R1 passed and order 812 was cancelled";
+
+    expect(check(shape)).toEqual({ code: 0, stdout: "", stderr: "" });
   });
 });
 
@@ -284,15 +238,6 @@ describe("mt shape slice", () => {
     expect(result.stderr).toBe("");
     const { outcome, non_goals } = example();
     expect(Bun.YAML.parse(result.stdout)).toEqual({ outcome, non_goals });
-  });
-
-  test("slices a draft's draft block", () => {
-    const document = draft();
-
-    const result = mtWith(Bun.YAML.stringify(document, null, 2), "shape", "slice", "-", "--keys", "draft");
-
-    expect(result.code).toBe(0);
-    expect(Bun.YAML.parse(result.stdout)).toEqual({ draft: document.draft });
   });
 
   test("exits 2 with usage without --keys or a file", () => {
