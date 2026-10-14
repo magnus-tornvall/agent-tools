@@ -36,12 +36,12 @@ No agent chooses them, so a skill-list entry would only cost the sessions that n
 `mt get` serves them like any other guide. The oracle guide has no stub either: an oracle Task runs
 only when the owner opts in. Stubs remain for
 what an agent or the owner picks: mvc, which settles a shape with the owner, coordinate, which runs
-a change through Orca from a shape, an issue or prose, ask, which composes a question for whoever owns
-a decision, door-rule, which says whether a decision is asked at all, debugging, which finds the
-root cause of an unexpected failure before it is fixed, commit, which stages, writes and pushes
-commits as the session's destination allows, and research, which answers the owner's question from
-trusted outside sources; only the owner starts it, by typing `/research`. `mt list` shows every
-guide.
+a change unattended, through the platform the owner's instructions name, from a shape, an issue or
+prose, ask, which composes a question for whoever owns a decision, door-rule, which says whether a
+decision is asked at all, debugging, which finds the root cause of an unexpected failure before it
+is fixed, commit, which stages, writes and pushes commits as the session's destination allows, and
+research, which answers the owner's question from trusted outside sources; only the owner starts
+it, by typing `/research`. `mt list` shows every guide.
 
 ```
 mt list                       every guide, once, with its stub's description, or the
@@ -202,6 +202,10 @@ invalid in <path>: <why>` on stderr and exits 1, and a key `mt` does not know is
 exit 2.
 
 ### Install
+
+Install is for Claude Code: it links the stub skills where Claude Code finds them and adds `mt`'s
+rules to Claude Code's settings. For another agent it only links the stubs into a folder you name
+with `SKILLS_DIR`.
 
 `mt` is TypeScript run by [Bun](https://bun.sh). Bun must be on the PATH that agents and Orca
 workers launch with, not only on your interactive shell's, or every `mt` command they run

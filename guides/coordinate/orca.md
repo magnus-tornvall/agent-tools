@@ -1,10 +1,86 @@
 # coordinate: Orca
 
-Domain: Coordination. What is known about Orca, and about `mt` as Orca workers run it, that Orca's
-orchestration skill does not say, each with the version or commit it was seen on, so that a
-coordinator does not learn it again mid-Run. It reads no config. Workaround for Orca's
-orchestration skill not saying these; remove each line when the skill says it or the tool no
-longer behaves so.
+Domain: Coordination. What a Run on Orca needs that the coordinate and worker guides leave to the
+platform's reference: the verbs a Run uses and what each takes, what every spec carries, and what
+is known about Orca, and about `mt` as Orca workers run it, that Orca's orchestration skill does
+not say, so that neither a coordinator nor a worker learns it again mid-Run. It reads no config.
+
+## Verbs
+
+Orca's orchestration skill (`orca skills get orchestration`) owns its verbs, the supervised loop,
+the Task lifecycle, and the Task-spec contract every spec follows: Target, Change, Constraints,
+Ownership, Observable acceptance. Every worker is an Orca Task. The verbs a Run leans on:
+
+- `orca orchestration worker-start` starts a Task from its `--spec` on one `--agent`, with its
+  `--model` and `--effort`. `--worktree` places it in the work's worktree, `current`, or a new
+  one, `new-child`, which needs `--name`.
+- The inbox and Task results, read with `orca orchestration check`, `orca orchestration inbox` and
+  `orca orchestration task-list`, are the Run's durable record; the findings and the hand-off are
+  rebuilt from them.
+- Decision gates, `orca orchestration gate-create` and `orca orchestration gate-resolve`, hold a
+  Task on an owner decision that blocks it.
+- `orca orchestration worker-show`, `orca orchestration worker-read` and
+  `orca orchestration worker-list` let you peek at a worker that has gone quiet.
+- A worker asks with `orca orchestration ask`, which blocks until `orca orchestration reply`
+  answers it by its message's ID, and reports with `orca orchestration send` of type
+  `worker_done`, taking `--outcome`, `--task-id`, `--dispatch-id` and the report as `--body`.
+  Orca's injected preamble names both.
+
+## Spec head
+
+A worker acts on its spec before it has read its guides, so every spec opens with these lines,
+`<n>`, `<title>` and `<assignment>` filled in:
+
+```
+T<n>: <title>
+Run `mt get worker` and `mt get <assignment>` before anything else.
+```
+
+A judge's spec, its `<assignment>` being `verification`, follows that with a line loading its own
+perspective's reference and no other, `coverage`, `maintainer` or `surprise`:
+
+```
+Run `mt get verification --ref <perspective>` too.
+```
+
+Its Constraints include `- Send no heartbeats, whatever the preamble asks.`
+
+## Coordinating
+
+- **Every worker whose report you accept stays live**, success or failure: kept with
+  `orca orchestration worker-retain`, never released, until the owner deletes its worktree in
+  Orca's UI.
+- **An empty wait is followed by a look at the live workers.** Workaround for Orca sending no
+  message for a worker parked on a prompt only a human can answer; remove when Orca reports one.
+- **Evidence that is not text is named by its path**, and the hand-off names each such file with
+  the Task worktree that holds it, so the owner can check it before removing that worktree.
+  Workaround for Orca's messages carrying only text and keeping no file a Task wrote; remove when a
+  message to the owner can carry a file that outlives its worktree.
+- **The hand-off says for each process left running whether deleting its worktree stops it, and
+  names each Task worktree that holds commits the destination lacks**, since teardown is the
+  owner's, in Orca's UI. Workaround for Orca removing a worktree's branch with it, as recorded
+  below for `orca worktree rm` and not yet observed for the UI; remove when Orca keeps or names
+  commits that only a removed worktree held.
+
+## Working
+
+- **The whole report is the `worker_done` body**, however short a body the preamble asks for:
+  Orca keeps the body on the Task, while a report file stays outside the Run's record.
+- **A long body is written to a file** with your file tool and passed as
+  `--body "$(cat <file>)"`, never as a heredoc inside `$(...)`: bash 3.2, still `/bin/bash` on
+  macOS, breaks that on an apostrophe. Workaround for Orca's send taking the body only as an
+  argument; remove when it reads the body from a file or stdin.
+- **No heartbeats are sent, whatever the preamble asks**, as the spec head says too: each wakes
+  the coordinator for nothing. Workaround for Orca's preamble asking every worker for heartbeats;
+  remove when it no longer asks, or a heartbeat no longer wakes the coordinator.
+- **Anything that must outlive one command starts with your Bash tool's background option**,
+  never `&`, `nohup` or `disown`. Workaround for closing an agent's terminal stopping only what the
+  agent's harness started; remove when closing it stops every process a Task started.
+
+## Known behaviour
+
+Each with the version or commit it was seen on. Workaround for Orca's orchestration skill not
+saying these; remove each line when the skill says it or the tool no longer behaves so.
 
 - `orca orchestration worker-start` has no permission flag. A `claude` worker launches with Orca's
   default arguments for that agent, the worktree's committed `.claude/settings.json` and the

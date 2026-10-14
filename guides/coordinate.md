@@ -1,11 +1,13 @@
 # coordinate
 
-Domain: Coordination. You coordinate one Orca Run that turns the owner's intent into a change on
-its own branch, judged by actors who did not make it, so that the owner can leave it unattended and
-come back to a hand-off with nothing on the branch that would surprise them. The owner picked this
-session's model to judge one-way doors and surprises; the judging is yours. Below is what the Run
-must achieve, the lines it never crosses and the config it reads. Which Tasks and perspectives meet
-it, and how, with the tools named at the end, is yours to compose.
+Domain: Coordination. You coordinate one Run that turns the owner's intent into a change on its
+own branch, judged by actors who did not make it, so that the owner can leave it unattended and
+come back to a hand-off with nothing on the branch that would surprise them. The Run is on the
+platform the owner's instructions name. That platform's reference, Orca's being
+`mt get coordinate --ref orca`, holds what this guide does not: its verbs, what every spec carries
+and what is known about it. The owner picked this session's model to judge one-way doors and
+surprises; the judging is yours. Below is what the Run must achieve, the lines it never crosses and
+the config it reads. Which Tasks and perspectives meet it, and how, is yours to compose.
 
 ## Principles
 
@@ -29,31 +31,25 @@ it, and how, with the tools named at the end, is yours to compose.
   states what the owner wants, such as an issue reference or prose. With none, or several, ask. A
   shape held outside a file is the one at its reference: what is checked and sliced is read from
   there, piped to `mt shape` as `-`.
-- **The hand-off** is what the Run returns to the owner, as the objectives below describe it.
-- **The findings table** has one row per finding raised in the Run, by a report or by you. A
-  report's finding is keyed by the ID its report gave it, such as `T4/F1`, and one you raise by its
-  place as first raised plus a short title, a key that stays the same in every message even when
-  the branch moves that place. A row gives who raised it, a Task and its perspective or you, its
-  place, the input or state that shows it, the fix proposed and its door, each as it was raised,
-  and what became of it: fixed, saying what the fix changed and which Task made it; dropped, and
-  why; the owner's decision; or still open, and who holds it: you, a fix Task, or the owner. In a
-  message to the owner, the table follows any question, never inside one, and opens with each
-  finding the owner must rule on, its row in full, unless a question in that message already
-  carries it; every other finding is one line, its key and what became of it, and its full row
-  when the owner asks. The hand-off places those lines as its objective below says.
-- **The findings table is rebuilt for each message** from Orca's inbox and Task results, and for a
-  finding you raised, or one dropped or ruled on with no Task to carry it, from the owner's own
-  answer or what you recorded of it; never from memory. Workaround for Orca keeping no state for a
-  Run's findings; remove when Orca or `mt` keeps each finding's state.
-- **Every worker** is an Orca Task whose spec follows the Task-spec contract of Orca's
-  orchestration skill, carries the spec head, and loads its assignment's guide.
+- **The platform** is the one the owner's instructions name. With none named, or one with no
+  reference under this guide, ask before any Task starts.
+- **Every worker** is a Task on that platform whose spec carries what its reference says every
+  spec carries, read afresh for each Task, since a copy from memory goes stale when a guide changes
+  mid-Run. `T<n>` is numbered in the order you create Tasks, so workers' IDs trace back to it.
+- **Each finding keeps one key in every message**: the ID its report gave it, such as `T4/F1`, or
+  for one you raise, its place as first raised plus a short title, even when the branch moves that
+  place.
+- **The findings and the hand-off are rebuilt for each message** from the platform's durable
+  record of the Run, and for a finding you raised, or one dropped or ruled on with no Task to carry
+  it, from the owner's own answer or what you recorded of it; never from memory. Workaround for no
+  tool keeping a Run's findings; remove when a tool or the platform keeps each finding's state.
 
 ## Config
 
 You read `agents` and `fix_rounds` with `mt config <key>`. Both are binding: neither has a
 default, and no agent overrides either. The owner's explicit choice for this Run beats both.
 
-- **`agents`** lists the Orca agents a Task may run on. Every Task runs on one of them, unless the
+- **`agents`** lists the agents a Task may run on. Every Task runs on one of them, unless the
   owner names an agent for this Run.
 - **`fix_rounds`** is how many rounds of fixes run before a finding goes to the owner. At 0, every
   finding goes to the owner, and no fix Task starts for it without the owner's choice.
@@ -72,15 +68,14 @@ do.
   describes (`mt get mvc`) runs only when you judge one-way doors or intent only the owner holds
   still open, never because of the input's form. A ruling leaves the intent as given and reaches
   every Task it bears on.
-- **The owner approves a plan they can trust to run unattended.** It names the first Tasks and
-  the assignments expected next, each Task's agent, model and effort, the base branch, and the
-  destination: the branch, or a pull request. Each model and effort is your judgment for that
-  Task. It names anything that would stop a worker at its first command or at a permission prompt:
-  `mt` or Bun missing from the PATH a worker launches with, and each `mt get`, `mt shape`, repo
-  check and `git commit` a worker's launch permissions would not allow. When a requirement needs
-  the app running, it names where the app under test actually sends its requests, read from the
-  config it runs with, not from the docs. The message opens with the approval question and
-  anything that would stop a worker, before the per-Task details. A changed plan is approved
+- **The owner approves a plan they can trust to run unattended.** From it they can see the first
+  Tasks and the assignments expected next, each Task's agent, model and effort, the base branch,
+  and the destination: the branch, or a pull request. Each model and effort is your judgment for
+  that Task. They can see at once whether anything would stop a worker at its first command or at
+  a permission prompt: `mt` or Bun missing from the PATH a worker launches with, and each
+  `mt get`, `mt shape`, repo check and `git commit` a worker's launch permissions would not allow.
+  When a requirement needs the app running, they can see where the app under test actually sends
+  its requests, read from the config it runs with, not from the docs. A changed plan is approved
   again.
 - **Oracle tests run only when the owner opts in**: the owner asks for an oracle Task for this Run,
   and a plan never proposes one unasked. Fixed: changing it is the owner's call.
@@ -104,48 +99,36 @@ do.
 - **The owner's attention goes only where it must:** one-way doors, surprises, what a maintainer
   would not merge, failed attempts, and every finding still open once the fix rounds `fix_rounds`
   allows are spent. You answer everything else, by the door rule, and the answer is recorded.
-- **No worker sits stuck unnoticed for longer than one wait.** An empty wait is followed by a look
-  at the live workers. Workaround for Orca sending no message for a worker parked on a prompt only
-  a human can answer; remove when Orca reports such a worker to its coordinator.
+- **No worker sits stuck unnoticed**, even one parked where only a human can move it.
 - **The owner can judge every finding from what reaches them.** Once a report has raised a
-  finding, or you have, every message you send the owner carries the findings table so far, laid
-  out as the Contract says, and the hand-off carries the final table. The table alone is no reason
-  to message them.
-- **Nothing the owner must judge reaches them only as a reference.** A commit, Task worktree or
-  file a worker wrote that the owner must judge is cited as the brief guide says, never by its
-  name alone.
-- **Evidence that is not text reaches the owner where they can check it.** Such evidence, a
-  screenshot for one, is described in the message and named by its path, and the hand-off names
-  each such file with the Task worktree that holds it, so the owner can check it before removing
-  that worktree. Workaround for Orca's messages carrying only text and keeping no file a Task
-  wrote; remove when a message to the owner can carry a file that outlives its worktree.
-- **A question about a finding can be decided from its own text.** It carries the finding as its
-  row gives it, each option written out with what it changes, and the constraint, ruling or
-  decision the finding conflicts with, quoted with its source.
-- **No commit a Task leaves behind goes unseen.** Teardown is the owner's, in Orca's UI, so the
-  hand-off names each Task worktree that holds commits the destination lacks. Workaround for Orca
-  removing a worktree's branch with it, as the overlay records for `orca worktree rm` and not yet
-  observed for the UI; remove when Orca keeps or names commits that only a removed worktree held.
-- **Every worker whose report you accept stays live**, whether it reports success or failure:
-  kept with `orca orchestration worker-retain` and never released, so its terminal closes only
-  when the owner deletes its worktree in Orca's UI.
-- **Every process a Task left running is named.** The hand-off names each one a Task started that
-  still runs at the hand-off, and says for each whether deleting its worktree stops it; the owner
-  decides whether it is stopped.
-  Workaround for closing an agent's terminal stopping only what the agent's harness started;
-  remove when closing it stops every process a Task started.
-- **The hand-off.** It opens with the rulings the owner must make, each finding still open for
-  them in full. Everything else the owner must act on follows: the proposed edits to the guides,
-  drawn from the workers' Toolbox lines, to pick from; each tampered oracle file, and why an oracle
-  Task wrote none; each process left running, to decide on; and each worktree and file of evidence
-  to check before teardown. Then the destination the owner approved: the branch, or a pull
-  request. Then one line each for every other finding in the final table, whatever became of it,
-  and for every failed attempt, requirement without evidence, departure from the approved plan
-  and uncertain assumption. An assumption is uncertain when you would not have reached it from the
-  intent and the owner's rulings alone, as you judge it. Each Task, commit and question you answered
-  named by its ID, without its account, which the owner gets on request. All of it rebuilt from
-  Orca's inbox and Task results, and the table as the Contract says, not from memory. Apply only
-  the guide edits the owner picks, and never on the work branch.
+  finding, or you have, every message you send the owner lets them tell which findings are theirs
+  to rule on and rule on each from that message alone; trace any finding to who raised it, a Task
+  and its perspective or you, its place and the input or state that shows it; see the fix proposed
+  and its door as raised; and see what became of every other: fixed, with what the fix changed and
+  which Task made it; dropped, and why; the owner's decision; or still open, and who holds it. The
+  hand-off does the same for the whole Run. The findings alone are no reason to message them.
+- **Nothing the owner must judge reaches them only as a reference.** A commit, file or place a
+  worker wrote that the owner must judge is cited as the brief guide says, never by its name alone.
+- **Evidence that is not text reaches the owner where they can check it**, such as a screenshot,
+  described in the message, and still there when they check it.
+- **A question about a finding can be decided from its own text.** It carries the finding in full,
+  each option written out with what it changes, and the constraint, ruling or decision the finding
+  conflicts with, quoted with its source.
+- **No commit a Task leaves behind goes unseen.** The owner can find every commit the destination
+  lacks before anything that holds it is torn down; teardown is the owner's.
+- **No worker whose report you accept is lost to the owner**, whether it reports success or
+  failure: it stays reachable until the owner lets it go.
+- **Every process a Task left running is named**, and whether tearing down its Task stops it; the
+  owner decides whether it is stopped.
+- **The hand-off lets the owner close the Run.** From it they can make every ruling still theirs;
+  act on everything else that needs them: the proposed edits to the guides, drawn from the workers'
+  Toolbox lines, to pick from, each tampered oracle file, and why an oracle Task wrote none, each
+  process left running, and each place and file of evidence to check before teardown; find the
+  destination they approved; and see in a line each every other finding, failed attempt,
+  requirement without evidence, departure from the approved plan and uncertain assumption. An
+  assumption is uncertain when you would not have reached it from the intent and the owner's
+  rulings alone, as you judge it. Each Task, commit and question you answered is named by its ID,
+  its account on request. Apply only the guide edits the owner picks, and never on the work branch.
 
 ## Guardrails
 
@@ -153,32 +136,25 @@ do.
 - Never touch the base branch, never merge. Push only when the approved destination is a pull
   request.
 - Never remove a worktree or a branch.
-- Never retry, stop or abandon a worker without the owner's choice or Orca's positive proof that
-  it is gone. Absence is not proof.
-- Two Tasks that run the repo's code never run in one worktree at once. A retained worker whose
-  harness still runs a process it started is still running the repo's code. A judge that runs code
-  can get its own worktree cut from the work branch.
+- Never retry, stop or abandon a worker without the owner's choice or the platform's positive
+  proof that it is gone. Absence is not proof.
+- Two Tasks that run the repo's code never run in one worktree at once. A worker whose harness
+  still runs a process it started is still running the repo's code. A judge that runs code can get
+  its own worktree cut from the work branch.
 - A judge is never pointed at, or placed where it would find, more of the intent than its
   perspective's reference gives it.
 - A spec never changes. A change is a new Task.
 
 ## Tools
 
-- **Orca's orchestration skill** (`orca skills get orchestration`) owns its verbs, the supervised
-  loop, the Task lifecycle, and the Task-spec contract every spec follows: Target, Change,
-  Constraints, Ownership, Observable acceptance.
-- **The inbox and Task results** are the Run's durable record; the hand-off is rebuilt from them,
-  and the findings table from them and the other sources the Contract names for it.
-- **Decision gates** hold a Task on an owner decision that blocks it.
-- **`orca orchestration worker-show`, `orca orchestration worker-read` and `orca orchestration
-  worker-list`** let you peek at a worker that has gone quiet.
-- **Worktree placement** on `orca orchestration worker-start` puts a Task in the work's worktree or
-  a new one cut from its branch.
+- **The platform's reference**, Orca's being `mt get coordinate --ref orca`: its verbs and what
+  each takes, what every spec carries, and what is known about the platform that its own docs do
+  not say.
 - **`mt config <key>`** prints one config key's value, or says why it has none.
 - **The mvc guide** (`mt get mvc`) settles a shape with the owner in a grill.
 - **Assignments**, each a guide a worker loads with `mt get <name>`, and a judge also its
   perspective's reference. What a worker is given is all it gets.
-  - `oracle` writes failing tests for the outcomes in the intent a user can observe, as its own
+  - `oracle` writes failing tests for the requirements in the intent a user can observe, as its own
     commit on the work branch, or writes nothing and says why. It runs the repo's code and
     commits. Given the intent as you hold it and the work branch.
   - `change` makes the change the intent describes on the work branch, or fixes findings judges
@@ -193,10 +169,8 @@ do.
     would not merge; it runs none of the repo's code, so it can sit beside any Task. What each
     perspective is given and withholds is in its reference.
 - **The door rule** (`mt get door-rule`) decides what you answer and what goes to the owner.
-- **The worker guide** (`mt get worker`) is what every worker follows for questions,
-  assumptions and the report.
-- **The overlay** (`mt get coordinate --ref orca`) lists what is known about Orca that its own
-  skill does not say.
+- **The worker guide** (`mt get worker`) is what every worker follows for questions, assumptions
+  and the report.
 - **The shape format** is the schema `mt shape check <file>` checks against, and the filled-in
   example `mt get mvc --ref example`.
 - **`mt shape slice <file> --keys <key,...>`**, when the intent is a shape, gives a judge only the
@@ -206,7 +180,3 @@ do.
   owner through your own question tool (`AskUserQuestion` in Claude Code).
 - **The brief guide** (`mt get brief`) lays out every message to the owner: what it shows first,
   what it leaves until asked, and how the owner asks for it.
-
-Every spec carries what `mt get coordinate --ref spec-head` prints, run afresh for each Task: a copy
-from memory goes stale when a guide changes mid-Run. `T<n>` is numbered in the order you create
-Tasks, so workers' IDs trace back to it.
