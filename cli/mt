@@ -1,7 +1,8 @@
 #!/usr/bin/env bun
-// mt: load the know-how of the owner's tools on demand, check and slice shapes, print the owner's
-// config, and update the clone it runs from. get, list and update need nothing beyond this file;
-// shape and config load src/shape/ and src/config/ only when they are called.
+// mt: load the know-how of the owner's tools on demand, check and slice shapes, check a Task
+// report's claims against the branch, print the owner's config, and update the clone it runs from.
+// get, list and update need nothing beyond this file; shape, report and config load src/shape/,
+// src/report/ and src/config/ only when they are called.
 
 import { existsSync, readdirSync, readFileSync, realpathSync, statSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
@@ -11,6 +12,9 @@ const USAGE = `usage: mt get <tool> [--ref <ref>]   print the guide for a tool, 
        mt shape check <file>         check that a file is a shape; - reads stdin
        mt shape slice <file> --keys <key,...>
                                      print only those top-level keys of a shape; - reads stdin
+       mt report check <file> --task <id> --base <ref>
+                                     print each claim of a Task report about changed files and
+                                     added tests that the branch does not bear out; - reads stdin
        mt config [<key>]             print the config file's path and each key, binding or
                                      advisory, with its value; or one key's value alone
        mt update                     move this clone to origin's newest release, or with main
@@ -143,6 +147,11 @@ async function cmdShape(args: string[]): Promise<number> {
   return runShape(args);
 }
 
+async function cmdReport(args: string[]): Promise<number> {
+  const { runReport }: typeof import("../src/report/command.ts") = await import(join(ROOT, "src/report/command.ts"));
+  return runReport(args);
+}
+
 async function cmdConfig(args: string[]): Promise<number> {
   const { runConfig }: typeof import("../src/config/config.ts") = await import(join(ROOT, "src/config/config.ts"));
   return runConfig(args);
@@ -260,6 +269,8 @@ async function main(args: string[]): Promise<number> {
       return cmdList();
     case "shape":
       return cmdShape(rest);
+    case "report":
+      return cmdReport(rest);
     case "config":
       return cmdConfig(rest);
     case "update":

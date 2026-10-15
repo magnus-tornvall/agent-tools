@@ -24,6 +24,7 @@ describe("side-effect classes", () => {
       list: "read-only",
       "shape check": "read-only",
       "shape slice": "read-only",
+      "report check": "read-only",
       config: "read-only",
       update: "network",
     });

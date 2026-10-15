@@ -1,8 +1,8 @@
 # agent-tools
 
 Skills for agents working on the owner's platform, and `mt`, which loads them on demand, checks
-and slices shapes, prints the owner's config, and updates its own clone. Install it with one line
-(see Install):
+and slices shapes, checks a Task report's claims against the branch, prints the owner's config, and
+updates its own clone. Install it with one line (see Install):
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/magnus-tornvall/agent-tools/main/install.sh | bash
@@ -51,6 +51,9 @@ mt get <name> [--ref <ref>]   print one of the tool's references instead
 mt shape check <file>         check that a file is a shape; - reads stdin
 mt shape slice <file> --keys <key,...>
                               print the shape with only those top-level keys; - reads stdin
+mt report check <file> --task <id> --base <ref>
+                              print each claim of a Task report about changed files and added
+                              tests that the branch does not bear out; - reads stdin
 mt config [<key>]             print the owner's config, or one key's value
 mt update                     move this clone forward along the channel it has checked out,
                               and run make install
@@ -91,6 +94,16 @@ top-level keys to keep. Prints those keys as YAML on stdout and exits 0. A key t
 define, a file that cannot be read, is not YAML or whose top level is not a map prints a line on
 stderr, nothing on stdout, and exits 1. No file, a second file, no `--keys` value or an unknown
 option exits 2.
+
+**`mt report check <file> --task <id> --base <ref>`**, read-only. Takes a Task report, or `-` for
+stdin, the Task's ID and the base ref, and checks the report's claim lines, `Changed: <path>` and
+`Added test: <path>::<name>`, against the worktree it runs in: the paths `git diff <ref>...HEAD`
+touches, and each claimed test file at `HEAD`. Prints one `<id>/F<m>: <what>` line on stdout per
+claimed path the diff does not touch, touched path no `Changed` line claims, and named test not
+found, numbered on after the report's own `<id>/F<k>` findings, and exits 1; with none, prints
+nothing and exits 0. A report it cannot read, or a base ref git does not know, prints one line on
+stderr and exits 1. No file, a missing `--task` or `--base` or an unknown option exits 2. Its
+contract is `src/report/PART.md`.
 
 **`mt config [<key>]`**, read-only. Prints the owner's config: the file's path, then one line per
 key. With a key, prints that key's value alone. Exits 0, 1 or 2 as Config says.
@@ -298,7 +311,8 @@ bun run typecheck
 worktree's files, and throwaway home folders, and needs `python3` and Bun's package cache to hold
 this repo's dependencies: it reaches no network, so `bun install` fails on a package the cache
 lacks.
-`src/install/PART.md` and `src/guide-lint/PART.md` hold the contracts of install and guide-lint.
+`src/install/PART.md`, `src/guide-lint/PART.md` and `src/report/PART.md` hold the contracts of
+install, guide-lint and `mt report check`.
 `test/guides.sh` is guide-lint, whose code is `src/guide-lint/`. It fails, one ``file:line:
 `mention`: reason`` line each, when a guide, stub skill or `AGENTS.md` mentions in backticks an `mt
 get` guide or reference that `mt get` no longer finds, an `mt` command its usage no longer lists, or
@@ -318,8 +332,8 @@ array, or a command without a string `command` and an array `path`), each as one
 one per mention.
 
 `bun test` runs guide-lint against fixture repos and a fake `orca`, and checks the shape
-schema and `mt shape`, `mt config` against a throwaway `XDG_CONFIG_HOME`, and that every command in
-`mt --help` has a side-effect class. `bun run typecheck` runs `tsc --noEmit` over `src/`; `tsc`
+schema and `mt shape`, `mt config` against a throwaway `XDG_CONFIG_HOME`, `mt report check`
+against a throwaway git repo, and that every command in `mt --help` has a side-effect class. `bun run typecheck` runs `tsc --noEmit` over `src/`; `tsc`
 cannot read `cli/mt`, which has no extension.
 
 ## Layout
@@ -332,9 +346,9 @@ install.sh
           the curl line's installer: clones the newest release and runs make install
 Makefile  make install and make uninstall
 src/      shape/, the shape schema and mt shape; config/, the owner's config and mt config;
-          install/, the side-effect classes and the settings rules; guide-lint/, the check
-          test/guides.sh runs; each with its tests, and install/ and guide-lint/ with their part,
-          PART.md
+          report/, mt report check; install/, the side-effect classes and the settings rules;
+          guide-lint/, the check test/guides.sh runs; each with its tests, and report/, install/
+          and guide-lint/ with their part, PART.md
 guides/   one guide per tool, <name>.md, with its references in <name>/<ref>.md
 skills/   a stub skill per guide an agent or the owner picks, <name>/SKILL.md, mvc and ask
           among them

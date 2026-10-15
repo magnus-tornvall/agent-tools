@@ -17,6 +17,7 @@ export const COMMANDS: Readonly<Record<string, SideEffect>> = {
   list: "read-only",
   "shape check": "read-only",
   "shape slice": "read-only",
+  "report check": "read-only",
   config: "read-only",
   update: "network",
 };
