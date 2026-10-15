@@ -99,10 +99,11 @@ do.
   Workaround for workers deciding one-way doors without asking; remove when Runs show they no
   longer do, and the owner decides to remove it.
 - **No report's claim about the branch is taken on its word.** Every report, judges' included,
-  has its claim lines checked by `mt report check` against the commits from its Task's start to
-  the commit it ended on, run before any later Task commits on the branch, and each finding it
-  prints joins the Run's findings under the key it prints. You keep the commit each Task starts
-  from for this. Workaround for Orca recording no Task's start or end commit; remove when it does.
+  has its claim lines checked by `mt report check` against the commits its own Task made on the
+  branch, and each finding it prints joins the Run's findings under the key it prints. A Task that
+  commits nothing, such as a judge, is checked at the commit the branch stands on when its report
+  arrives, so only its claims are tested. You keep the commit each Task starts from for this.
+  Workaround for Orca recording no Task's start or end commit; remove when it does.
 - **The owner's attention goes only where it must:** one-way doors, surprises, what a maintainer
   would not merge, failed attempts, and every finding still open once the fix rounds `fix_rounds`
   allows are spent. You answer everything else, by the door rule, and the answer is recorded.
