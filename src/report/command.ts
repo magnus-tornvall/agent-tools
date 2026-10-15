@@ -6,8 +6,9 @@
  *                       `<id>/F<m>: <what>: <claim>` line per mismatch on stdout and exit 1
  *
  * A file of `-` is read from stdin. The branch is the worktree it runs in, its HEAD diffed against
- * the base ref; a claimed test file is read from HEAD. An unreadable report or a base ref git does
- * not know exits 1 with one line on stderr. Usage errors exit 2.
+ * the base ref; a claimed test file is read from HEAD and from the merge base of the ref and HEAD.
+ * An unreadable report or a base ref git does not know exits 1 with one line on stderr. Usage
+ * errors exit 2.
  */
 import { readFileSync } from "node:fs";
 import { findings, testPaths } from "./check.ts";
@@ -33,20 +34,26 @@ function git(args: readonly string[]) {
   return Bun.spawnSync(["git", ...args]);
 }
 
-/** Each path `git diff <base>...HEAD` touches, a rename as both its paths. */
+/** Each path `git diff <base>...HEAD` touches from the repo root, a rename as both its paths. */
 function touched(base: string): string[] {
   const known = git(["rev-parse", "--verify", "--quiet", "--end-of-options", `${base}^{commit}`]);
   if (!known.success) throw new CheckError(`git does not know the base ref '${base}' here`);
-  const diff = git(["diff", "--name-only", "--no-renames", "-z", `${base}...HEAD`, "--"]);
+  const diff = git(["diff", "--name-only", "--no-renames", "--no-relative", "-z", `${base}...HEAD`, "--"]);
   if (!diff.success) throw new CheckError(`git diff ${base}...HEAD failed: ${diff.stderr.toString().trim()}`);
   return diff.stdout.toString().split("\0").filter((path) => path !== "");
 }
 
-/** Each path's text at HEAD; a path HEAD lacks is left out. */
-function filesAtHead(paths: readonly string[]): Map<string, string> {
+function mergeBase(base: string): string {
+  const found = git(["merge-base", base, "HEAD"]);
+  if (!found.success) throw new CheckError(`git finds no merge base of '${base}' and HEAD`);
+  return found.stdout.toString().trim();
+}
+
+/** Each path's text at the commit; a path the commit lacks is left out. */
+function filesAt(commit: string, paths: readonly string[]): Map<string, string> {
   const files = new Map<string, string>();
   for (const path of paths) {
-    const blob = git(["cat-file", "blob", `HEAD:${path}`]);
+    const blob = git(["cat-file", "blob", `${commit}:${path}`]);
     if (blob.success) files.set(path, blob.stdout.toString());
   }
   return files;
@@ -76,7 +83,12 @@ function check(args: readonly string[]): number {
 
   try {
     const report = readReport(file);
-    const lines = findings(report, task, { touched: touched(base), files: filesAtHead(testPaths(report)) });
+    const paths = testPaths(report);
+    const lines = findings(report, task, {
+      touched: touched(base),
+      files: filesAt("HEAD", paths),
+      baseFiles: filesAt(mergeBase(base), paths),
+    });
     process.stdout.write(lines.map((line) => `${line}\n`).join(""));
     return lines.length === 0 ? 0 : 1;
   } catch (error) {

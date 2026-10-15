@@ -37,8 +37,8 @@ function reportFile(contents: string): string {
   return path;
 }
 
-function mt(args: string[], stdin?: string) {
-  const result = Bun.spawnSync([MT, ...args], { cwd: REPO, env: ENV, stdin: stdin === undefined ? "ignore" : Buffer.from(stdin) });
+function mt(args: string[], stdin?: string, cwd = REPO) {
+  const result = Bun.spawnSync([MT, ...args], { cwd, env: ENV, stdin: stdin === undefined ? "ignore" : Buffer.from(stdin) });
   return { code: result.exitCode, stdout: result.stdout.toString(), stderr: result.stderr.toString() };
 }
 
@@ -50,10 +50,12 @@ function stderrLines(stderr: string): string[] {
   return stderr.trimEnd().split("\n");
 }
 
-// main holds src/keep.ts; the work branch, checked out, changes src/a.ts and src/a.test.ts.
+// main holds src/keep.ts and src/d.test.ts; the work branch, checked out, changes src/a.ts and
+// src/a.test.ts. The repo's own config sets diff.relative, which only a run from src/ would feel.
 beforeAll(() => {
   mkdirSync(REPO);
   git("init", "--quiet", "--initial-branch=main");
+  git("config", "diff.relative", "true");
   write("src/keep.ts", "export {};\n");
   write("src/d.test.ts", 'test("accepts a key", () => {});\n');
   git("add", ".");
@@ -100,6 +102,24 @@ describe("mt report check", () => {
 
   test("finds a claimed test by its name in the file as committed", () => {
     expect(check(`${MATCHING}Added test: src/a.test.ts::parses a\n`)).toEqual({ code: 0, stdout: "", stderr: "" });
+  });
+
+  test("names a claimed test the base already held", () => {
+    expect(check(`${MATCHING}Added test: src/d.test.ts::accepts a key\n`)).toEqual({
+      code: 1,
+      stdout: "T4/F1: named test not added: src/d.test.ts::accepts a key\n",
+      stderr: "",
+    });
+  });
+
+  test("reads a claim's path in backticks as the bare path", () => {
+    const report = "Changed: `src/a.ts`\nChanged: `src/a.test.ts`\nAdded test: `src/a.test.ts::parses a`\n";
+    expect(check(report)).toEqual({ code: 0, stdout: "", stderr: "" });
+  });
+
+  test("names paths from the repo root when run from a subfolder whatever diff.relative says", () => {
+    const result = mt(["report", "check", reportFile(MATCHING), "--task", "T4", "--base", "main"], undefined, join(REPO, "src"));
+    expect(result).toEqual({ code: 0, stdout: "", stderr: "" });
   });
 
   test("keys its finding after the report's own findings under the task", () => {

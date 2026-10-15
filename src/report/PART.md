@@ -29,15 +29,20 @@ the report.
 - A file of `-` is read from stdin.
 - A claim is a line of the report that is `Changed: <path>` or `Added test: <path>::<name>`,
   anywhere in it, alone on its line save for indentation or a `-` or `*` list marker. A path is
-  relative to the repo root. A test claim splits at its first `::`. A claim line missing its path,
+  relative to the repo root. One pair of backticks around a claim's path, or around a whole test
+  claim, is not part of it. A test claim splits at its first `::`. A claim line missing its path,
   or a test claim missing its path or name, is malformed.
-- The branch is `HEAD`. The paths it touched are those `git diff <ref>...HEAD` names, a rename as
-  both its paths. A claimed test is found when its file at `HEAD` holds its name as text.
+- The branch is `HEAD`. The paths it touched are those `git diff <ref>...HEAD` names from the repo
+  root, a rename as both its paths. A claimed test is found when its file at `HEAD` holds its name
+  as text, and added when, besides, its file at the merge base of `<ref>` and `HEAD` is absent or
+  does not hold its name.
 - Its findings are, in this order: for each claim in the order the report holds them, a malformed
-  claim, a `Changed` path the diff does not touch, `claimed but untouched: <path>`, and an
-  `Added test` not found, `named test not found: <path>::<name>`; then each path the diff touches
-  that no `Changed` line claims, `touched but unclaimed: <path>`, in git's order. A path claimed
-  twice is one claim.
+  claim line, `malformed claim: <line>`, a `Changed` path the diff does not touch,
+  `claimed but untouched: <path>`, an `Added test` not found,
+  `named test not found: <path>::<name>`, and one found but not added,
+  `named test not added: <path>::<name>`; then each path the diff
+  touches that no `Changed` line claims, `touched but unclaimed: <path>`, in git's order. A path
+  claimed twice is one claim.
 - Each finding is one line on stdout, `<id>/F<m>: <what>`, `<id>` from `--task` and `<m>`
   numbered on after the highest `<id>/F<k>` the report itself keys, so it never collides with the
   report's own findings.
@@ -46,7 +51,7 @@ the report.
   file, a second file, a missing `--task` or `--base`, a flag without its value or an unknown
   option prints its usage on stderr and exits 2.
 - Side effects: read-only, declared in `src/install/side-effects.ts`. It runs git's `rev-parse`,
-  `diff` and `cat-file` and writes nothing.
+  `diff`, `merge-base` and `cat-file` and writes nothing.
 
 ## Config
 

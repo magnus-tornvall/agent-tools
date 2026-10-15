@@ -98,12 +98,13 @@ option exits 2.
 **`mt report check <file> --task <id> --base <ref>`**, read-only. Takes a Task report, or `-` for
 stdin, the Task's ID and the base ref, and checks the report's claim lines, `Changed: <path>` and
 `Added test: <path>::<name>`, against the worktree it runs in: the paths `git diff <ref>...HEAD`
-touches, and each claimed test file at `HEAD`. Prints one `<id>/F<m>: <what>` line on stdout per
-claimed path the diff does not touch, touched path no `Changed` line claims, and named test not
-found, numbered on after the report's own `<id>/F<k>` findings, and exits 1; with none, prints
-nothing and exits 0. A report it cannot read, or a base ref git does not know, prints one line on
-stderr and exits 1. No file, a missing `--task` or `--base` or an unknown option exits 2. Its
-contract is `src/report/PART.md`.
+touches, and each claimed test file at `HEAD` and at the merge base of `<ref>` and `HEAD`. Prints
+one `<id>/F<m>: <what>` line on stdout per malformed claim, claimed path the diff does not touch,
+touched path no `Changed` line claims, named test not found at `HEAD`, and named test the merge
+base already held, numbered on after the report's own `<id>/F<k>` findings, and exits 1; with
+none, prints nothing and exits 0. A report it cannot read, or a base ref git does not know, prints
+one line on stderr and exits 1. No file, a missing `--task` or `--base` or an unknown option exits
+2. Its contract is `src/report/PART.md`.
 
 **`mt config [<key>]`**, read-only. Prints the owner's config: the file's path, then one line per
 key. With a key, prints that key's value alone. Exits 0, 1 or 2 as Config says.
@@ -333,8 +334,9 @@ one per mention.
 
 `bun test` runs guide-lint against fixture repos and a fake `orca`, and checks the shape
 schema and `mt shape`, `mt config` against a throwaway `XDG_CONFIG_HOME`, `mt report check`
-against a throwaway git repo, and that every command in `mt --help` has a side-effect class. `bun run typecheck` runs `tsc --noEmit` over `src/`; `tsc`
-cannot read `cli/mt`, which has no extension.
+against a throwaway git repo, and that every command in `mt --help` has a side-effect class.
+`bun run typecheck` runs `tsc --noEmit` over `src/`; `tsc` cannot read `cli/mt`, which has no
+extension.
 
 ## Layout
 
