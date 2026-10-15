@@ -18,9 +18,8 @@ machine.
 - **Idempotence.** Every target converges on the desired state: it changes only what is missing or
   stale, so it is safe to run again after a pull or on a half-set-up machine.
 - **Least privilege**, as far as `mt`'s own effects go. A command's class is declared once in code:
-  read-only, local write, or network, which leaves the machine. The one allow rule `Bash(mt:*)`
-  covers every command, and each network command brings an ask rule, so an agent is asked before
-  it.
+  read-only or network, which leaves the machine. The one allow rule `Bash(mt:*)` covers every
+  command, and each network command brings an ask rule, so an agent is asked before it.
 - **Mechanism, not policy.** Install proposes the rules; the owner decides. Nothing is written to
   the settings without a yes, and with no answer and no terminal nothing is written.
 - **Ownership** is by where a link points, not by who made it. Uninstall removes the links that
@@ -66,8 +65,8 @@ needs Bun 1.2.23 or later on PATH.
 - `uninstall` leaves no `mt` link, no link in `SKILLS_DIR` or `CLAUDE_SKILLS_DIR` that points into
   this clone, and none in `CLAUDE_SKILLS_DIR` to a link in `SKILLS_DIR` that does, absolute or
   relative, whoever made it; with `~/.agents/skills` gone, none in `CLAUDE_SKILLS_DIR` to it; and
-  the rules removed if the owner said yes. It leaves Bun, the clone and its `node_modules`, the
-  shell profile and `mt`'s usage log.
+  the rules removed if the owner said yes. It leaves Bun, the clone and its `node_modules`, and
+  the shell profile.
 - `bun src/install/mt-rules.ts add|remove <settings.json> [yes|no]` adds or removes the rules,
   keeping everything else in the file. `add` creates a missing file. It asks only when there is
   something to change, and exits 0 whether it changed the file, found nothing to change or was

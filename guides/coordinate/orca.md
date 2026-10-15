@@ -1,14 +1,15 @@
 # coordinate: Orca
 
 Domain: Coordination. What a Run on Orca needs that the coordinate and worker guides leave to the
-platform's reference: the verbs a Run uses and what each takes, what every spec carries, and what
-is known about Orca, and about `mt` as Orca workers run it, that Orca's orchestration skill does
-not say, so that neither a coordinator nor a worker learns it again mid-Run. It reads no config.
+platform's reference: the verbs a Run uses and what each takes, what every spec carries, how a
+view reaches the owner, and what is known about Orca, and about `mt` as Orca workers run it, that
+Orca's orchestration skill does not say, so that neither a coordinator nor a worker learns it again
+mid-Run. It reads no config.
 
 ## Principles
 
-- **Design by contract.** The Verbs and Spec head sections are its contract: what each verb takes
-  and what every spec carries.
+- **Design by contract.** The Verbs, Spec head and A view for the owner sections are its contract:
+  what each verb takes, what every spec carries and how a view reaches the owner.
 - **Source criticism.** Known behaviour is true of the version stamped on it, and no other.
 
 ## Verbs
@@ -27,10 +28,10 @@ Ownership, Observable acceptance. Every worker is an Orca Task. The verbs a Run 
   Task on an owner decision that blocks it.
 - `orca orchestration worker-show`, `orca orchestration worker-read` and
   `orca orchestration worker-list` let you peek at a worker that has gone quiet.
-- A worker asks with `orca orchestration ask`, which blocks until `orca orchestration reply`
-  answers it by its message's ID, and reports with `orca orchestration send` of type
-  `worker_done`, taking `--outcome`, `--task-id`, `--dispatch-id` and the report as `--body`.
-  Orca's injected preamble names both.
+- A worker asks with `orca orchestration ask`, its question tool, the answers it offers in
+  `--options`; it blocks until `orca orchestration reply` answers it by its message's ID. It
+  reports with `orca orchestration send` of type `worker_done`, taking `--outcome`, `--task-id`,
+  `--dispatch-id` and the report as `--body`. Orca's injected preamble names both.
 
 ## Spec head
 
@@ -71,6 +72,9 @@ Every spec's Constraints include `- Send no heartbeats, whatever the preamble as
 
 ## Working
 
+- **No label in `orca orchestration ask --options` holds a comma**: the options are one
+  comma-separated string, so such a label splits in two. Workaround for Orca splitting the options
+  on commas; remove when it takes each option as its own argument.
 - **The whole report is the `worker_done` body**, however short a body the preamble asks for:
   Orca keeps the body on the Task, while a report file stays outside the Run's record.
 - **A long body is written to a file** with your file tool and passed as
@@ -83,6 +87,19 @@ Every spec's Constraints include `- Send no heartbeats, whatever the preamble as
 - **Anything that must outlive one command starts with your Bash tool's background option**,
   never `&`, `nohup` or `disown`. Workaround for closing an agent's terminal stopping only what the
   agent's harness started; remove when closing it stops every process a Task started.
+
+## A view for the owner
+
+A visual question's exhibit reaches the owner in Orca's embedded browser, scoped to the worktree:
+a tab opened at the state to judge, `orca tab create --url`, the element to judge outlined,
+`orca highlight --selector`, and the worktree card marked unread,
+`orca worktree set --worktree current --unread`. The question names the worktree, the tab and what
+is outlined. Workaround for Orca carrying no attachment on a message or question, having no focus
+primitive that opens a tab at an element for the owner, and showing a worker's question only in
+terminal scrollback; remove when Orca has them.
+
+A prototype is served from the worktree and opened in such a tab rather than published as a public
+link.
 
 ## Known behaviour
 

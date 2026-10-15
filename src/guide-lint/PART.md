@@ -46,7 +46,7 @@ stays in step with the tools it names.
   guides, or `orca agent-context --json` fails, is not JSON or has an unreadable shape, and exits 1.
   No repo exits 2.
 - Side effects: it runs only `mt --help`, `mt get` and `orca agent-context --json`, and writes
-  only to a scratch folder it removes.
+  nothing.
 
 ## Config
 
@@ -54,10 +54,6 @@ guide-lint reads no config: not the owner's `mt` config, which it never opens, a
 its own.
 
 ## Workarounds
-
-It runs `mt get` with `MT_LOG` on a throwaway file, so its checks never reach the owner's usage
-log. Workaround for `mt get` having no way to resolve a guide without logging a load; remove when
-it has one.
 
 An `orca` mention that opens with a flag or holds a short flag (`-x`) fails, since it cannot be
 checked: write the command path first, then long flags. Workaround for `orca agent-context --json`

@@ -1,7 +1,4 @@
 import { describe, expect, test } from "bun:test";
-import { mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
 import { parseMtUsage } from "../guide-lint/lint.ts";
 import { ASK_RULES, COMMANDS } from "./side-effects.ts";
 
@@ -13,13 +10,7 @@ function usageCommands(): string[] {
 }
 
 function usage(): string {
-  const scratch = mkdtempSync(join(tmpdir(), "mt-side-effects-"));
-  try {
-    const result = Bun.spawnSync([MT, "--help"], { env: { ...process.env, MT_LOG: join(scratch, "usage.jsonl"), XDG_STATE_HOME: scratch } });
-    return result.stdout.toString();
-  } finally {
-    rmSync(scratch, { recursive: true, force: true });
-  }
+  return Bun.spawnSync([MT, "--help"]).stdout.toString();
 }
 
 describe("side-effect classes", () => {
@@ -27,9 +18,9 @@ describe("side-effect classes", () => {
     expect(usageCommands()).toEqual(Object.keys(COMMANDS).sort());
   });
 
-  test("D9, D5: get is a local write, update network, the rest read-only", () => {
+  test("update is network, the rest read-only", () => {
     expect(COMMANDS).toEqual({
-      get: "local write",
+      get: "read-only",
       list: "read-only",
       "shape check": "read-only",
       "shape slice": "read-only",
@@ -38,7 +29,7 @@ describe("side-effect classes", () => {
     });
   });
 
-  test("D3: install asks before an agent runs mt update, the one network command", () => {
+  test("the one ask rule covers mt update, the one network command", () => {
     expect(ASK_RULES).toEqual(["Bash(mt update:*)"]);
   });
 });

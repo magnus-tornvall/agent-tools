@@ -29,8 +29,6 @@ function mt(args: string[], env: Record<string, string | undefined> = {}, stdin?
       PATH: process.env.PATH,
       HOME,
       XDG_CONFIG_HOME: CONFIG_HOME,
-      MT_LOG: join(TMP, "usage.jsonl"),
-      XDG_STATE_HOME: join(TMP, "state"),
       ...env,
     },
     stdin: stdin === undefined ? "ignore" : Buffer.from(stdin),

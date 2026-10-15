@@ -1,6 +1,6 @@
 ---
 name: research
-description: Answer a question from outside sources in a report that cites only trusted sources it has read, weighs several perspectives and the opposing case, and draws no conclusion where trusted evidence runs out. Started only by the owner typing /research with the question.
+description: Use when the owner types /research with a question that published sources outside the repo should answer.
 disable-model-invocation: true
 ---
 

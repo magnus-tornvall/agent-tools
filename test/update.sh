@@ -15,7 +15,6 @@ TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
 TMP=$(cd "$TMP" && pwd -P)
 
-export MT_LOG=$TMP/usage.jsonl XDG_STATE_HOME=$TMP/state
 export BUN_INSTALL_CACHE_DIR=$BUN_CACHE
 export HTTP_PROXY=http://127.0.0.1:9 HTTPS_PROXY=http://127.0.0.1:9 http_proxy=http://127.0.0.1:9 https_proxy=http://127.0.0.1:9
 export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 GIT_ALLOW_PROTOCOL=file

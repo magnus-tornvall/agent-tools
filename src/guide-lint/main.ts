@@ -4,8 +4,7 @@
  *
  *   bun src/guide-lint/main.ts <repo>
  */
-import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { checkMtMention, checkOrcaMention, isPlaceholderMention, parseMtUsage, readOrcaContext, spans, type MtGet } from "./lint.ts";
 
@@ -16,11 +15,9 @@ if (root === undefined) {
 }
 
 const mt = join(root, "cli", "mt");
-const scratch = mkdtempSync(join(tmpdir(), "guide-lint-"));
-const mtEnv = { ...process.env, MT_LOG: join(scratch, "usage.jsonl") };
 
 function runMt(...args: string[]) {
-  return Bun.spawnSync([process.execPath, mt, ...args], { env: mtEnv, stdin: "ignore" });
+  return Bun.spawnSync([process.execPath, mt, ...args], { stdin: "ignore" });
 }
 
 function firstLine(text: string): string {
@@ -115,16 +112,9 @@ function lintOrca(): number | null {
   return orcaMentions.length;
 }
 
-let mtChecked = 0;
-let skipped = 0;
-let orcaChecked: number | null = null;
-try {
-  if (guides.length === 0) failures.push(`guide-lint: found no guides under ${join(root, "guides")}`);
-  ({ checked: mtChecked, skipped } = lintMt());
-  orcaChecked = lintOrca();
-} finally {
-  rmSync(scratch, { recursive: true, force: true });
-}
+if (guides.length === 0) failures.push(`guide-lint: found no guides under ${join(root, "guides")}`);
+const { checked: mtChecked, skipped } = lintMt();
+const orcaChecked = lintOrca();
 
 if (failures.length > 0) {
   console.log(failures.join("\n"));

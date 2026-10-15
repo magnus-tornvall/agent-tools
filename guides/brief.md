@@ -32,9 +32,9 @@ it leaves until asked, and how the owner asks. It reads no config.
   on an uncertain assumption. Whatever went as expected, such as a settled fact, a Task's account,
   a commit or a question already answered, is named by its ID, or counted with its IDs, without
   its content.
-- **A fact is cited with only the clause the owner needs.** A fact from the repo comes with its
-  `file:line` and the clause of it the decision turns on, never its whole content; any other source
-  comes the same way. The rest of it is one request away.
+- **A fact is cited with only the clause the owner needs**: by where it is, with the clause of it
+  the decision turns on, never its whole content, whatever its source. The rest of it is one
+  request away.
 - **A requirement is shown to the owner as one sentence of what is true at the end.** The given,
   when and then split is what the whole shape carries, shown on request.
 - **Whatever a message left out is one question away.** The owner asks in their own words; an ID
@@ -42,7 +42,7 @@ it leaves until asked, and how the owner asks. It reads no config.
   and its sources, read afresh from those sources rather than recalled, and names the IDs of the
   items it draws on, so the owner can ask after any of them again.
 - **Detail reaches the owner in a reply.** No file or page is written for the owner to open in
-  place of asking.
+  place of asking; a visual question's exhibit is the ask guide's (`mt get ask`).
 
 ## Contract
 
@@ -50,7 +50,7 @@ it leaves until asked, and how the owner asks. It reads no config.
   it holds; **returns** that message, laid out as the objectives say. Takes a question from the
   owner about something a message left out; returns the answer.
 - **The guide that sends a message** says what it holds: the ask guide for a question, the mvc
-  guide (`mt get mvc`) for a grill's rounds and its closing reply, the coordinate guide
+  guide (`mt get mvc`) for a grill's questions and its close, the coordinate guide
   (`mt get coordinate`) for a Run's plan, messages and hand-off. Where that guide asks for something
   in full, it is shown in full.
 - **Not a report between agents.** What a worker or judge reports to its coordinator holds what
