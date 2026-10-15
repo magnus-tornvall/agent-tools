@@ -42,7 +42,7 @@ it leaves until asked, and how the owner asks. It reads no config.
   and its sources, read afresh from those sources rather than recalled, and names the IDs of the
   items it draws on, so the owner can ask after any of them again.
 - **Detail reaches the owner in a reply.** No file or page is written for the owner to open in
-  place of asking; a visual question's exhibit is the ask guide's (`mt get ask`).
+  place of asking; what a question shows for the eye to judge is the ask guide's (`mt get ask`).
 
 ## Contract
 

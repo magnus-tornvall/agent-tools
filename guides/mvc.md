@@ -131,8 +131,7 @@ to do nothing or to defer, reported with its reasons and evidence.
   Without `mt shape`, the shape is reported marked unchecked and no file is written.
 - **The door rule** (`mt get door-rule`) says what is settled, a two-way door or a one-way door,
   and who pays to undo it.
-- **The ask guide** (`mt get ask`) composes every question: its form, its channel and what each
-  carries. An Either answer is a decision naming the input it covers.
+- **The ask guide** (`mt get ask`) composes every question and says what an answer means.
 - **The brief guide** (`mt get brief`) lays out every message to the owner: what it shows first,
   what it leaves until asked, and how the owner asks for it.
 

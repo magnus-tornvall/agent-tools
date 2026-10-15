@@ -134,7 +134,7 @@ do.
 
 ## Guardrails
 
-- An owner decision is always asked through the ask guide, in the form the decision calls for.
+- An owner decision is always asked through the ask guide.
 - Never touch the base branch, never merge. Push only when the approved destination is a pull
   request.
 - Never remove a worktree or a branch.
@@ -178,7 +178,6 @@ do.
 - **`mt shape slice <file> --keys <key,...>`**, when the intent is a shape, gives a judge only the
   keys that hold what its perspective's reference says it is given. Both `mt shape` commands read
   a file of `-` from stdin, and only a whole YAML document.
-- **The ask guide** (`mt get ask`) composes every question to the owner, and says which reach the
-  owner through your own question tool (`AskUserQuestion` in Claude Code).
+- **The ask guide** (`mt get ask`) composes every question to the owner.
 - **The brief guide** (`mt get brief`) lays out every message to the owner: what it shows first,
   what it leaves until asked, and how the owner asks for it.
