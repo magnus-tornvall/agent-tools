@@ -37,12 +37,14 @@ it leaves until asked, and how the owner asks. It reads no config.
   request away.
 - **A requirement is shown to the owner as one sentence of what is true at the end.** The given,
   when and then split is what the whole shape carries, shown on request.
+- **A comparison is a table.** The owner reads a comparison as one, so readings, options or
+  findings set side by side are laid out as a table whenever they can be.
 - **Whatever a message left out is one question away.** The owner asks in their own words; an ID
   is a handle they may use, never one they must. The next message answers it with the full content
   and its sources, read afresh from those sources rather than recalled, and names the IDs of the
   items it draws on, so the owner can ask after any of them again.
 - **Detail reaches the owner in a reply.** No file or page is written for the owner to open in
-  place of asking; a visual question's exhibit is the ask guide's (`mt get ask`).
+  place of asking; what a question shows for the eye to judge is the ask guide's (`mt get ask`).
 
 ## Contract
 
