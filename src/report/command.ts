@@ -7,8 +7,8 @@
  *
  * A file of `-` is read from stdin. The branch is the worktree it runs in, its HEAD diffed against
  * the base ref; a claimed test file is read from HEAD and from the merge base of the ref and HEAD.
- * An unreadable report or a base ref git does not know exits 1 with one line on stderr. Usage
- * errors exit 2.
+ * An unreadable report, a base ref git does not know or a git command that fails exits 1 with one
+ * line on stderr. Usage errors exit 2.
  */
 import { readFileSync } from "node:fs";
 import { findings, testPaths } from "./check.ts";
@@ -39,7 +39,7 @@ function touched(base: string): string[] {
   const known = git(["rev-parse", "--verify", "--quiet", "--end-of-options", `${base}^{commit}`]);
   if (!known.success) throw new CheckError(`git does not know the base ref '${base}' here`);
   const diff = git(["diff", "--name-only", "--no-renames", "--no-relative", "-z", `${base}...HEAD`, "--"]);
-  if (!diff.success) throw new CheckError(`git diff ${base}...HEAD failed: ${diff.stderr.toString().trim()}`);
+  if (!diff.success) throw new CheckError(`git diff ${base}...HEAD failed: ${diff.stderr.toString().trim().split("\n")[0]}`);
   return diff.stdout.toString().split("\0").filter((path) => path !== "");
 }
 

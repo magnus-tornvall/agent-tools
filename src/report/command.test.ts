@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
@@ -20,9 +20,33 @@ const ENV = {
   GIT_COMMITTER_DATE: "2026-01-01T00:00:00Z",
 };
 
-function git(...args: string[]): void {
-  const result = Bun.spawnSync(["git", ...args], { cwd: REPO, env: ENV });
+function gitIn(repo: string, ...args: string[]): string {
+  const result = Bun.spawnSync(["git", ...args], { cwd: repo, env: ENV });
   if (!result.success) throw new Error(`git ${args.join(" ")} failed: ${result.stderr.toString()}`);
+  return result.stdout.toString().trim();
+}
+
+function git(...args: string[]): void {
+  gitIn(REPO, ...args);
+}
+
+/** A repo of its own under TMP: main commits the base files, then a checked-out work branch its own. */
+function repoOf(name: string, base: Record<string, string>, work: Record<string, string>): string {
+  const repo = join(TMP, name);
+  const commit = (files: Record<string, string>, message: string) => {
+    for (const [path, contents] of Object.entries(files)) {
+      mkdirSync(dirname(join(repo, path)), { recursive: true });
+      writeFileSync(join(repo, path), contents);
+    }
+    gitIn(repo, "add", ".");
+    gitIn(repo, "commit", "--quiet", "-m", message);
+  };
+  mkdirSync(repo);
+  gitIn(repo, "init", "--quiet", "--initial-branch=main");
+  commit(base, "base");
+  gitIn(repo, "checkout", "--quiet", "-b", "work");
+  commit(work, "work");
+  return repo;
 }
 
 function write(path: string, contents: string): void {
@@ -112,6 +136,13 @@ describe("mt report check", () => {
     });
   });
 
+  test("counts a new test as added whose name is part of a name the base already held", () => {
+    const held = 'test("exits 2 with no file or flag", () => {});\n';
+    const repo = repoOf("prefix", { "src/e.test.ts": held }, { "src/e.test.ts": `${held}test("exits 2 with no file", () => {});\n` });
+    const report = reportFile("Changed: src/e.test.ts\nAdded test: src/e.test.ts::exits 2 with no file\n");
+    expect(mt(["report", "check", report, "--task", "T4", "--base", "main"], undefined, repo)).toEqual({ code: 0, stdout: "", stderr: "" });
+  });
+
   test("reads a claim's path in backticks as the bare path", () => {
     const report = "Changed: `src/a.ts`\nChanged: `src/a.test.ts`\nAdded test: `src/a.test.ts::parses a`\n";
     expect(check(report)).toEqual({ code: 0, stdout: "", stderr: "" });
@@ -176,5 +207,17 @@ describe("mt report check", () => {
     expect(result.code).toBe(1);
     expect(result.stdout).toBe("");
     expect(stderrLines(result.stderr)).toEqual(["mt: report check: git does not know the base ref 'no-such-ref' here"]);
+  });
+
+  test("exits 1 with one line on stderr naming a git command that fails", () => {
+    const repo = repoOf("corrupt", { "src/keep.ts": "export {};\n" }, { "src/a.ts": "export const a = 1;\n" });
+    const tree = gitIn(repo, "rev-parse", "main^{tree}");
+    const object = join(repo, ".git", "objects", tree.slice(0, 2), tree.slice(2));
+    chmodSync(object, 0o644);
+    writeFileSync(object, "not a git object");
+    const result = mt(["report", "check", reportFile("Changed: src/a.ts\n"), "--task", "T4", "--base", "main"], undefined, repo);
+    expect(result.code).toBe(1);
+    expect(result.stdout).toBe("");
+    expect(stderrLines(result.stderr)).toEqual([expect.stringContaining("mt: report check: git diff main...HEAD failed: ")]);
   });
 });

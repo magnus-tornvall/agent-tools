@@ -34,8 +34,9 @@ the report.
   or a test claim missing its path or name, is malformed.
 - The branch is `HEAD`. The paths it touched are those `git diff <ref>...HEAD` names from the repo
   root, a rename as both its paths. A claimed test is found when its file at `HEAD` holds its name
-  as text, and added when, besides, its file at the merge base of `<ref>` and `HEAD` is absent or
-  does not hold its name.
+  as text, and added when, besides, its file at `HEAD` holds the name more times than its file at
+  the merge base of `<ref>` and `HEAD` does, an absent file holding it no times. So a new test whose
+  name is part of a name the base already held is added.
 - Its findings are, in this order: for each claim in the order the report holds them, a malformed
   claim line, `malformed claim: <line>`, a `Changed` path the diff does not touch,
   `claimed but untouched: <path>`, an `Added test` not found,
@@ -47,9 +48,9 @@ the report.
   numbered on after the highest `<id>/F<k>` the report itself keys, so it never collides with the
   report's own findings.
 - It exits 0 with nothing printed when there is no finding, and 1 when there is one. A report it
-  cannot read, or a base ref git does not know, exits 1 with one line on stderr saying which. No
-  file, a second file, a missing `--task` or `--base`, a flag without its value or an unknown
-  option prints its usage on stderr and exits 2.
+  cannot read, a base ref git does not know, or a git command that fails exits 1 with one line on
+  stderr saying which. No file, a second file, a missing `--task` or `--base`, a flag without its
+  value or an unknown option prints its usage on stderr and exits 2.
 - Side effects: read-only, declared in `src/install/side-effects.ts`. It runs git's `rev-parse`,
   `diff`, `merge-base` and `cat-file` and writes nothing.
 

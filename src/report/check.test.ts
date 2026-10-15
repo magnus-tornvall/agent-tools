@@ -84,6 +84,13 @@ describe("findings", () => {
     expect(findings(report, "T4", { touched: ["src/d.test.ts"], files: head, baseFiles: base })).toEqual([]);
   });
 
+  test("none for a new test whose name is part of a name the base already held", () => {
+    const report = "Changed: src/d.test.ts\nAdded test: src/d.test.ts::exits 2 with no file";
+    const head = new Map([["src/d.test.ts", 'test("exits 2 with no file or flag", () => {});\ntest("exits 2 with no file", () => {});']]);
+    const base = new Map([["src/d.test.ts", 'test("exits 2 with no file or flag", () => {});']]);
+    expect(findings(report, "T4", { touched: ["src/d.test.ts"], files: head, baseFiles: base })).toEqual([]);
+  });
+
   test("a malformed claim line is a finding", () => {
     expect(findings("Added test: src/d.test.ts", "T4", { touched: [], files: NO_FILES, baseFiles: NO_FILES })).toEqual(["T4/F1: malformed claim: Added test: src/d.test.ts"]);
   });

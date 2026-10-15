@@ -42,6 +42,11 @@ export function testPaths(report: string): string[] {
   return [...new Set(paths)];
 }
 
+/** How many times the text holds the name, or 0 when there is no text. */
+function occurrences(text: string | undefined, name: string): number {
+  return text === undefined ? 0 : text.split(name).length - 1;
+}
+
 function escape(text: string): string {
   return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -79,10 +84,10 @@ export function findings(report: string, task: string, branch: Branch): string[]
       if (claimed.has(claim.path)) continue;
       claimed.add(claim.path);
       if (!touched.has(claim.path)) problems.push(`claimed but untouched: ${claim.path}`);
-    } else if (!branch.files.get(claim.path)?.includes(claim.name)) {
-      problems.push(`named test not found: ${claim.path}::${claim.name}`);
-    } else if (branch.baseFiles.get(claim.path)?.includes(claim.name)) {
-      problems.push(`named test not added: ${claim.path}::${claim.name}`);
+    } else {
+      const held = occurrences(branch.files.get(claim.path), claim.name);
+      if (held === 0) problems.push(`named test not found: ${claim.path}::${claim.name}`);
+      else if (held <= occurrences(branch.baseFiles.get(claim.path), claim.name)) problems.push(`named test not added: ${claim.path}::${claim.name}`);
     }
   }
   for (const path of branch.touched) {

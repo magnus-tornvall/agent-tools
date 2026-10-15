@@ -100,11 +100,12 @@ stdin, the Task's ID and the base ref, and checks the report's claim lines, `Cha
 `Added test: <path>::<name>`, against the worktree it runs in: the paths `git diff <ref>...HEAD`
 touches, and each claimed test file at `HEAD` and at the merge base of `<ref>` and `HEAD`. Prints
 one `<id>/F<m>: <what>` line on stdout per malformed claim, claimed path the diff does not touch,
-touched path no `Changed` line claims, named test not found at `HEAD`, and named test the merge
-base already held, numbered on after the report's own `<id>/F<k>` findings, and exits 1; with
-none, prints nothing and exits 0. A report it cannot read, or a base ref git does not know, prints
-one line on stderr and exits 1. No file, a missing `--task` or `--base` or an unknown option exits
-2. Its contract is `src/report/PART.md`.
+touched path no `Changed` line claims, named test not found at `HEAD`, and named test the file at
+`HEAD` holds no more times than the merge base does, numbered on after the report's own
+`<id>/F<k>` findings, and exits 1; with none, prints nothing and exits 0. A report it cannot read,
+a base ref git does not know, or a git command that fails prints one line on stderr and exits 1.
+No file, a second file, a missing `--task` or `--base`, a flag without its value or an unknown
+option exits 2. Its contract is `src/report/PART.md`.
 
 **`mt config [<key>]`**, read-only. Prints the owner's config: the file's path, then one line per
 key. With a key, prints that key's value alone. Exits 0, 1 or 2 as Config says.
