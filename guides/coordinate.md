@@ -98,6 +98,9 @@ do.
 - **The surprise perspective judges the final branch.** Fixed: changing it is the owner's call.
   Workaround for workers deciding one-way doors without asking; remove when Runs show they no
   longer do, and the owner decides to remove it.
+- **No report's claim about the branch is taken on its word.** Every report, judges' included,
+  has its claim lines checked by `mt report check` against the commit its Task started from, and
+  each finding it prints joins the Run's findings under the key it prints.
 - **The owner's attention goes only where it must:** one-way doors, surprises, what a maintainer
   would not merge, failed attempts, and every finding still open once the fix rounds `fix_rounds`
   allows are spent. You answer everything else, by the door rule, and the answer is recorded.
@@ -178,6 +181,10 @@ do.
 - **`mt shape slice <file> --keys <key,...>`**, when the intent is a shape, gives a judge only the
   keys that hold what its perspective's reference says it is given. Both `mt shape` commands read
   a file of `-` from stdin, and only a whole YAML document.
+- **`mt report check <file> --task <id> --base <ref>`**, run in the worktree holding the work
+  branch, prints each `Changed` or `Added test` claim of a report that the branch does not bear
+  out, and each changed file no `Changed` line claims, as one `<id>/F<m>` finding a line, numbered
+  after the report's own. It reads a file of `-` from stdin.
 - **The ask guide** (`mt get ask`) composes every question to the owner, and says which reach the
   owner through your own question tool (`AskUserQuestion` in Claude Code).
 - **The brief guide** (`mt get brief`) lays out every message to the owner: what it shows first,
