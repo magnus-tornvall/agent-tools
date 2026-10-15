@@ -57,6 +57,9 @@ line. The report gives:
 
 - the outcome, succeeded or failed;
 - the evidence the spec and the assignment guide ask for;
+- one `Changed: <path>` line per file the Task changed on the work branch and one
+  `Added test: <path>::<name>` line per test it added, each path from the repo root, so that
+  `mt report check` can hold them against the branch; a Task that changed nothing has none;
 - each assumption;
 - each question with its answer, or pending;
 - proposed follow-ups, or none. You never create Tasks;
