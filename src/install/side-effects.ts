@@ -15,8 +15,6 @@ export type SideEffect = "read-only" | "network";
 export const COMMANDS: Readonly<Record<string, SideEffect>> = {
   get: "read-only",
   list: "read-only",
-  "shape check": "read-only",
-  "shape slice": "read-only",
   config: "read-only",
   update: "network",
 };

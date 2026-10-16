@@ -1,12 +1,13 @@
 /**
  * guide-lint: gathers a repo's guides, stub skills and AGENTS.md, runs mt and orca, and reports
- * each mention that no longer resolves; src/guide-lint/PART.md is its contract.
+ * each mention that no longer resolves or that names a platform's command outside that platform's
+ * reference; src/guide-lint/PART.md is its contract.
  *
  *   bun src/guide-lint/main.ts <repo>
  */
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
-import { checkMtMention, checkOrcaMention, isPlaceholderMention, parseMtUsage, readOrcaContext, spans, type MtGet } from "./lint.ts";
+import { checkMtMention, checkOrcaMention, checkPlacement, isPlaceholderMention, parseMtUsage, readOrcaContext, spans, type MtGet } from "./lint.ts";
 
 const root = process.argv[2];
 if (root === undefined) {
@@ -112,7 +113,19 @@ function lintOrca(): number | null {
   return orcaMentions.length;
 }
 
+/** Fails each mention of a platform's command outside that platform's reference. */
+function lintPlacement(references: string): void {
+  const platforms = new Set(
+    (existsSync(references) ? readdirSync(references) : []).filter((name) => name.endsWith(".md")).map((name) => name.slice(0, -3)),
+  );
+  for (const mention of mentions) {
+    const reason = checkPlacement(mention.file, mention.words, platforms);
+    if (reason !== null) fail(mention, reason);
+  }
+}
+
 if (guides.length === 0) failures.push(`guide-lint: found no guides under ${join(root, "guides")}`);
+lintPlacement(join(root, "guides", "coordinate"));
 const { checked: mtChecked, skipped } = lintMt();
 const orcaChecked = lintOrca();
 

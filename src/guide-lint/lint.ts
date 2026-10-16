@@ -171,6 +171,19 @@ export function readOrcaContext(context: unknown): OrcaTable | string {
   return table;
 }
 
+/**
+ * Why a mention sits where it must not, or null. A command whose first word names a platform with
+ * a reference, `guides/coordinate/<platform>.md`, belongs in that reference alone, so the other parts
+ * stay free of any one platform's commands.
+ */
+export function checkPlacement(file: string, words: readonly string[], platforms: ReadonlySet<string>): string | null {
+  const platform = words[0] ?? "";
+  // A bare platform name is a name, not a command.
+  if (words.length < 2 || !platforms.has(platform)) return null;
+  const home = `guides/coordinate/${platform}.md`;
+  return file === home ? null : `${platform} commands belong only in its platform reference, ${home}`;
+}
+
 /** Why an `orca …` mention no longer resolves, or null when its command and every `--flag` still exist. */
 export function checkOrcaMention(words: readonly string[], table: OrcaTable): string | null {
   if (words[1]?.startsWith("-") === true || words.some((word) => /^-[^-]/.test(word))) {

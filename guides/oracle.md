@@ -24,7 +24,7 @@ and says why. It reads no config.
 
 ## Contract
 
-Takes the intent as the coordinator holds it, a shape or otherwise, the repo at the base commit,
+Takes the intent as the coordinator holds it, a spec or otherwise, the repo at the base commit,
 and the work branch to commit on. Returns one commit on the work branch that adds the tests, or
 none, and the report. The commit is the oracle's record: whatever builds the change leaves every
 file it added unchanged.

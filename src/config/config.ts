@@ -30,24 +30,16 @@ interface Spec<T> {
 }
 
 interface Values {
-  agents: string[];
   fix_rounds: number;
 }
 
 export type Key = keyof Values;
 
-const AGENT = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
-
 const SPECS: { [K in Key]: Spec<Values[K]> } = {
-  agents: {
-    kind: "binding",
-    rule: "a non-empty list of agent names",
-    schema: z.array(z.string().regex(AGENT)).min(1),
-  },
   fix_rounds: { kind: "binding", rule: "an integer of 0 or more", schema: z.number().int().min(0) },
 };
 
-const KEYS: readonly Key[] = ["agents", "fix_rounds"];
+const KEYS: readonly Key[] = ["fix_rounds"];
 
 function isKey(name: string): name is Key {
   return KEYS.some((key) => key === name);

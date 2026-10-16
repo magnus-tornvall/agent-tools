@@ -1,5 +1,5 @@
 ---
-name: ask
+name: mt-ask
 description: Use when you are blocked on a decision you cannot settle yourself and are about to put a question to the owner, the user or your coordinator.
 ---
 

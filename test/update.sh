@@ -46,11 +46,11 @@ new_home() { # dir: a HOME whose login shell puts its ~/.local/bin and bun on PA
   printf 'export PATH="%s/.local/bin:%s:$PATH"\n' "$1" "$BUN_DIR" >"$1/.bash_profile"
 }
 
-add_skill() { # repo name: commits a stub skill with a guide, which make install links
-  mkdir -p "$1/skills/$2"
-  printf -- '---\nname: %s\ndescription: A fixture.\n---\n\nRun `mt get %s`.\n' "$2" "$2" >"$1/skills/$2/SKILL.md"
+add_skill() { # repo name: commits a stub skill, mt-<name>, with a guide, which make install links
+  mkdir -p "$1/skills/mt-$2"
+  printf -- '---\nname: mt-%s\ndescription: A fixture.\n---\n\nRun `mt get %s`.\n' "$2" "$2" >"$1/skills/mt-$2/SKILL.md"
   printf '# %s\n\nDomain: Tools. A fixture.\n' "$2" >"$1/guides/$2.md"
-  git -C "$1" add "skills/$2" "guides/$2.md" && git -C "$1" commit -q -m "$2" || fail "committing $2 in $1"
+  git -C "$1" add "skills/mt-$2" "guides/$2.md" && git -C "$1" commit -q -m "$2" || fail "committing $2 in $1"
 }
 
 # origin: this worktree's files at v0.1.0, with tags that are not releases beside it, and a stub
@@ -130,8 +130,8 @@ state() { # clone -> its HEAD, branch, status and the diff of its files
   git -C "$1" diff | shasum
 }
 
-linked() { # home tool -> exit 0 when make install linked the tool's stub from the clone
-  [ "$(readlink "$1/.claude/skills/$2")" = "$(clone_of "$1")/skills/$2" ]
+linked() { # home tool -> exit 0 when make install linked the tool's stub, mt-<tool>, from the clone
+  [ "$(readlink "$1/.claude/skills/mt-$2")" = "$(clone_of "$1")/skills/mt-$2" ]
 }
 
 snapshot() { # folder -> every file in it with its sha1
@@ -153,8 +153,9 @@ assert_eq "the clone has v0.2.0 checked out" "$(commit_of "$O" v0.2.0)" "$(git -
 git -C "$D" symbolic-ref -q HEAD >/dev/null && fail "the clone is on a branch, not the release tag"
 check "the clone is on the release tag, on no branch"
 assert_eq "mt links into the clone" "$D/cli/mt" "$(readlink "$H/.local/bin/mt")"
-for dir in "$D"/skills/*/; do
+for dir in "$D"/skills/mt-*/; do
   tool=$(basename "$dir")
+  tool=${tool#mt-}
   [ -f "$D/guides/$tool.md" ] || continue
   linked "$H" "$tool" || fail "$tool is not linked from the clone"
 done

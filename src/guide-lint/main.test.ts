@@ -54,18 +54,18 @@ function fixture(): void {
   write(join(FIX, "guides", "ask.md"), "# ask\n\nSee `mt get door-rule`, then\nthe stance form, `mt get ask --ref stance`.\n");
   write(join(FIX, "guides", "ask", "stance.md"), "# stance\n");
   write(join(FIX, "guides", "door-rule.md"), "# door-rule\n");
-  write(join(FIX, "guides", "mvc.md"), "# mvc\n\nCheck it with `mt shape check <file>`, and `mt\nshape slice` it.\n");
+  write(join(FIX, "guides", "mvc.md"), "# mvc\n\nRead it with `mt config fix_rounds`, and `mt\nupdate` it.\n");
   write(
     join(FIX, "skills", "mvc", "SKILL.md"),
     "---\ndescription: Settle a shape.\n---\n\nRun `mt get mvc` and follow what it prints.\n",
   );
   write(
     join(FIX, "guides", "coordinate.md"),
-    "# coordinate\n\nA worker runs `mt get <name>` and `mt list`; read `orca skills get orchestration`.\n",
+    "# coordinate\n\nA worker runs `mt get <name>` and `mt list`.\n",
   );
   write(
     join(FIX, "guides", "coordinate", "orca.md"),
-    "# coordinate: Orca\n\n- `orca orchestration worker-list --terminal-state reclaimable` misses one;\n  `orca orchestration run-create` moves it.\n- Ask with `orca orchestration ask --options`, in the group `orca orchestration`.\n",
+    "# coordinate: Orca\n\n- `orca orchestration worker-list --terminal-state reclaimable` misses one;\n  `orca orchestration run-create` moves it.\n- Ask with `orca orchestration ask --options`, in the group `orca orchestration`.\n\nRead `orca skills get orchestration`.\n",
   );
 }
 
@@ -229,19 +229,30 @@ describe("Orca mentions", () => {
   });
 
   test("fails a mention that opens with a flag, telling the author how to write it", () => {
-    writeFileSync(join(FIX, "guides", "door-rule.md"), "# door-rule\n\nThen `orca --json agent-context`.\n");
+    writeFileSync(join(FIX, "guides", "coordinate", "orca.md"), "# coordinate: Orca\n\nThen `orca --json agent-context`.\n");
     const { status, out } = lint(WITH_ORCA);
     expect(status).toBe(1);
     expect(out).toBe(
-      "guides/door-rule.md:3: `orca --json agent-context`: guide-lint cannot check a mention that opens with a flag or holds a short flag; write the command path first, then long flags\n",
+      "guides/coordinate/orca.md:3: `orca --json agent-context`: guide-lint cannot check a mention that opens with a flag or holds a short flag; write the command path first, then long flags\n",
     );
   });
 
   test("fails a command that never existed", () => {
-    writeFileSync(join(FIX, "guides", "door-rule.md"), "# door-rule\n\nThen `orca orchestration frob`.\n");
+    writeFileSync(join(FIX, "guides", "coordinate", "orca.md"), "# coordinate: Orca\n\nThen `orca orchestration frob`.\n");
     const { status, out } = lint(WITH_ORCA);
     expect(status).toBe(1);
-    expect(out).toBe("guides/door-rule.md:3: `orca orchestration frob`: orca has no command 'orchestration frob'\n");
+    expect(out).toBe("guides/coordinate/orca.md:3: `orca orchestration frob`: orca has no command 'orchestration frob'\n");
+  });
+});
+
+describe("platform placement", () => {
+  test("fails an Orca command outside Orca's reference, even without orca on PATH", () => {
+    write(join(FIX, "guides", "coordinate.md"), "# coordinate\n\nA worker runs `mt list`.\n\nThen `orca orchestration ask`.\n");
+    const { status, out } = lint(NO_ORCA);
+    expect(status).toBe(1);
+    expect(out).toContain(
+      "guides/coordinate.md:5: `orca orchestration ask`: orca commands belong only in its platform reference, guides/coordinate/orca.md\n",
+    );
   });
 });
 

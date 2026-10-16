@@ -22,8 +22,6 @@ describe("side-effect classes", () => {
     expect(COMMANDS).toEqual({
       get: "read-only",
       list: "read-only",
-      "shape check": "read-only",
-      "shape slice": "read-only",
       config: "read-only",
       update: "network",
     });

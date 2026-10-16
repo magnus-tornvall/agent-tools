@@ -30,8 +30,8 @@ assert_contains() { # name haystack needle
   case $2 in *"$3"*) check "$1" ;; *) fail "$1: [$2] does not contain [$3]" ;; esac
 }
 
-mkdir -p "$REPO/cli" "$REPO/guides/relay" "$REPO/skills/door-rule" "$REPO/skills/relay" \
-  "$REPO/skills/solo" "$REPO/skills/orphan-stub"
+mkdir -p "$REPO/cli" "$REPO/guides/relay" "$REPO/skills/mt-door-rule" "$REPO/skills/mt-relay" \
+  "$REPO/skills/mt-solo" "$REPO/skills/mt-orphan-stub" "$REPO/skills/no-stub"
 cp "$MT_SRC" "$REPO/cli/mt"
 chmod +x "$REPO/cli/mt"
 
@@ -41,7 +41,7 @@ printf '# Overlay\noverlay body\n' >"$REPO/guides/relay/overlay.md"
 printf '# Solo, no stub\n\nDomain: Tools. A guide only a spec loads,\n  over two lines.\n\n## Later\nnot read\n' >"$REPO/guides/no-stub.md"
 printf '# Solo\n' >"$REPO/guides/solo.md"
 
-cat >"$REPO/skills/door-rule/SKILL.md" <<'SK'
+cat >"$REPO/skills/mt-door-rule/SKILL.md" <<'SK'
 ---
 name: door-rule
 description: Use when deciding whether to ask or to carry on.
@@ -50,7 +50,7 @@ description: Use when deciding whether to ask or to carry on.
 # Door rule stub
 description: this body line must not be read
 SK
-cat >"$REPO/skills/relay/SKILL.md" <<'SK'
+cat >"$REPO/skills/mt-relay/SKILL.md" <<'SK'
 ---
 name: relay
 description: >-
@@ -59,14 +59,20 @@ description: >-
 allowed-tools: Bash
 ---
 SK
-cat >"$REPO/skills/solo/SKILL.md" <<'SK'
+cat >"$REPO/skills/mt-solo/SKILL.md" <<'SK'
 ---
 description: "Quoted description, single line"
 ---
 SK
-cat >"$REPO/skills/orphan-stub/SKILL.md" <<'SK'
+cat >"$REPO/skills/mt-orphan-stub/SKILL.md" <<'SK'
 ---
 description: A stub whose guide does not exist.
+---
+SK
+
+cat >"$REPO/skills/no-stub/SKILL.md" <<'SK'
+---
+description: An unprefixed folder, not the guide's stub.
 ---
 SK
 
@@ -126,6 +132,8 @@ check "R3 list leaves out a guide's domain"
 case $out in *"not read"*) fail "R3 list read past a guide's first paragraph" ;; esac
 check "R3 list stops at a guide's first paragraph"
 case $out in *orphan-stub*) fail "R3 list shows a stub that has no guide" ;; esac
+case $out in *"unprefixed folder"*) fail "R3 list read a skill folder without the mt- prefix" ;; esac
+check "R3 list reads only a stub named mt-<guide>"
 check "R3 list shows only guides"
 
 # R5: symlink on PATH, run from another directory

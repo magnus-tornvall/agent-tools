@@ -1,6 +1,6 @@
 # brief
 
-Domain: Coordination. Lays out every message an agent sends the owner, in a grill, a Run or a
+Domain: Coordination. Lays out every message an agent sends the owner, in a spec, a Run or a
 question, so that the owner reads what needs them first, reads nothing they do not need, and gets
 any detail left out by asking for it. Which decisions reach the owner is the door rule's
 (`mt get door-rule`), how a question is composed the ask guide's (`mt get ask`), and what a
@@ -35,8 +35,6 @@ it leaves until asked, and how the owner asks. It reads no config.
 - **A fact is cited with only the clause the owner needs**: by where it is, with the clause of it
   the decision turns on, never its whole content, whatever its source. The rest of it is one
   request away.
-- **A requirement is shown to the owner as one sentence of what is true at the end.** The given,
-  when and then split is what the whole shape carries, shown on request.
 - **A comparison is a table.** The owner reads a comparison as one, so readings, options or
   findings set side by side are laid out as a table whenever they can be.
 - **Whatever a message left out is one question away.** The owner asks in their own words; an ID
@@ -51,8 +49,8 @@ it leaves until asked, and how the owner asks. It reads no config.
 - **Takes** a message an agent is about to send the owner, with what the guide that sends it says
   it holds; **returns** that message, laid out as the objectives say. Takes a question from the
   owner about something a message left out; returns the answer.
-- **The guide that sends a message** says what it holds: the ask guide for a question, the mvc
-  guide (`mt get mvc`) for a grill's questions and its close, the coordinate guide
+- **The guide that sends a message** says what it holds: the ask guide for a question, the spec
+  guide (`mt get spec`) for its questions and the spec itself, the coordinate guide
   (`mt get coordinate`) for a Run's plan, messages and hand-off. Where that guide asks for something
   in full, it is shown in full.
 - **Not a report between agents.** What a worker or judge reports to its coordinator holds what

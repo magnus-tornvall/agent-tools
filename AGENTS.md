@@ -15,10 +15,9 @@ agent composes better.
 
 | Domain | Principles from |
 |---|---|
-| Intent | commander's intent, observable end state, MVP deletion test, non-goals |
+| Intent | owner-held intent, commander's intent, observable end state, precommitment |
 | Decision | reversibility (one-/two-way doors), value of information, opportunity cost, pre-mortem |
 | Verification | test oracle, separation of duties, Goodhart's law, falsifiability |
-| Change | minimal change, root cause by the scientific method |
 | Evidence | source criticism, evidence hierarchy |
 | Coordination | mission command, single writer per change, attention as the bottleneck |
 | Tools | Unix philosophy, mechanism not policy, design by contract |
@@ -27,8 +26,7 @@ agent composes better.
 Each part declares its own domain, so the mapping lives in the parts rather than in a list that
 goes stale. A guide and each of its references begin the first paragraph after their title with
 `Domain: <domain>.` A stub skill that only loads a guide declares none; it is its guide's part.
-The code under `cli/` and `src/` is Tools. So is the shape format's example,
-`mt get mvc --ref example`, which carries no line and belongs with the schema in `src/shape/`.
+The code under `cli/` and `src/` is Tools.
 
 This charter is the home of Toolbox's principles. Research notes and behaviour records under
 `docs/` are inputs, not parts.
@@ -59,15 +57,17 @@ part. Only the owner changes a fixed rule.
   Remove when Runs show workers no longer deciding one-way doors without asking, and the owner
   decides to remove it. A Run without such a door is not evidence.
 - **The oracle runs only when the owner opts in.** Home: the coordinate guide.
-- **The shape's format and validation.** Home: `mt`'s schema and examples, which `mt shape check`
-  enforces in place of a mark. Principles for writing good intent belong to the mvc guide. Other
-  parts name the shape's keys and never restate its structure or field rules.
+- **The spec's sections and where it lives**, so that each judge is given only its own sections
+  and a judge never finds the whole spec in its worktree. Home: the spec guide (`mt get spec`).
+  Other parts name its sections and never restate them.
 - **Lifecycle bookkeeping belongs in tools or the platform.** Until one owns a step, the step
   stays in guide prose as a tagged workaround naming the gap. Home: this charter.
   Fixed: changing it is the owner's call.
 
-Everything else is composed by the agent: which parts a task needs, which perspectives judge a
-change, and the model and effort for each Task.
+Everything else is composed by the agent: which parts a task needs, the plan, which platform runs
+its Tasks, which perspectives judge a change, and the model and effort for each Task. Platform
+choice is kept apart from the parts: a platform's commands live only in its reference under
+`guides/coordinate/`, which guide-lint enforces, and the session's own harness needs none.
 
 ## Part template
 
@@ -75,7 +75,8 @@ Every part contains:
 
 - its domain, declared at the start of its first paragraph;
 - its purpose;
-- principles that still hold for an agent ten times as capable, named in established terms;
+- principles that still hold for an agent ten times as capable, and that such an agent would still
+  get wrong unprompted, named in established terms;
 - its contract at the seams;
 - the config it reads;
 - workarounds tagged inline with what they compensate for and when to remove them, each ending
@@ -102,7 +103,7 @@ fallback location; a cap another tool enforces is that tool's, not the part's.
 
 - Config holds standing owner policy for unattended work: values the owner holds that no task can
   reveal, such as budget, risk tolerance and permission. A limit the owner sets for one task
-  belongs in that task's shape or draft.
+  belongs in that task's spec or draft.
 - One per-user TOML file under `~/.config/mt/`, printed by `mt`, listing its keys. No per-repo
   overrides until a repo needs one.
 - Each key is binding or advisory.
