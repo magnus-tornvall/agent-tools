@@ -145,21 +145,18 @@ The owner's explicit choice for a Run beats it.
 
 | key                 | kind     | value                                                                  |
 | ------------------- | -------- | ---------------------------------------------------------------------- |
-| `agents`            | binding  | the agents a Task on the owner's platform may run on, a non-empty list |
 | `fix_rounds`        | binding  | fix rounds before the owner gets a finding, an integer from 0          |
 
 A TOML float with an integer value, such as `fix_rounds = 2.0`, counts as that integer, since
 `Bun.TOML.parse` cannot tell them apart. `Bun.TOML.parse` also reads some values that are not
 valid TOML as numbers: `-foo`, `+inf`, `-inf` and `-nan` as 0, `.7` as 0.7 and `07` as 7. So
 `mt config` takes `fix_rounds = -foo` as a valid 0. The owner writes `fix_rounds` as a plain TOML
-number. `mt` checks that an agent name is well formed, not that the platform knows it, and a
-repeated name is allowed.
+number.
 
-No `mt` command reads `agents` or `fix_rounds`; whatever coordinates unattended work, such as the
+No `mt` command reads `fix_rounds`; whatever coordinates unattended work, such as the
 coordinate guide, reads them through `mt config <key>`. For example:
 
 ```toml
-agents = ["claude"]
 fix_rounds = 1
 ```
 

@@ -48,11 +48,9 @@ it, and how, is yours to compose.
 
 ## Config
 
-You read `agents` and `fix_rounds` with `mt config <key>`. Both are binding: neither has a
-default, and no agent overrides either. The owner's explicit choice for this Run beats both.
+You read `fix_rounds` with `mt config fix_rounds`. It is binding: it has no default, and no agent
+overrides it. The owner's explicit choice for this Run beats it.
 
-- **`agents`** lists the agents a Task may run on. Every Task runs on one of them, unless the
-  owner names an agent for this Run.
 - **`fix_rounds`** is how many rounds of fixes run before a finding goes to the owner. At 0, every
   finding goes to the owner, and no fix Task starts for it without the owner's choice.
 
