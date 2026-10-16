@@ -75,7 +75,8 @@ Every part contains:
 
 - its domain, declared at the start of its first paragraph;
 - its purpose;
-- principles that still hold for an agent ten times as capable, named in established terms;
+- principles that still hold for an agent ten times as capable, and that such an agent would still
+  get wrong unprompted, named in established terms;
 - its contract at the seams;
 - the config it reads;
 - workarounds tagged inline with what they compensate for and when to remove them, each ending
