@@ -40,5 +40,5 @@ and what the repo's own checks and builds write.
 
 ## Report
 
-Besides what the worker guide asks: the findings, or none. A perspective's reference says what
+Besides what every worker's report holds (`mt get coordinate`): the findings, or none. A perspective's reference says what
 else its report holds.

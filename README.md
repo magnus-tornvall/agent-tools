@@ -24,19 +24,17 @@ prefix keeps a stub from colliding with a skill of the same name from elsewhere,
 `research`; a skill folder without it is not a stub, and install does not link it. The
 agent's skill list stays short, and the guide enters context only when the tool is used.
 
-Every stub has a guide. A guide that only a spec or another guide loads has no stub:
-worker; brief, which the ask, spec and coordinate guides load to lay out every message to the
-owner; and the assignments change and verification, whose references are its judging
-perspectives coverage and surprise.
-No agent chooses them, so a skill-list entry would only cost the sessions that never use them;
-`mt get` serves them like any other guide. The oracle guide has no stub either: an oracle Task runs
-only when the owner opts in. Stubs remain for
-what an agent or the owner picks: spec, which settles with the owner what only they hold,
-coordinate, which runs
-a change unattended, on the platform the request or session names, from a spec, an issue or
-prose, ask, which composes a question for whoever owns a decision, door-rule, which says whether a
-decision is asked at all, and research, which answers the owner's question from trusted outside sources; only the owner starts
-it, by typing `/mt-research`. `mt list` shows every guide.
+Every stub has a guide. A guide that only a spec or another guide loads has no stub: brief,
+which the ask, spec and coordinate guides load to lay out every message to the owner; the
+assignment verification, whose references are its judging perspectives coverage and surprise; and
+oracle, since an oracle Task runs only when the owner opts in. No agent chooses them, so a
+skill-list entry would only cost the sessions that never use them; `mt get` serves them like any
+other guide. Stubs remain for what an agent or the owner picks: spec, which settles with the owner
+what only they hold; coordinate, which runs a change unattended from a spec, an issue or prose, on
+the session's own harness or the platform the request names; ask, which composes a question for
+whoever owns a decision; door-rule, which says whether a decision is asked at all; and research,
+which answers the owner's question from trusted outside sources, started only by the owner typing
+`/mt-research`. `mt list` shows every guide.
 
 ```
 mt list                       every guide, once, with its stub's description, or the

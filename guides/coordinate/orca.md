@@ -1,6 +1,6 @@
 # coordinate: Orca
 
-Domain: Coordination. What a Run on Orca needs that the coordinate and worker guides leave to the
+Domain: Coordination. What a Run on Orca needs that the coordinate guide leaves to the
 platform's reference: the verbs a Run uses and what each takes, what every spec carries, how a
 view reaches the owner, and what is known about Orca, and about `mt` as Orca workers run it, that
 Orca's orchestration skill does not say, so that neither a coordinator nor a worker learns it again
@@ -29,7 +29,8 @@ Ownership, Observable acceptance. Every worker is an Orca Task. The verbs a Run 
 - `orca orchestration worker-show`, `orca orchestration worker-read` and
   `orca orchestration worker-list` let you peek at a worker that has gone quiet.
 - A worker asks with `orca orchestration ask`, its question tool, the answers it offers in
-  `--options`; it blocks until `orca orchestration reply` answers it by its message's ID. It
+  `--options`; it blocks until `orca orchestration reply` answers it by its message's ID, so on
+  Orca a worker waits for its answer rather than ending its Task with the question. It
   reports with `orca orchestration send` of type `worker_done`, taking `--outcome`, `--task-id`,
   `--dispatch-id` and the report as `--body`. Orca's injected preamble names both.
 
@@ -40,13 +41,15 @@ A worker acts on its spec before it has read its guides, so every spec opens wit
 
 ```
 T<n>: <title>
-Run `mt get worker`, `mt get coordinate --ref orca` and `mt get <assignment>` before anything else.
+Run `mt get coordinate --ref orca` before anything else.
 ```
 
-A judge's spec, its `<assignment>` being `verification`, follows that with a line loading its own
-perspective's reference and no other, `coverage` or `surprise`:
+A spec whose assignment has a guide, `oracle` or `verification`, follows that with a line loading
+it, and a judge's also loads its own perspective's reference and no other, `coverage` or
+`surprise`:
 
 ```
+Run `mt get <assignment>` too.
 Run `mt get verification --ref <perspective>` too.
 ```
 
