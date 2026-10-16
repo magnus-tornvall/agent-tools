@@ -40,9 +40,7 @@ only when the owner opts in. Stubs remain for
 what an agent or the owner picks: mvc, which settles a shape with the owner, coordinate, which runs
 a change unattended, on the platform the request or session names, from a shape, an issue or
 prose, ask, which composes a question for whoever owns a decision, door-rule, which says whether a
-decision is asked at all, debugging, which finds the root cause of an unexpected failure before it
-is fixed, commit, which stages, writes and pushes commits as the session's destination allows, and
-research, which answers the owner's question from trusted outside sources; only the owner starts
+decision is asked at all, and research, which answers the owner's question from trusted outside sources; only the owner starts
 it, by typing `/mt-research`. `mt list` shows every guide.
 
 ```
@@ -248,9 +246,7 @@ A `SKILLS_DIR` override, for another agent, links the stubs into that folder alo
 `~/.claude/skills` as it is; `CLAUDE_SKILLS_DIR` moves Claude Code's folder when `SKILLS_DIR` is not
 set. A skill installed as a real folder, or a file where a stub goes, is left alone and the install
 fails, naming it: linking over it would write a stray link inside the folder, or replace the file.
-The whole mvc from before it became a guide is such a folder, and so is a whole commit skill copied
-in before commit became one; the old and the new cannot both be installed under one name. To keep
-the old one for a later comparison, move it out of the skills folder rather than delete it. Settings
+Settings
 that are not a JSON object, or whose `permissions` is not an object or whose `permissions.allow`,
 `permissions.ask` or `permissions.deny` is not a list of strings, are left alone too, and the
 install fails saying which; it names the rules to add by hand only when the settings are not JSON
