@@ -15,10 +15,9 @@ agent composes better.
 
 | Domain | Principles from |
 |---|---|
-| Intent | commander's intent, observable end state, MVP deletion test, non-goals |
+| Intent | owner-held intent, commander's intent, observable end state, precommitment |
 | Decision | reversibility (one-/two-way doors), value of information, opportunity cost, pre-mortem |
 | Verification | test oracle, separation of duties, Goodhart's law, falsifiability |
-| Change | minimal change, root cause by the scientific method |
 | Evidence | source criticism, evidence hierarchy |
 | Coordination | mission command, single writer per change, attention as the bottleneck |
 | Tools | Unix philosophy, mechanism not policy, design by contract |
@@ -65,8 +64,10 @@ part. Only the owner changes a fixed rule.
   stays in guide prose as a tagged workaround naming the gap. Home: this charter.
   Fixed: changing it is the owner's call.
 
-Everything else is composed by the agent: which parts a task needs, which perspectives judge a
-change, and the model and effort for each Task.
+Everything else is composed by the agent: which parts a task needs, the plan, which platform runs
+its Tasks, which perspectives judge a change, and the model and effort for each Task. Platform
+choice is kept apart from the parts: a platform's commands live only in its reference under
+`guides/coordinate/`, which guide-lint enforces, and the session's own harness needs none.
 
 ## Part template
 
