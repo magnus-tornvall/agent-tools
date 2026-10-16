@@ -83,7 +83,9 @@ Every part contains:
   `Workaround for <gap>; remove when <condition>.`
 
 A part states objectives, never the steps of a workflow or their order: how to get there is the
-agent's own judgment. A mark adds a sentence to the part's prose, never a step.
+agent's own judgment. Each rule carries its reason, so that an agent can tell where it applies and
+where it does not; a rule without one is followed by rote, then not at all. A mark adds a sentence
+to the part's prose, never a step.
 
 Sorting a number:
 
