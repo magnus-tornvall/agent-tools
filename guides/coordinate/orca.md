@@ -21,6 +21,30 @@ Ownership, Observable acceptance. Every worker is an Orca Task. The verbs a Run 
 - `orca orchestration worker-start` starts a Task from its `--spec` on one `--agent`, with its
   `--model` and `--effort`. `--worktree` places it in the work's worktree, `current`, or a new
   one, `new-child`, which needs `--name`.
+
+### Agents, models and efforts
+
+Orca prints no list of the agents it launches, the model ids each takes or the efforts it accepts,
+and `--model` passes an opaque provider id through unchecked, so a Run picks from these, each seen
+to launch with the model and effort it asked for on Orca 1.4.227. Workaround for Orca printing no
+agents, models or efforts; remove when a verb prints them.
+
+| `--agent` | `--model` |
+|---|---|
+| `claude` | `opus`, `sonnet`, `haiku` |
+| `codex` | `gpt-6.1-sol`, `gpt-5.6-terra`, `gpt-6-luna` |
+| `copilot` | `claude-opus-5.5`, `gpt-6.1-sol`, `grok-4.7` |
+
+`--effort` is `medium`, `high` or `xhigh`, and needs `--model` beside it: Orca refuses an effort
+on an agent's default model.
+
+`worker-start --agent copilot` refuses `--model` and launches Copilot's own default model. A
+Copilot worker on a chosen model starts its own terminal with `orca terminal create --command`,
+the command being `copilot --model <id> --reasoning-effort <level>`, answers the trust-the-folder
+prompt Copilot opens in a new worktree, which `orca terminal wait --for tui-idle` never sees past,
+and is then started on that terminal with `worker-start --terminal <handle>`.
+Workaround for Orca not passing a model to copilot; remove when `worker-start --agent copilot
+--model` is accepted.
 - The inbox and Task results, read with `orca orchestration check`, `orca orchestration inbox` and
   `orca orchestration task-list`, are the Run's durable record; the findings and the hand-off are
   rebuilt from them.
