@@ -131,7 +131,7 @@ function cmdList(): number {
     const guide = join(guides, name);
     if (!isFile(guide)) continue;
     const tool = basename(name, ".md");
-    const stub = join(ROOT, "skills", tool, "SKILL.md");
+    const stub = join(ROOT, "skills", `mt-${tool}`, "SKILL.md");
     const description = isFile(stub) ? stubDescription(stub) : guideSummary(guide);
     process.stdout.write(`${tool.padEnd(20)} ${description}\n`);
   }

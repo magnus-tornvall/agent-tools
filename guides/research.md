@@ -7,7 +7,7 @@ who made it, how near it stands to what it reports and what interest it has in t
 claim is read where it was first made. It also rests on the evidence hierarchy: some kinds of
 source earn more trust than others, and evidence differs in strength, so each finding carries a
 strength on GRADE's certainty levels, and the report shows what was searched, found and excluded,
-as PRISMA's reporting does. The owner starts it by typing /research; a spec the owner writes may
+as PRISMA's reporting does. The owner starts it by typing /mt-research; a spec the owner writes may
 load it too. It takes the owner's question and returns the report as the reply. It answers from
 what is published outside the repo; reading the codebase is other tools' work. It reads no config.
 

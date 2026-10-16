@@ -1,5 +1,5 @@
 ---
-name: mvc
+name: mt-mvc
 description: Use before committing to an idea of any kind, before you are sure why.
 ---
 

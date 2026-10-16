@@ -61,8 +61,8 @@ mt:
 	fi
 	@ln -sfn "$(REPO)/cli/mt" "$(BIN_DIR)/mt"
 
-# Links every stub that has a guide into SKILLS_DIR, and each into CLAUDE_LINKS when that is
-# another folder, and removes links to a stub that is gone. A real folder or file in the way is
+# Links every stub that has a guide, skills/mt-<guide>, into SKILLS_DIR, and each into
+# CLAUDE_LINKS when that is another folder, and removes links to a stub that is gone. A real folder or file in the way is
 # left alone: ln -sfn would write a stray link inside the folder, or replace the file. A link that
 # already leads to its target's place, however it spells the path, is left as it is. The folders
 # are compared by physical path, so a Claude Code folder that links to SKILLS_DIR gets no link to
@@ -84,9 +84,9 @@ skills:
 	skills=$$(cd -P "$(SKILLS_DIR)" && pwd); \
 	claude=$(if $(CLAUDE_LINKS),$$(cd -P "$(CLAUDE_LINKS)" && pwd),$$skills); \
 	status=0; \
-	for dir in "$(REPO)"/skills/*/; do \
+	for dir in "$(REPO)"/skills/mt-*/; do \
 	  tool=$$(basename "$$dir"); \
-	  [ -f "$(REPO)/guides/$$tool.md" ] || continue; \
+	  [ -f "$(REPO)/guides/$${tool#mt-}.md" ] || continue; \
 	  place "$(REPO)/skills/$$tool" "$(SKILLS_DIR)/$$tool" || continue; \
 	  [ "$$claude" != "$$skills" ] || continue; \
 	  place "$(SKILLS_DIR)/$$tool" "$(CLAUDE_LINKS)/$$tool"; \

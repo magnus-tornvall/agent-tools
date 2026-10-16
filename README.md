@@ -24,8 +24,10 @@ not the contract.
 ## mt
 
 `mt` is a loader. A tool's know-how lives in a guide under `guides/`. A tool an agent or the
-owner picks also has a stub skill under `skills/<name>/`: its description says when to use the
-tool, and its body only tells the agent to run `mt get <name>` and follow what it prints. The
+owner picks also has a stub skill under `skills/mt-<name>/`: its description says when to use the
+tool, and its body only tells the agent to run `mt get <name>` and follow what it prints. The `mt-`
+prefix keeps a stub from colliding with a skill of the same name from elsewhere, such as a plugin's
+`research`; a skill folder without it is not a stub, and install does not link it. The
 agent's skill list stays short, and the guide enters context only when the tool is used.
 
 Every stub has a guide. A guide that only a spec or another guide loads has no stub:
@@ -41,7 +43,7 @@ prose, ask, which composes a question for whoever owns a decision, door-rule, wh
 decision is asked at all, debugging, which finds the root cause of an unexpected failure before it
 is fixed, commit, which stages, writes and pushes commits as the session's destination allows, and
 research, which answers the owner's question from trusted outside sources; only the owner starts
-it, by typing `/research`. `mt list` shows every guide.
+it, by typing `/mt-research`. `mt list` shows every guide.
 
 ```
 mt list                       every guide, once, with its stub's description, or the
@@ -217,10 +219,11 @@ pull or on a machine that is half set up; it changes only what is missing or sta
 - checks Bun's version and runs `bun install --frozen-lockfile`, since `mt shape` needs zod;
 - links `cli/mt` as `~/.local/bin/mt`. `mt` finds the guides through the link, so the clone
   stays where it is;
-- links each stub skill that has a guide into `~/.agents/skills`, and links each into
-  `~/.claude/skills` as a link to `~/.agents/skills/<tool>`, so Claude Code finds it. With no
-  `~/.agents/skills` folder it links the stubs straight into `~/.claude/skills` and does not create
-  `~/.agents`. It removes the links to a stub that is gone;
+- links each stub skill that has a guide, `skills/mt-<tool>`, into `~/.agents/skills`, and links
+  each into `~/.claude/skills` as a link to `~/.agents/skills/mt-<tool>`, so Claude Code finds it.
+  With no `~/.agents/skills` folder it links the stubs straight into `~/.claude/skills` and does not
+  create `~/.agents`. It removes the links to a stub that is gone, so the unprefixed links an
+  earlier install made, such as `ask`, go with the first install after the rename;
 - asks whether to add `Bash(mt:*)` to `permissions.allow` and `Bash(mt update:*)` to
   `permissions.ask` in `~/.claude/settings.json`, so Claude Code agents run every `mt` command
   without a prompt but `mt update`, which reaches off the machine (see Contracts) and is asked
@@ -333,8 +336,7 @@ src/      shape/, the shape schema and mt shape; config/, the owner's config and
           test/guides.sh runs; each with its tests, and install/ and guide-lint/ with their part,
           PART.md
 guides/   one guide per tool, <name>.md, with its references in <name>/<ref>.md
-skills/   a stub skill per guide an agent or the owner picks, <name>/SKILL.md, mvc and ask
-          among them
+skills/   a stub skill per guide an agent or the owner picks, mt-<name>/SKILL.md
 test/     mt.sh, which checks mt get and mt list; install.sh, which checks make install and
           uninstall; update.sh, which checks install.sh and mt update; guides.sh, which checks
           that what guides and AGENTS.md mention still exists
