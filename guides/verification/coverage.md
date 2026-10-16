@@ -10,11 +10,14 @@ config.
 
 ## Given and withheld
 
-- **Given** what the owner wants shown true: the spec's `Outcome`, `In scope`, `Out of scope`,
-  `Constraints` and `Decisions`, the owner's rulings among them, and the change reports.
-- **Withheld** the spec's `Why`, and the change worker's reasoning beyond its report. Why is no
-  end state, so nothing on the branch can show it holds, and a judge who knows it reads the branch
-  for the attempt instead of the result.
+- **Given** what the owner wants shown true and the setting they accepted it in: the spec's
+  `Outcome`, `In scope`, `Out of scope`, `Constraints`, `Decisions`, the owner's rulings among
+  them, and `Assumptions`, so that a requirement is judged in the setting the owner accepted and
+  not one they never asked for; and the change reports.
+- **Withheld** the spec's `Why` and `Success and stop`, and the change worker's reasoning beyond
+  its report. Why is no end state, so nothing on the branch can show it holds, and a judge who
+  knows it reads the branch for the attempt instead of the result. Success and stop is observed
+  after shipping, so nothing on the branch can settle a finding against it.
 
 Fixed: changing it is the owner's call.
 

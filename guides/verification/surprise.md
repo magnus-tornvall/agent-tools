@@ -10,11 +10,13 @@ It reads no config.
 
 ## Given and withheld
 
-- **Given** the spec's `Outcome`, `Why` and `Out of scope`, and the record of decisions: the
-  spec's `Decisions`, each choice with what it ruled out and the owner's rulings, and the reports'
-  assumptions and questions.
-- **Withheld** what the change was checked against: the spec's `In scope` and `Constraints`. A
-  judge who knows what was measured looks where the measuring looked.
+- **Given** the spec's `Outcome`, `Why` and `Out of scope`, and the record of what the owner
+  decided and accepted: the spec's `Decisions`, each choice with what it ruled out and the owner's
+  rulings, its `Assumptions`, and the reports' assumptions and questions. An assumption the owner
+  already accepted is no surprise, and flagging it spends their attention on what they have seen.
+- **Withheld** what the change was checked against: the spec's `In scope` and `Constraints`, since
+  a judge who knows what was measured looks where the measuring looked; and `Success and stop`,
+  which is observed after shipping and shows nothing on the branch that `Why` does not.
 
 Fixed: changing it is the owner's call.
 
