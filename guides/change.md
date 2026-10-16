@@ -2,7 +2,7 @@
 
 Domain: Change. Make the change the intent describes in this worktree, or fix the findings handed
 over, so that each requirement holds by evidence and nothing else moves. It takes the intent as
-the coordinator holds it, a shape or otherwise, the owner's rulings and the oracle commit with its
+the coordinator holds it, a spec or otherwise, the owner's rulings and the oracle commit with its
 suite's command, when the work branch has one, and when fixing the findings with the reports that
 raised them; it returns commits on the work branch and a report. Where the intent is silent, why
 the owner wants the change says which way to lean. It reads no config.

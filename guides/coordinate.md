@@ -28,10 +28,8 @@ it, and how, is yours to compose.
 ## Contract
 
 - **Intent in any form.** The intent is the argument, else the one the conversation names; say
-  which. It is a shape, by its path or a reference to where it is held, or anything else that
-  states what the owner wants, such as an issue reference or prose. With none, or several, ask. A
-  shape held outside a file is the one at its reference: what is checked and sliced is read from
-  there, piped to `mt shape` as `-`.
+  which. It is a spec, by a reference to where it is held, or anything else that states what
+  the owner wants, such as an issue reference or prose. With none, or several, ask.
 - **The platform** is the one the request, the owner's instructions or the session's own
   environment names. A Run asks, before any Task starts, only when none of these names one, or when
   the platform named has no reference: `mt get coordinate --ref <platform>` exits 1.
@@ -62,18 +60,17 @@ Task starts until the owner answers.
 The Run's objective: nothing on the branch would surprise the owner. It holds when all of these
 do.
 
-- **The intent is clear enough to plan from before any plan is shown.** Given a shape,
-  `mt shape check` passes on it, or the owner has ruled on each violation it prints. Given intent
-  in any other form, you orchestrate from it on your own judgment. A grill as the mvc guide
-  describes (`mt get mvc`) runs only when you judge one-way doors or intent only the owner holds
-  still open, never because of the input's form. A ruling leaves the intent as given and reaches
+- **The intent is clear enough to plan from before any plan is shown.** Given intent in any
+  form, you orchestrate from it on your own judgment. The spec guide (`mt get spec`) runs only when
+  you judge one-way doors or intent only the owner holds still open, never because of the input's
+  form. A ruling leaves the intent as given and reaches
   every Task it bears on.
 - **The owner approves a plan they can trust to run unattended.** From it they can see the first
   Tasks and the assignments expected next, each Task's agent, model and effort, the base branch,
   and the destination: the branch, or a pull request. Each model and effort is your judgment for
   that Task. They can see at once whether anything would stop a worker at its first command or at
   a permission prompt: `mt` or Bun missing from the PATH a worker launches with, and each
-  `mt get`, `mt shape`, repo check and `git commit` a worker's launch permissions would not allow.
+  `mt get`, repo check and `git commit` a worker's launch permissions would not allow.
   When a requirement needs the app running, they can see where the app under test actually sends
   its requests, read from the config it runs with, not from the docs. A changed plan is approved
   again.
@@ -151,7 +148,7 @@ do.
   each takes, what every spec carries, and what is known about the platform that its own docs do
   not say.
 - **`mt config <key>`** prints one config key's value, or says why it has none.
-- **The mvc guide** (`mt get mvc`) settles a shape with the owner in a grill.
+- **The spec guide** (`mt get spec`) settles with the owner what only they hold, as a spec.
 - **Assignments**, each a guide a worker loads with `mt get <name>`, and a judge also its
   perspective's reference. What a worker is given is all it gets.
   - `oracle` writes failing tests for the requirements in the intent a user can observe, as its own
@@ -171,11 +168,8 @@ do.
 - **The door rule** (`mt get door-rule`) decides what you answer and what goes to the owner.
 - **The worker guide** (`mt get worker`) is what every worker follows for questions, assumptions
   and the report.
-- **The shape format** is the schema `mt shape check <file>` checks against, and the filled-in
-  example `mt get mvc --ref example`.
-- **`mt shape slice <file> --keys <key,...>`**, when the intent is a shape, gives a judge only the
-  keys that hold what its perspective's reference says it is given. Both `mt shape` commands read
-  a file of `-` from stdin, and only a whole YAML document.
+- **The spec's sections**, as the spec guide fixes them, let a judge be given only the sections
+  that hold what its perspective's reference says it is given.
 - **The ask guide** (`mt get ask`) composes every question to the owner.
 - **The brief guide** (`mt get brief`) lays out every message to the owner: what it shows first,
   what it leaves until asked, and how the owner asks for it.

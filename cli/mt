@@ -1,16 +1,13 @@
 #!/usr/bin/env bun
-// mt: load the know-how of the owner's tools on demand, check and slice shapes, print the owner's
-// config, and update the clone it runs from. get, list and update need nothing beyond this file;
-// shape and config load src/shape/ and src/config/ only when they are called.
+// mt: load the know-how of the owner's tools on demand, print the owner's config, and update the
+// clone it runs from. get, list and update need nothing beyond this file; config loads src/config/
+// only when it is called.
 
 import { existsSync, readdirSync, readFileSync, realpathSync, statSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 
 const USAGE = `usage: mt get <tool> [--ref <ref>]   print the guide for a tool, or one of its references
        mt list                       list every tool with when to use it
-       mt shape check <file>         check that a file is a shape; - reads stdin
-       mt shape slice <file> --keys <key,...>
-                                     print only those top-level keys of a shape; - reads stdin
        mt config [<key>]             print the config file's path and each key, binding or
                                      advisory, with its value; or one key's value alone
        mt update                     move this clone to origin's newest release, or with main
@@ -21,8 +18,6 @@ The owner's config is \${XDG_CONFIG_HOME:-$HOME/.config}/mt/config.toml; mt only
 `;
 
 const ROOT = dirname(dirname(realpathSync(import.meta.path)));
-// The shape's example lives with its schema, not under guides/.
-const SHAPE_EXAMPLE = join(ROOT, "src/shape/example.yaml");
 
 class UsageError extends Error {}
 
@@ -56,7 +51,6 @@ function cmdGet(args: string[]): number {
   let file = "";
   if (validName(tool)) {
     if (!haveRef) file = join(ROOT, "guides", `${tool}.md`);
-    else if (tool === "mvc" && ref === "example") file = SHAPE_EXAMPLE;
     else if (validName(ref)) file = join(ROOT, "guides", tool, `${ref}.md`);
   }
 
@@ -136,11 +130,6 @@ function cmdList(): number {
     process.stdout.write(`${tool.padEnd(20)} ${description}\n`);
   }
   return 0;
-}
-
-async function cmdShape(args: string[]): Promise<number> {
-  const { runShape }: typeof import("../src/shape/command.ts") = await import(join(ROOT, "src/shape/command.ts"));
-  return runShape(args);
 }
 
 async function cmdConfig(args: string[]): Promise<number> {
@@ -258,8 +247,6 @@ async function main(args: string[]): Promise<number> {
       return cmdGet(rest);
     case "list":
       return cmdList();
-    case "shape":
-      return cmdShape(rest);
     case "config":
       return cmdConfig(rest);
     case "update":

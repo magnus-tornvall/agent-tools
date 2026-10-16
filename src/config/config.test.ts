@@ -4,7 +4,6 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
 const MT = new URL("../../cli/mt", import.meta.url).pathname;
-const EXAMPLE = readFileSync(new URL("../shape/example.yaml", import.meta.url).pathname, "utf8");
 const TMP = realpathSync(mkdtempSync(join(tmpdir(), "mt-config-")));
 const HOME = join(TMP, "home");
 const CONFIG_HOME = join(TMP, "config");
@@ -232,19 +231,10 @@ describe("mt config", () => {
     expect(stderr).toBe("mt: unexpected argument '3'\nusage: mt config [<key>]\n");
   });
 
-  test("R8: with no config file mt shape check on a valid shape exits 0 and prints nothing about config", () => {
-    const shape = join(TMP, "shape.yaml");
-    writeFileSync(shape, EXAMPLE);
-    const { code, stdout, stderr } = mt(["shape", "check", shape]);
-    expect(code).toBe(0);
-    expect(stdout).toBe("");
-    expect(stderr).toBe("");
-  });
-
   test("D1: commands that read no key run as before over an invalid config", () => {
     config("fix_rounds = \n");
     expect(mt(["list"]).code).toBe(0);
-    expect(mt(["shape", "check", "-"], {}, EXAMPLE)).toEqual({ code: 0, stdout: "", stderr: "" });
+    expect(mt(["get", "door-rule"]).code).toBe(0);
   });
 
   test("R13: the usage lists mt config and the config file's path", () => {

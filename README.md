@@ -1,25 +1,19 @@
 # agent-tools
 
-Skills for agents working on the owner's platform, and `mt`, which loads them on demand, checks
-and slices shapes, prints the owner's config, and updates its own clone. Install it with one line
+Skills for agents working on the owner's platform, and `mt`, which loads them on demand, prints
+the owner's config, and updates its own clone. Install it with one line
 (see Install):
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/magnus-tornvall/agent-tools/main/install.sh | bash
 ```
 
-## The shape
+## The spec
 
-A shape is one YAML document: the outcome, its `purpose`, why the outcome matters, requirements
-keyed `R1…`, non-goals keyed `N1…`, constraints keyed `C1…`, and decisions keyed `D1…`.
-Oracles are not part of it: they are tests in the repo, written as their own commit on the work
-branch (`mt get oracle`). The schema in `src/shape/shape.ts` is the contract: a shape is what
-`mt shape check` accepts, and `mt get mvc --ref example` prints a filled-in example.
-
-Any producer whose shape passes `mt shape check` is a valid producer. mvc is one producer,
-not the contract.
-
-`mt` keeps no drafts and no shapes; whoever produces one stores it.
+A spec is a short document the owner reads first-hand: the outcome, why it matters, success and
+stop, what is in and out of scope, constraints, decisions and assumptions. Its sections, and that it
+lives outside the repo's tree, are fixed by the spec guide (`mt get spec`). `mt` keeps no specs;
+whoever writes one stores it where the owner reads it.
 
 ## mt
 
@@ -31,14 +25,15 @@ prefix keeps a stub from colliding with a skill of the same name from elsewhere,
 agent's skill list stays short, and the guide enters context only when the tool is used.
 
 Every stub has a guide. A guide that only a spec or another guide loads has no stub:
-worker; brief, which the ask, mvc and coordinate guides load to lay out every message to the
+worker; brief, which the ask, spec and coordinate guides load to lay out every message to the
 owner; and the assignments change and verification, whose references are its judging
 perspectives coverage and surprise.
 No agent chooses them, so a skill-list entry would only cost the sessions that never use them;
 `mt get` serves them like any other guide. The oracle guide has no stub either: an oracle Task runs
 only when the owner opts in. Stubs remain for
-what an agent or the owner picks: mvc, which settles a shape with the owner, coordinate, which runs
-a change unattended, on the platform the request or session names, from a shape, an issue or
+what an agent or the owner picks: spec, which settles with the owner what only they hold,
+coordinate, which runs
+a change unattended, on the platform the request or session names, from a spec, an issue or
 prose, ask, which composes a question for whoever owns a decision, door-rule, which says whether a
 decision is asked at all, and research, which answers the owner's question from trusted outside sources; only the owner starts
 it, by typing `/mt-research`. `mt list` shows every guide.
@@ -48,18 +43,14 @@ mt list                       every guide, once, with its stub's description, or
                               guide's first paragraph when it has no stub
 mt get <name>                 print the tool's guide
 mt get <name> [--ref <ref>]   print one of the tool's references instead
-mt shape check <file>         check that a file is a shape; - reads stdin
-mt shape slice <file> --keys <key,...>
-                              print the shape with only those top-level keys; - reads stdin
 mt config [<key>]             print the owner's config, or one key's value
 mt update                     move this clone forward along the channel it has checked out,
                               and run make install
 mt --help                     print the usage
 ```
 
-A reference is a file under `guides/<name>/<ref>.md`, for example `mt get coordinate --ref orca`,
-except that `mt get mvc --ref example` prints `src/shape/example.yaml`. An unknown tool or ref exits
-1 with a message on stderr.
+A reference is a file under `guides/<name>/<ref>.md`, for example `mt get coordinate --ref orca`.
+An unknown tool or ref exits 1 with a message on stderr.
 
 ### Contracts
 
@@ -80,17 +71,6 @@ file prints one line on stderr naming it and pointing at `mt list`, and exits 1.
 **`mt list`**, read-only. Prints one line per guide under `guides/`, its name padded to 20
 columns, then its stub's description, or its first paragraph when it has no stub, and exits 0.
 Words after `list` are ignored.
-
-**`mt shape check <file>`**, read-only. Takes a file, or `-` for stdin. Prints nothing and exits 0
-when it is a shape. A file that cannot be read, or is not one, prints a line on stderr per
-violation, or the reason it cannot be read, and exits 1. No file, two files or an unknown option
-exits 2. See Shapes.
-
-**`mt shape slice <file> --keys <key,...>`**, read-only. Takes a file, or `-` for stdin, and the
-top-level keys to keep. Prints those keys as YAML on stdout and exits 0. A key the schema does not
-define, a file that cannot be read, is not YAML or whose top level is not a map prints a line on
-stderr, nothing on stdout, and exits 1. No file, a second file, no `--keys` value or an unknown
-option exits 2.
 
 **`mt config [<key>]`**, read-only. Prints the owner's config: the file's path, then one line per
 key. With a key, prints that key's value alone. Exits 0, 1 or 2 as Config says.
@@ -115,25 +95,6 @@ The usage lists every command, and names the config file's path.
 
 **`mt <anything else>`**, read-only. An unknown command prints `mt: unknown command '<command>'`
 and the usage on stderr, and exits 2.
-
-### Shapes
-
-`mt shape check <file>` prints nothing and exits 0 when the file is a shape. Otherwise it prints one
-`path: message` line per violation on stderr and exits 1; a file that is not YAML is one violation,
-on `(document)`. A key repeated in `requirements`, `non_goals`, `constraints` or `decisions` is a
-violation on that key, found in block-style maps; YAML keeps only the last of a repeated key, so
-without this one entry would be dropped silently.
-
-`mt shape slice <file> --keys outcome,non_goals` prints a YAML document with only those
-top-level keys of the shape, their values unchanged. A key the schema does not define, or a
-file that is not YAML or whose top level is not a map, exits 1 with nothing on stdout. Slice
-does not run the check, so a shape with a violation the owner ruled on can still be sliced.
-
-Both read the document from stdin when the file is `-`, and read only a whole YAML document:
-a shape inside other text, such as Markdown, is taken out of it by whoever pipes it in.
-
-The schema is `src/shape/shape.ts`. `mt shape` loads it only when called, so `mt get` and
-`mt list` need nothing beyond `cli/mt` and Bun.
 
 ### Config
 
@@ -185,11 +146,8 @@ to add its rules to Claude Code's settings.
 
 `mt` is TypeScript run by [Bun](https://bun.sh). Bun must be on the PATH that agents and Orca
 workers launch with, not only on your interactive shell's, or every `mt` command they run
-fails. Use Bun 1.2.23 or later: `Bun.YAML.parse` arrived in 1.2.21, `Bun.YAML.stringify` in
-1.2.22, and from 1.2.23 `Bun.YAML.parse` throws a `SyntaxError` on invalid input, which `mt
-shape` relies on ([release notes](https://bun.com/blog/release-notes/bun-v1.2.23)). It is
-tested on 1.3.14. `mt config` reads its file with `Bun.TOML.parse`, which is older. Install git,
-make and Bun, then run:
+fails. Use Bun 1.2.23 or later, the version `make install` checks for; it is tested on 1.3.14.
+Install git, make and Bun, then run:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/magnus-tornvall/agent-tools/main/install.sh | bash
@@ -214,7 +172,7 @@ stays and `mt update` says to run `make install` again.
 To work on `mt`, run `make install` from your own clone instead. It is safe to run again, after a
 pull or on a machine that is half set up; it changes only what is missing or stale. It:
 
-- checks Bun's version and runs `bun install --frozen-lockfile`, since `mt shape` needs zod;
+- checks Bun's version and runs `bun install --frozen-lockfile`, since `mt config` needs zod;
 - links `cli/mt` as `~/.local/bin/mt`. `mt` finds the guides through the link, so the clone
   stays where it is;
 - links each stub skill that has a guide, `skills/mt-<tool>`, into `~/.agents/skills`, and links
@@ -246,8 +204,7 @@ A `SKILLS_DIR` override, for another agent, links the stubs into that folder alo
 `~/.claude/skills` as it is; `CLAUDE_SKILLS_DIR` moves Claude Code's folder when `SKILLS_DIR` is not
 set. A skill installed as a real folder, or a file where a stub goes, is left alone and the install
 fails, naming it: linking over it would write a stray link inside the folder, or replace the file.
-Settings
-that are not a JSON object, or whose `permissions` is not an object or whose `permissions.allow`,
+Settings that are not a JSON object, or whose `permissions` is not an object or whose `permissions.allow`,
 `permissions.ask` or `permissions.deny` is not a list of strings, are left alone too, and the
 install fails saying which; it names the rules to add by hand only when the settings are not JSON
 or not an object.
@@ -313,9 +270,8 @@ schema version other than 1, or lists its commands in a shape the lint does not 
 array, or a command without a string `command` and an array `path`), each as one line instead of
 one per mention.
 
-`bun test` runs guide-lint against fixture repos and a fake `orca`, and checks the shape
-schema and `mt shape`, `mt config` against a throwaway `XDG_CONFIG_HOME`, and that every command in
-`mt --help` has a side-effect class. `bun run typecheck` runs `tsc --noEmit` over `src/`; `tsc`
+`bun test` runs guide-lint against fixture repos and a fake `orca`, and checks `mt config` against
+a throwaway `XDG_CONFIG_HOME`, and that every command in `mt --help` has a side-effect class. `bun run typecheck` runs `tsc --noEmit` over `src/`; `tsc`
 cannot read `cli/mt`, which has no extension.
 
 ## Layout
@@ -327,10 +283,9 @@ cli/      mt
 install.sh
           the curl line's installer: clones the newest release and runs make install
 Makefile  make install and make uninstall
-src/      shape/, the shape schema and mt shape; config/, the owner's config and mt config;
-          install/, the side-effect classes and the settings rules; guide-lint/, the check
-          test/guides.sh runs; each with its tests, and install/ and guide-lint/ with their part,
-          PART.md
+src/      config/, the owner's config and mt config; install/, the side-effect classes and the
+          settings rules; guide-lint/, the check test/guides.sh runs; each with its tests, and
+          install/ and guide-lint/ with their part, PART.md
 guides/   one guide per tool, <name>.md, with its references in <name>/<ref>.md
 skills/   a stub skill per guide an agent or the owner picks, mt-<name>/SKILL.md
 test/     mt.sh, which checks mt get and mt list; install.sh, which checks make install and

@@ -54,7 +54,7 @@ function fixture(): void {
   write(join(FIX, "guides", "ask.md"), "# ask\n\nSee `mt get door-rule`, then\nthe stance form, `mt get ask --ref stance`.\n");
   write(join(FIX, "guides", "ask", "stance.md"), "# stance\n");
   write(join(FIX, "guides", "door-rule.md"), "# door-rule\n");
-  write(join(FIX, "guides", "mvc.md"), "# mvc\n\nCheck it with `mt shape check <file>`, and `mt\nshape slice` it.\n");
+  write(join(FIX, "guides", "mvc.md"), "# mvc\n\nRead it with `mt config fix_rounds`, and `mt\nupdate` it.\n");
   write(
     join(FIX, "skills", "mvc", "SKILL.md"),
     "---\ndescription: Settle a shape.\n---\n\nRun `mt get mvc` and follow what it prints.\n",
