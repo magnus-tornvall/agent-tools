@@ -39,8 +39,9 @@ no approval is asked for them: the owner hears only what is theirs to decide.
   to, below. A spec never changes: a change is a new Task, so that no Task works from a spec that
   moved under it.
 - **Every worker is held to this**, carried in its spec:
-  - each open decision is sorted by the door rule: a two-way door is decided and recorded with
-    what it rules out; a one-way door is asked, as the ask guide composes it (`mt get ask`). A
+  - each open decision is sorted by the door rule (`mt get door-rule`): a two-way door is decided
+    and recorded with what it rules out; a one-way door is asked, as the ask guide composes it
+    (`mt get ask`). A
     worker that cannot wait for the answer ends its Task with the question and what is done, and
     the answer starts a new Task; the platform's reference says whether a worker can wait;
   - the repo's own checks pass before it claims success; the files an oracle commit added stay

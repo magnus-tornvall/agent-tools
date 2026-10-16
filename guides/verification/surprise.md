@@ -22,8 +22,9 @@ Fixed: changing it is the owner's call.
 
 - **None of the repo's code is built, tested or run**: you share a worktree with Tasks that do.
   Reading the branch and loading guides with `mt get` are fine, even where the repo is `mt`'s own.
-- **Every one-way door decided without a question is found.** Look hardest at the kinds the door
-  rule names, and at an assumption that is one.
+- **Every one-way door decided without a question is found.** Look hardest at the doors a diff
+  shows without running it: an assumption that is one, a new dependency, a changed contract,
+  schema or file format, a first instance of a pattern, a changed test assertion.
 - **Every surprise that is not a door is found**: work beyond the outcome, a different mechanism
   than the decisions chose, code that does not read like the code around it, and what the merge
   does where the tools are already installed, such as links into skill folders and what must be
