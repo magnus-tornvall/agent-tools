@@ -34,10 +34,9 @@ no approval is asked for them: the owner hears only what is theirs to decide.
   `mt get coordinate --ref <platform>`, such as `orca`, is run by that reference; the session's
   own harness needs none. The choice is a two-way door, recorded in the hand-off.
 - **Each Task's spec** is written for that Task alone and is complete in itself: the sections of
-  the intent its assignment needs, as text with their version and never as a path, since a path
-  in a judge's hands leaks the rest; what it owns; its assignment; and what every worker is held
-  to, below. A spec never changes: a change is a new Task, so that no Task works from a spec that
-  moved under it.
+  the intent its assignment needs, as text with their version and never as a path; what it owns;
+  its assignment; and what every worker is held to, below. A spec never changes: a change is a new
+  Task, so that no Task works from a spec that moved under it.
 - **Every worker is held to this**, carried in its spec:
   - each open decision is sorted by the door rule (`mt get door-rule`): a two-way door is decided
     and recorded with what it rules out; a one-way door is asked, as the ask guide composes it
@@ -71,12 +70,15 @@ missing or invalid, ask the owner and start no Task until they answer.
 The Run's objective is that nothing on the branch would surprise the owner. It holds when all of
 these do.
 
-- **The acceptance obligations hold on the final branch, fix commits included**: the repo's checks
-  pass; every requirement has evidence at least as strong as the requirement; no oracle is
-  tampered, each file the oracle commit added unchanged, and the hand-off names any that changed;
-  nothing in the diff would stop a maintainer merging; and nothing on the branch would surprise
-  the owner, above all a one-way door decided without a question. Fixed: changing it is the
-  owner's call.
+- **The acceptance obligations hold on the final branch, fix commits included.** Fixed: changing
+  it is the owner's call.
+  - The repo's own checks pass.
+  - Every requirement has evidence at least as strong as the requirement.
+  - No oracle is tampered: each file the oracle commit added is unchanged, and the hand-off names
+    any that changed.
+  - Nothing in the diff would stop a maintainer merging.
+  - Nothing on the branch would surprise the owner, above all a one-way door decided without a
+    question.
 - **The change is the workers'**, on its own branch, the base branch untouched.
 - **An oracle Task runs only when the owner asks for one** (`mt get oracle`); no Run proposes it.
   Fixed: changing it is the owner's call.
@@ -85,11 +87,9 @@ these do.
 - **The surprise perspective judges the final branch.** Fixed: changing it is the owner's call.
   Workaround for workers deciding one-way doors without asking; remove when Runs show they no
   longer do, and the owner decides to remove it.
-- **The owner decides what is theirs and nothing else.** From planning or building, what reaches
-  them is what the door rule sends up, and each ruling is appended to the spec's decisions
-  (`mt get spec`). The destination of the work and any effect outside the worktree, such as
-  writing where the app under test keeps the owner's real data, are one-way doors. Once the fix
-  rounds are spent, every open finding is theirs.
+- **The owner decides what is theirs and nothing else.** The destination of the work and any
+  effect outside the worktree, such as writing where the app under test keeps the owner's real
+  data, are one-way doors. Once the fix rounds are spent, every open finding is theirs.
 - **The owner can judge every finding from what reaches them**: who raised it, the input or state
   that shows it, the fix and its door, and what became of every other: fixed and by which Task,
   dropped and why, ruled on, or open and with whom. Evidence that is not text is where they can
@@ -98,12 +98,11 @@ these do.
   where only a human can move it, and every commit the destination lacks, every process still
   running and every worker whose report you accepted is named before anything that holds it is
   torn down. Teardown is the owner's.
-- **The hand-off lets the owner close the Run**: every ruling still theirs; the platform and why;
-  which sections of the spec each judge was given, so that a leak can be traced; the proposed
-  guide edits, drawn from the Toolbox lines, applied only when the owner picks them and never on
-  the work branch; and a line each for every other finding, failed attempt, requirement without
-  evidence, departure from the spec and assumption you would not have reached from the intent and
-  the owner's rulings alone.
+- **The hand-off lets the owner close the Run.** Besides the findings, it holds the platform and
+  why; which sections of the spec each judge was given, so that a leak can be traced; each
+  assumption you would not have reached from the intent and the owner's rulings alone; and the
+  proposed guide edits, drawn from the Toolbox lines, applied only when the owner picks them and
+  never on the work branch.
 
 ## Guardrails
 

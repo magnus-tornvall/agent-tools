@@ -211,3 +211,42 @@ export function checkOrcaMention(words: readonly string[], table: OrcaTable): st
   }
   return null;
 }
+
+/** The sentence that marks a fixed rule in its home part. */
+export const FIXED_MARK = "Fixed: changing it is the owner's call.";
+
+/** The lines of a document that carry the fixed mark. */
+export function fixedLines(markdown: string): number[] {
+  return markdown.split("\n").flatMap((line, index) => (line.includes(FIXED_MARK) ? [index + 1] : []));
+}
+
+const SECTION_NAME = /^[A-Z][a-z]+( [a-z]+)*$/;
+
+/** Whether a backticked span names a spec section: a title-case phrase such as `In scope`, which no command or guide name is. */
+export function isSectionName(text: string): boolean {
+  return SECTION_NAME.test(text);
+}
+
+/** The `mt get` mentions in the charter's Fixed section: the homes it names for the fixed rules. */
+export function fixedHomes(charter: string): Span[] {
+  const lines = charter.split("\n");
+  const start = lines.findIndex((line) => /^## Fixed\b/.test(line));
+  if (start === -1) return [];
+  const next = lines.findIndex((line, index) => index > start && line.startsWith("## "));
+  const end = next === -1 ? lines.length : next;
+  return spans(charter).filter(({ line, text }) => line > start + 1 && line <= end && text.startsWith("mt get "));
+}
+
+/**
+ * The guide files, relative to the repo, that an `mt get` home names: the tool's guide, one of its
+ * references, or, for a `--ref <placeholder>`, every reference `references(tool)` lists.
+ */
+export function homeFiles(words: readonly string[], references: (tool: string) => string[]): string[] {
+  const tool = words[2] ?? "";
+  if (tool === "" || tool.includes("<")) return [];
+  const flag = words.indexOf("--ref");
+  if (flag === -1) return [`guides/${tool}.md`];
+  const ref = (words[flag + 1] ?? "").replace(/^\[|\]$/g, "");
+  if (ref.includes("<")) return references(tool).map((name) => `guides/${tool}/${name}.md`);
+  return [`guides/${tool}/${ref}.md`];
+}

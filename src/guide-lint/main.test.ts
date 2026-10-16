@@ -204,6 +204,41 @@ describe("mt mentions", () => {
   });
 });
 
+describe("spec sections and fixed rules", () => {
+  const FIXED = "Fixed: changing it is the owner's call.";
+
+  test("names the guide line that cites a spec section the spec guide does not declare", () => {
+    write(join(FIX, "guides", "spec.md"), "# spec\n\nSections: `Outcome`, `In scope`.\n");
+    write(join(FIX, "guides", "door-rule.md"), "# door-rule\n\nGiven `Outcome` and\n`Scope`.\n");
+    const { status, out } = lint(NO_ORCA);
+    expect(out).toContain("guides/door-rule.md:4: `Scope`: the spec guide declares no such section\n");
+    expect(out).not.toContain("`Outcome`");
+    expect(status).toBe(1);
+  });
+
+  test("without a spec guide, a title-case span is not checked", () => {
+    write(join(FIX, "guides", "door-rule.md"), "# door-rule\n\nGiven `Scope`.\n");
+    expect(lint(NO_ORCA).status).toBe(0);
+  });
+
+  test("fails a home without a fixed rule and a fixed rule outside the homes, and passes the homes that carry one", () => {
+    write(join(FIX, "AGENTS.md"), `# Charter\n\n## Fixed\n\n- Home: the door rule (\`mt get door-rule\`).\n- Home: each stance (\`mt get ask --ref <stance>\`).\n`);
+    write(join(FIX, "guides", "ask", "stance.md"), `# stance\n\nA rule. ${FIXED}\n`);
+    write(join(FIX, "guides", "mvc.md"), `# mvc\n\nA stray. ${FIXED}\n`);
+    const { status, out } = lint(NO_ORCA);
+    expect(out).toContain("AGENTS.md:5: `mt get door-rule`: the charter names it a home, but it carries no fixed rule\n");
+    expect(out).toContain("guides/mvc.md:3: a fixed rule outside the homes the charter names\n");
+    expect(out).not.toContain("stance.md");
+    expect(status).toBe(1);
+  });
+
+  test("a charter without a Fixed section checks no fixed rule", () => {
+    write(join(FIX, "AGENTS.md"), "# Charter\n\nSee `mt get door-rule`.\n");
+    write(join(FIX, "guides", "mvc.md"), `# mvc\n\nA rule. ${FIXED}\n`);
+    expect(lint(NO_ORCA).status).toBe(0);
+  });
+});
+
 describe("Orca mentions", () => {
   test("names the guide, line and flag the installed Orca no longer has", () => {
     fakeOrca([{ ...WORKER_LIST, flags: ["help", "run"] }, RUN_CREATE, ASK, SKILLS_GET]);

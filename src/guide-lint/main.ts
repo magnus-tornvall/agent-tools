@@ -6,8 +6,8 @@
  *   bun src/guide-lint/main.ts <repo>
  */
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { join, relative } from "node:path";
-import { checkMtMention, checkOrcaMention, checkPlacement, isPlaceholderMention, parseMtUsage, readOrcaContext, spans, type MtGet } from "./lint.ts";
+import { basename, join, relative } from "node:path";
+import { checkMtMention, checkOrcaMention, checkPlacement, fixedHomes, fixedLines, homeFiles, isPlaceholderMention, isSectionName, parseMtUsage, readOrcaContext, spans, type MtGet } from "./lint.ts";
 
 const root = process.argv[2];
 if (root === undefined) {
@@ -15,6 +15,8 @@ if (root === undefined) {
   process.exit(2);
 }
 
+/** The repo as a string: a function declared below does not see the narrowing above. */
+const repo: string = root;
 const mt = join(root, "cli", "mt");
 
 function runMt(...args: string[]) {
@@ -124,8 +126,47 @@ function lintPlacement(references: string): void {
   }
 }
 
+/** Fails each mention of a spec section that the spec guide does not declare: a judge's reference names sections it never sees declared. */
+function lintSections(): void {
+  const spec = join(repo, "guides", "spec.md");
+  if (!existsSync(spec)) return;
+  const declared = new Set(spans(readFileSync(spec, "utf8")).map(({ text }) => text).filter(isSectionName));
+  if (declared.size === 0) return;
+  for (const mention of mentions) {
+    if (mention.file === "guides/spec.md" || !isSectionName(mention.text) || declared.has(mention.text)) continue;
+    fail(mention, "the spec guide declares no such section");
+  }
+}
+
+/** Fails a home the charter names that carries no fixed rule, and a fixed rule in a part the charter names no home. */
+function lintFixed(): void {
+  const charterPath = charter[0];
+  if (charterPath === undefined) return;
+  const homes = new Set<string>();
+  const references = (tool: string) => markdownFiles(join(repo, "guides", tool)).map((file) => basename(file, ".md"));
+  for (const home of fixedHomes(readFileSync(charterPath, "utf8"))) {
+    for (const file of homeFiles(home.text.split(" "), references)) {
+      homes.add(file);
+      const path = join(repo, file);
+      if (existsSync(path) && fixedLines(readFileSync(path, "utf8")).length === 0) {
+        failures.push(`AGENTS.md:${home.line}: \`${home.text}\`: the charter names it a home, but it carries no fixed rule`);
+      }
+    }
+  }
+  if (homes.size === 0) return;
+  for (const path of [...guides, ...stubs].sort()) {
+    const file = relative(repo, path);
+    if (homes.has(file)) continue;
+    for (const line of fixedLines(readFileSync(path, "utf8"))) {
+      failures.push(`${file}:${line}: a fixed rule outside the homes the charter names`);
+    }
+  }
+}
+
 if (guides.length === 0) failures.push(`guide-lint: found no guides under ${join(root, "guides")}`);
 lintPlacement(join(root, "guides", "coordinate"));
+lintSections();
+lintFixed();
 const { checked: mtChecked, skipped } = lintMt();
 const orcaChecked = lintOrca();
 

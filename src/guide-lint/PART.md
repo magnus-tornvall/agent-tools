@@ -2,15 +2,20 @@
 
 Domain: Tools. guide-lint fails when a guide, a stub skill or the charter mentions in backticks an
 `mt` guide, reference or command, or an `orca` command or flag, that no longer exists, or a
-platform's command outside that platform's reference. Its code is
+platform's command outside that platform's reference; when a guide names a spec section the spec
+guide does not declare; and when a fixed rule sits outside the home the charter names for it, or
+a home carries none. Its code is
 `src/guide-lint/`: `lint.ts` matches mentions and reads no files, `main.ts` gathers the files and
 runs the tools. `test/guides.sh` runs it on this repo.
 
 ## Purpose
 
 An agent that loads a guide never meets a command or guide that is gone: the prose agents follow
-stays in step with the tools it names. And the parts stay agnostic of the platform that runs a
-Run: one platform's commands live only in its reference.
+stays in step with the tools it names. The parts stay agnostic of the platform that runs a Run:
+one platform's commands live only in its reference. And what one part states for the others
+stays where they can find it: a judge's reference names spec sections it never sees declared, and
+a fixed rule read through `mt get` is found only in its home, so a rename in the spec guide or a
+rule moved or copied fails here instead of drifting.
 
 ## Principles
 
@@ -45,10 +50,20 @@ Run: one platform's commands live only in its reference.
   string `command` and an array `path`. A path's proper prefix is a group, which takes a
   subcommand, never an argument. Without `orca` on PATH it checks the `mt` mentions only and says
   so in one line.
+- A backticked span that is a title-case phrase, such as `In scope`, names a spec section. Each
+  one outside `guides/spec.md` must be one `guides/spec.md` itself names in backticks; with no
+  spec guide, or one naming no section, none is checked.
+- The charter's `## Fixed` section names each fixed rule's home as an `mt get` mention: the
+  tool's guide, one reference, or every reference of the tool for `--ref <placeholder>`. Each
+  home that exists must carry the sentence `Fixed: changing it is the owner's call.`, and no
+  guide or stub outside the homes may carry it. A charter with no such section, or none, checks
+  neither. It catches a rule moved or copied, not one reworded.
 - On success it prints `guide-lint: <n> mt mentions [and <m> Orca mentions] resolve; placeholder
   mentions skipped: <k>` and exits 0. Otherwise it prints one ``<file>:<line>: `<mention>`:
   <reason>`` line per failing mention, or one line when `mt --help` prints no usage, there are no
   guides, or `orca agent-context --json` fails, is not JSON or has an unreadable shape, and exits 1.
+  A section the spec guide does not declare fails as a mention; a home without a fixed rule fails
+  at the charter line that names it, and a stray fixed rule at its own line.
   No repo exits 2.
 - Side effects: it runs only `mt --help`, `mt get` and `orca agent-context --json`, and writes
   nothing.
