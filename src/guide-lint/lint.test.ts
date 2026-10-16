@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { checkMtMention, checkOrcaMention, checkPlacement, isPlaceholderMention, parseMtUsage, readOrcaContext, spans, type MtGet, type OrcaTable } from "./lint.ts";
+import { checkMtMention, checkOrcaMention, checkPlacement, fixedHomes, fixedLines, homeFiles, isPlaceholderMention, isSectionName, parseMtUsage, readOrcaContext, spans, type MtGet, type OrcaTable } from "./lint.ts";
 
 const USAGE = `usage: mt get <tool> [--ref <ref>]   print the guide for a tool
        mt list                       list every tool
@@ -219,5 +219,40 @@ describe("checkPlacement", () => {
     expect(checkPlacement("guides/coordinate.md", ["mt", "get", "orca"], platforms)).toBeNull();
     expect(checkPlacement("guides/coordinate.md", ["codex", "exec"], platforms)).toBeNull();
     expect(checkPlacement("guides/coordinate.md", ["orca"], platforms)).toBeNull();
+  });
+});
+
+describe("spec sections", () => {
+  test("a title-case phrase is a section name; a command, a guide name or a heading is not", () => {
+    expect(isSectionName("In scope")).toBe(true);
+    expect(isSectionName("Why")).toBe(true);
+    expect(["mt get spec", "coverage", "T<n>", "Observable Acceptance", "--ref"].some(isSectionName)).toBe(false);
+  });
+});
+
+describe("fixed rules", () => {
+  const CHARTER = "# Charter\n\n## Fixed\n\n- One. Home: the door-rule guide (`mt get door-rule`).\n- Two. Home: each perspective (`mt get verification --ref <perspective>`).\n\n## Later\n\nNot a home: `mt get ask`.\n";
+
+  test("names the mt get mentions of the Fixed section only, with their lines", () => {
+    expect(fixedHomes(CHARTER)).toEqual([
+      { line: 5, text: "mt get door-rule" },
+      { line: 6, text: "mt get verification --ref <perspective>" },
+    ]);
+    expect(fixedHomes("# Charter\n\nNo fixed section, `mt get ask`.\n")).toEqual([]);
+  });
+
+  test("resolves a home to its guide, its reference, or every reference for a placeholder", () => {
+    const references = (tool: string) => (tool === "verification" ? ["coverage", "surprise"] : []);
+    expect(homeFiles("mt get door-rule".split(" "), references)).toEqual(["guides/door-rule.md"]);
+    expect(homeFiles("mt get ask --ref stance".split(" "), references)).toEqual(["guides/ask/stance.md"]);
+    expect(homeFiles("mt get verification --ref <perspective>".split(" "), references)).toEqual([
+      "guides/verification/coverage.md",
+      "guides/verification/surprise.md",
+    ]);
+    expect(homeFiles("mt get <tool>".split(" "), references)).toEqual([]);
+  });
+
+  test("finds each line that carries the fixed mark", () => {
+    expect(fixedLines("a\nb. Fixed: changing it is the owner's call.\nc\nFixed: changing it is the owner's call. d\n")).toEqual([2, 4]);
   });
 });

@@ -83,7 +83,9 @@ Every part contains:
   `Workaround for <gap>; remove when <condition>.`
 
 A part states objectives, never the steps of a workflow or their order: how to get there is the
-agent's own judgment. A mark adds a sentence to the part's prose, never a step.
+agent's own judgment. Each rule carries its reason, so that an agent can tell where it applies and
+where it does not; a rule without one is followed by rote, then not at all. A mark adds a sentence
+to the part's prose, never a step.
 
 Sorting a number:
 
@@ -117,4 +119,6 @@ fallback location; a cap another tool enforces is that tool's, not the part's.
 
 Here, in the root `AGENTS.md`, which the root `CLAUDE.md` imports. Nothing under `guides/`, because
 `mt list` lists every top-level Markdown file there as a tool. `test/guides.sh` checks that each
-`mt` command and `mt get` guide this file mentions still exists.
+`mt` command and `mt get` guide this file mentions still exists, that each home the Fixed section
+names carries a fixed rule and no other part does, and that the spec sections the parts name are
+the ones the spec guide declares.
