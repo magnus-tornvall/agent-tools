@@ -163,8 +163,8 @@ do.
     findings with the reports that raised them and every earlier change report.
   - `verification` judges the work branch from one perspective, each a reference loaded with
     `mt get verification --ref <perspective>`, and edits nothing. `coverage` judges whether the
-    branch does what the intent says, and runs the code. `maintainer` judges whether a maintainer
-    of the repo would merge it, and runs the repo's checks. `surprise` finds what the owner would
+    branch does what the intent says and whether a maintainer would merge it, and runs the code
+    and the repo's checks. `surprise` finds what the owner would
     not expect on it, above all one-way doors decided without a question, and what a maintainer
     would not merge; it runs none of the repo's code, so it can sit beside any Task. What each
     perspective is given and withholds is in its reference.

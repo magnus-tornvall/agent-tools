@@ -44,7 +44,7 @@ Run `mt get worker`, `mt get coordinate --ref orca` and `mt get <assignment>` be
 ```
 
 A judge's spec, its `<assignment>` being `verification`, follows that with a line loading its own
-perspective's reference and no other, `coverage`, `maintainer` or `surprise`:
+perspective's reference and no other, `coverage` or `surprise`:
 
 ```
 Run `mt get verification --ref <perspective>` too.

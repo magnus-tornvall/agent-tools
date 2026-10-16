@@ -3,8 +3,8 @@
 Domain: Verification. Judges a change on its branch from one perspective, so that the work is
 weighed by someone other than whoever made it, against something other than its maker's account of
 it. Each perspective is a reference to this guide: `coverage` judges whether the branch does what
-the intent says, `maintainer` whether a maintainer of the repo would merge it, and `surprise` what
-the owner would not expect on it. This guide holds what every perspective shares; a perspective's
+the intent says and whether a maintainer of the repo would merge it, and `surprise` what the owner
+would not expect on it. This guide holds what every perspective shares; a perspective's
 reference holds what it is given, what it withholds and what it judges. It reads no config.
 
 ## Principles
