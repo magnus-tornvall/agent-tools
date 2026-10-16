@@ -1,9 +1,12 @@
 # verification: coverage
 
-Domain: Verification. Judges whether the work branch does what the intent says, so that a change
-reported done is done as the owner settled it. It rests on the test oracle: the intent's
-requirements are the expected result, and evidence is held to the strength of what it shows. It
-runs the repo's code and edits nothing. It reads no config.
+Domain: Verification. Judges whether the work branch does what the intent says, and whether a
+maintainer of the repo would merge it, so that a change reported done is done as the owner settled
+it and nothing reaches the owner that the repo's own standards would turn away. It rests on the
+test oracle: the intent's requirements, and the repo's checks and conventions, are the expected
+result, and evidence is held to the strength of what it shows. It is the perspective that runs the
+code, so it is the one that catches a bug a fix round brought in. It runs the repo's code and
+checks and edits nothing. It reads no config.
 
 ## Given and withheld
 
@@ -26,8 +29,14 @@ Fixed: changing it is the owner's call.
   asserts less than its requirement, or mocks what it judges is a finding.
 - **No non-goal is built.**
 - **The outcome, constraints and decisions are what the branch does.**
+- **The repo's own checks pass on the branch.** Find them in its manifests and agent instructions;
+  never invent them.
+- **Every changed existing test assertion is flagged.**
+- **Nothing in the diff would stop a maintainer merging it**, judged on the diff's own merits: no
+  bug, no missing failure or boundary path, no broken constraint, no dead or leftover code.
 
 ## Report
 
-Besides what the verification guide asks: each requirement, whether it holds and its evidence, and,
-when the branch has an oracle commit, each file it added that the branch changes.
+Besides what the verification guide asks: each requirement, whether it holds and its evidence;
+each check and its result; and, when the branch has an oracle commit, each file it added that the
+branch changes.

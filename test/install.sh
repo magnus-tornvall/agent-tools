@@ -98,9 +98,9 @@ relative() { # path from-folder -> path spelled relative to from-folder
   python3 -I -c 'import os, sys; print(os.path.relpath(sys.argv[1], sys.argv[2]))' "$1" "$2"
 }
 
-tools=$(for dir in "$ROOT"/skills/*/; do
+tools=$(for dir in "$ROOT"/skills/mt-*/; do
   tool=$(basename "$dir")
-  [ -f "$ROOT/guides/$tool.md" ] && echo "$tool"
+  [ -f "$ROOT/guides/${tool#mt-}.md" ] && echo "$tool"
 done)
 
 # a fresh machine
@@ -115,11 +115,11 @@ done
 check "with no ~/.agents, every stub that has a guide is linked straight into ~/.claude/skills"
 [ -e "$H/.agents" ] && fail "install created ~/.agents"
 check "with no ~/.agents, install does not create it"
-assert_eq "commit is linked to the clone" "$ROOT/skills/commit" "$(readlink "$H/.claude/skills/commit")"
-out=$(HOME=$H "$H/.local/bin/mt" get commit); rc=$?
-assert_eq "mt get commit exits 0" 0 "$rc"
-assert_eq "mt get commit prints the commit guide" "$(cat "$ROOT/guides/commit.md")" "$out"
-[ -L "$H/.claude/skills/worker" ] && fail "worker is linked, but it has no stub"
+assert_eq "mt-door-rule is linked to the clone" "$ROOT/skills/mt-door-rule" "$(readlink "$H/.claude/skills/mt-door-rule")"
+out=$(HOME=$H "$H/.local/bin/mt" get door-rule); rc=$?
+assert_eq "mt get door-rule exits 0" 0 "$rc"
+assert_eq "mt get door-rule prints the door-rule guide" "$(cat "$ROOT/guides/door-rule.md")" "$out"
+[ -L "$H/.claude/skills/mt-brief" ] && fail "brief is linked, but it has no stub"
 check "guides without a stub are not linked"
 case $(cat "$TMP/out") in *"removed stale"*) fail "a fresh install removed links it made" ;; esac
 check "a fresh install removes nothing"
@@ -202,15 +202,15 @@ assert_eq "second install with ~/.agents/skills exits 0" 0 "$rc"
 links "$H/.agents/skills" "$H/.claude/skills" >"$TMP/links.after"
 cmp -s "$TMP/links.before" "$TMP/links.after" || fail "second install changed the links in either skills folder"
 check "second install leaves both skills folders as they are"
-rm "$H/.claude/skills/commit" "$H/.claude/skills/mvc"
-ln -s ../../.agents/skills/commit "$H/.claude/skills/commit"
-ln -s "$ROOT/skills/mvc" "$H/.claude/skills/mvc"
+rm "$H/.claude/skills/mt-door-rule" "$H/.claude/skills/mt-ask"
+ln -s ../../.agents/skills/mt-door-rule "$H/.claude/skills/mt-door-rule"
+ln -s "$ROOT/skills/mt-ask" "$H/.claude/skills/mt-ask"
 install "$H"; rc=$?
 assert_eq "install over a relative link and a link into the clone exits 0" 0 "$rc"
-assert_eq "a relative link to ~/.agents/skills/commit is left as it is" ../../.agents/skills/commit \
-  "$(readlink "$H/.claude/skills/commit")"
-assert_eq "a link in ~/.claude/skills straight into the clone is relinked to ~/.agents/skills" "$H/.agents/skills/mvc" \
-  "$(readlink "$H/.claude/skills/mvc")"
+assert_eq "a relative link to ~/.agents/skills/mt-door-rule is left as it is" ../../.agents/skills/mt-door-rule \
+  "$(readlink "$H/.claude/skills/mt-door-rule")"
+assert_eq "a link in ~/.claude/skills straight into the clone is relinked to ~/.agents/skills" "$H/.agents/skills/mt-ask" \
+  "$(readlink "$H/.claude/skills/mt-ask")"
 
 # a Claude Code folder that links to SKILLS_DIR gets no link to itself
 H=$TMP/claude-linked
@@ -431,27 +431,27 @@ check "install leaves no oracle link"
 # a real folder where a stub goes is left alone, and the rest still install
 H=$TMP/folder
 new_home "$H"
-mkdir -p "$H/.agents/skills/mvc"
-printf 'old mvc\n' >"$H/.agents/skills/mvc/SKILL.md"
+mkdir -p "$H/.agents/skills/mt-ask"
+printf 'old mvc\n' >"$H/.agents/skills/mt-ask/SKILL.md"
 install "$H"; rc=$?
 [ "$rc" -ne 0 ] || fail "install over a real skill folder exits 0"
 check "install over a real skill folder fails"
-assert_contains "the failure names the folder" "$(cat "$TMP/out")" "$H/.agents/skills/mvc is a real folder"
-assert_eq "the folder holds only what it held" "SKILL.md" "$(ls "$H/.agents/skills/mvc")"
-assert_eq "the other stubs are linked" "$ROOT/skills/coordinate" "$(readlink "$H/.agents/skills/coordinate")"
+assert_contains "the failure names the folder" "$(cat "$TMP/out")" "$H/.agents/skills/mt-ask is a real folder"
+assert_eq "the folder holds only what it held" "SKILL.md" "$(ls "$H/.agents/skills/mt-ask")"
+assert_eq "the other stubs are linked" "$ROOT/skills/mt-coordinate" "$(readlink "$H/.agents/skills/mt-coordinate")"
 
 # a real folder where a stub goes in Claude Code's folder is left alone too
 H=$TMP/claude-folder
 new_home "$H"
-mkdir -p "$H/.agents/skills" "$H/.claude/skills/mvc"
-printf 'old mvc\n' >"$H/.claude/skills/mvc/SKILL.md"
+mkdir -p "$H/.agents/skills" "$H/.claude/skills/mt-ask"
+printf 'old mvc\n' >"$H/.claude/skills/mt-ask/SKILL.md"
 install "$H"; rc=$?
 [ "$rc" -ne 0 ] || fail "install over a real skill folder in ~/.claude/skills exits 0"
 check "install over a real skill folder in ~/.claude/skills fails"
-assert_contains "the failure names the folder in ~/.claude/skills" "$(cat "$TMP/out")" "$H/.claude/skills/mvc is a real folder"
-assert_eq "the folder in ~/.claude/skills holds only what it held" "SKILL.md" "$(ls "$H/.claude/skills/mvc")"
+assert_contains "the failure names the folder in ~/.claude/skills" "$(cat "$TMP/out")" "$H/.claude/skills/mt-ask is a real folder"
+assert_eq "the folder in ~/.claude/skills holds only what it held" "SKILL.md" "$(ls "$H/.claude/skills/mt-ask")"
 for tool in $tools; do
-  [ "$tool" = mvc ] && continue
+  [ "$tool" = mt-ask ] && continue
   [ "$(readlink "$H/.claude/skills/$tool")" = "$H/.agents/skills/$tool" ] || fail "$tool in ~/.claude/skills is not linked to ~/.agents/skills"
 done
 check "the other stubs are linked in ~/.claude/skills"
@@ -460,15 +460,15 @@ check "the other stubs are linked in ~/.claude/skills"
 H=$TMP/file
 new_home "$H"
 mkdir -p "$H/.agents/skills" "$H/.claude/skills"
-printf 'a file\n' >"$H/.agents/skills/mvc"
-printf 'a file\n' >"$H/.claude/skills/commit"
+printf 'a file\n' >"$H/.agents/skills/mt-ask"
+printf 'a file\n' >"$H/.claude/skills/mt-door-rule"
 install "$H"; rc=$?
 [ "$rc" -ne 0 ] || fail "install over a file where a stub goes exits 0"
 check "install over a file where a stub goes fails"
-assert_contains "the failure names the file in ~/.agents/skills" "$(cat "$TMP/out")" "$H/.agents/skills/mvc is a real file"
-assert_contains "the failure names the file in ~/.claude/skills" "$(cat "$TMP/out")" "$H/.claude/skills/commit is a real file"
-[ ! -L "$H/.agents/skills/mvc" ] && [ "$(cat "$H/.agents/skills/mvc")" = "a file" ] || fail "the file in ~/.agents/skills was changed"
-[ ! -L "$H/.claude/skills/commit" ] && [ "$(cat "$H/.claude/skills/commit")" = "a file" ] || fail "the file in ~/.claude/skills was changed"
+assert_contains "the failure names the file in ~/.agents/skills" "$(cat "$TMP/out")" "$H/.agents/skills/mt-ask is a real file"
+assert_contains "the failure names the file in ~/.claude/skills" "$(cat "$TMP/out")" "$H/.claude/skills/mt-door-rule is a real file"
+[ ! -L "$H/.agents/skills/mt-ask" ] && [ "$(cat "$H/.agents/skills/mt-ask")" = "a file" ] || fail "the file in ~/.agents/skills was changed"
+[ ! -L "$H/.claude/skills/mt-door-rule" ] && [ "$(cat "$H/.claude/skills/mt-door-rule")" = "a file" ] || fail "the file in ~/.claude/skills was changed"
 check "a file where a stub goes is left as it is"
 
 # a login shell that cannot find mt fails the install
@@ -487,8 +487,8 @@ printf '{"model": "opus", "permissions": {"allow": ["Bash(git status)"]}}\n' >"$
 ln -s "$TMP/elsewhere/skill" "$H/.agents/skills/someone-elses"
 ln -s "$TMP/elsewhere/skill" "$H/.claude/skills/someone-elses"
 install "$H" ADD_MT_RULES=yes >/dev/null || fail "install before uninstall"
-rm "$H/.claude/skills/commit"
-ln -s ../../.agents/skills/commit "$H/.claude/skills/commit"
+rm "$H/.claude/skills/mt-door-rule"
+ln -s ../../.agents/skills/mt-door-rule "$H/.claude/skills/mt-door-rule"
 ln -s "$ROOT/skills/coordinate" "$H/.claude/skills/coordinate-by-hand"
 ln -s "$(relative "$ROOT/skills/coordinate" "$H/.claude/skills")" "$H/.claude/skills/coordinate-relative"
 uninstall_answering y "$H"; rc=$?
@@ -527,13 +527,13 @@ check "second uninstall leaves the settings as they are"
 H=$TMP/uninstall-relative
 new_home "$H"
 mkdir -p "$H/.agents/skills"
-ln -s "$(relative "$ROOT/skills/commit" "$H/.agents/skills")" "$H/.agents/skills/commit"
+ln -s "$(relative "$ROOT/skills/mt-door-rule" "$H/.agents/skills")" "$H/.agents/skills/mt-door-rule"
 install "$H" || fail "install over a relative link into the clone"
 uninstall "$H"; rc=$?
 assert_eq "uninstall after a relative link into the clone exits 0" 0 "$rc"
-[ -L "$H/.agents/skills/commit" ] && fail "uninstall left a relative link into the clone in ~/.agents/skills"
+[ -L "$H/.agents/skills/mt-door-rule" ] && fail "uninstall left a relative link into the clone in ~/.agents/skills"
 check "uninstall removes a relative link into the clone in ~/.agents/skills"
-[ -L "$H/.claude/skills/commit" ] && fail "uninstall left the ~/.claude/skills link to a relative stub link"
+[ -L "$H/.claude/skills/mt-door-rule" ] && fail "uninstall left the ~/.claude/skills link to a relative stub link"
 check "uninstall removes the ~/.claude/skills link to a relative stub link"
 
 # with ~/.agents/skills gone, uninstall removes Claude Code's links to it
@@ -542,8 +542,8 @@ new_home "$H"
 mkdir -p "$H/.agents/skills" "$H/.claude/skills"
 ln -s "$TMP/nowhere" "$H/.claude/skills/someone-elses"
 install "$H" || fail "install before removing ~/.agents"
-rm "$H/.claude/skills/commit"
-ln -s ../../.agents/skills/commit "$H/.claude/skills/commit"
+rm "$H/.claude/skills/mt-door-rule"
+ln -s ../../.agents/skills/mt-door-rule "$H/.claude/skills/mt-door-rule"
 rm -rf "$H/.agents"
 uninstall "$H"; rc=$?
 assert_eq "uninstall with ~/.agents gone exits 0" 0 "$rc"

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { checkMtMention, checkOrcaMention, isPlaceholderMention, parseMtUsage, readOrcaContext, spans, type MtGet, type OrcaTable } from "./lint.ts";
+import { checkMtMention, checkOrcaMention, checkPlacement, isPlaceholderMention, parseMtUsage, readOrcaContext, spans, type MtGet, type OrcaTable } from "./lint.ts";
 
 const USAGE = `usage: mt get <tool> [--ref <ref>]   print the guide for a tool
        mt list                       list every tool
@@ -197,5 +197,27 @@ describe("checkOrcaMention", () => {
 
   test("passes a bare `orca`", () => {
     expect(orcaMention("orca")).toBeNull();
+  });
+});
+
+describe("checkPlacement", () => {
+  const platforms = new Set(["orca"]);
+
+  test("a platform's command in its own reference is in place", () => {
+    expect(checkPlacement("guides/coordinate/orca.md", ["orca", "orchestration", "ask"], platforms)).toBeNull();
+  });
+
+  test("a platform's command anywhere else is out of place", () => {
+    for (const file of ["guides/coordinate.md", "skills/mt-coordinate/SKILL.md", "AGENTS.md"]) {
+      expect(checkPlacement(file, ["orca", "orchestration", "ask"], platforms)).toBe(
+        "orca commands belong only in its platform reference, guides/coordinate/orca.md",
+      );
+    }
+  });
+
+  test("a word that names no platform with a reference, or a bare platform name, is not checked", () => {
+    expect(checkPlacement("guides/coordinate.md", ["mt", "get", "orca"], platforms)).toBeNull();
+    expect(checkPlacement("guides/coordinate.md", ["codex", "exec"], platforms)).toBeNull();
+    expect(checkPlacement("guides/coordinate.md", ["orca"], platforms)).toBeNull();
   });
 });
