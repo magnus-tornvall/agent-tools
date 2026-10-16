@@ -253,7 +253,9 @@ lacks.
 `test/guides.sh` is guide-lint, whose code is `src/guide-lint/`. It fails, one ``file:line:
 `mention`: reason`` line each, when a guide, stub skill or `AGENTS.md` mentions in backticks an `mt
 get` guide or reference that `mt get` no longer finds, an `mt` command its usage no longer lists, or
-an `orca` command or `--flag` that `orca agent-context --json` no longer lists. A guide spells every
+an `orca` command or `--flag` that `orca agent-context --json` no longer lists, and when it mentions
+a platform's command, such as `orca orchestration ask`, anywhere but that platform's reference
+under `guides/coordinate/`. A guide spells every
 Orca command in full, `orca orchestration worker-start`; only a backticked span that starts with
 `orca ` is an Orca mention, so a bare `worker-start` is never checked. An Orca mention that opens
 with a flag or holds a short flag (`-x`) fails, because the lint cannot check it; write the command

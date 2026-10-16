@@ -1,14 +1,16 @@
 # guide-lint
 
 Domain: Tools. guide-lint fails when a guide, a stub skill or the charter mentions in backticks an
-`mt` guide, reference or command, or an `orca` command or flag, that no longer exists. Its code is
+`mt` guide, reference or command, or an `orca` command or flag, that no longer exists, or a
+platform's command outside that platform's reference. Its code is
 `src/guide-lint/`: `lint.ts` matches mentions and reads no files, `main.ts` gathers the files and
 runs the tools. `test/guides.sh` runs it on this repo.
 
 ## Purpose
 
 An agent that loads a guide never meets a command or guide that is gone: the prose agents follow
-stays in step with the tools it names.
+stays in step with the tools it names. And the parts stay agnostic of the platform that runs a
+Run: one platform's commands live only in its reference.
 
 ## Principles
 
@@ -35,6 +37,9 @@ stays in step with the tools it names.
   a placeholder ref is dropped with its flag and the guide is still checked. Any other `mt`
   mention resolves when its plain words match, as a prefix either way, a command `mt --help`
   lists.
+- A mention of two or more words whose first word names a platform with a reference,
+  `guides/coordinate/<platform>.md`, fails anywhere but that reference, whether or not the
+  platform is on PATH. The platforms are read from the files there, not from a list.
 - An `orca` mention resolves when its command path and every `--flag` appear in
   `orca agent-context --json`, schema version 1, a `commands` array whose entries each have a
   string `command` and an array `path`. A path's proper prefix is a group, which takes a
