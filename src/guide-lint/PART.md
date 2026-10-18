@@ -61,7 +61,7 @@ rule moved or copied fails here instead of drifting.
 - On success it prints `guide-lint: <n> mt mentions [and <m> Orca mentions] resolve; placeholder
   mentions skipped: <k>` and exits 0. Otherwise it prints one ``<file>:<line>: `<mention>`:
   <reason>`` line per failing mention, or one line when `mt --help` prints no usage, there are no
-  guides, or `orca agent-context --json` fails, is not JSON or has an unreadable shape, and exits 1.
+  guides, or `orca agent-context --json` fails, is not JSON or is not in a form the lint reads, and exits 1.
   A section the spec guide does not declare fails as a mention; a home without a fixed rule fails
   at the charter line that names it, and a stray fixed rule at its own line.
   No repo exits 2.

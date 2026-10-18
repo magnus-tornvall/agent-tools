@@ -303,24 +303,23 @@ assert_contains "declining the ask rule says agents run mt update unasked" "$(ca
   "agents run mt update without being asked"
 
 # an ask list that is not a list of strings is left alone
-for list in ask; do
-  for bad in '"Bash(x)"' '[1]' '{}'; do
-    H=$TMP/bad-$list
-    rm -rf "$H"
-    new_home "$H"
-    mkdir -p "$H/.claude"
-    printf '{"permissions": {"%s": %s}}\n' "$list" "$bad" >"$H/.claude/settings.json"
-    cp "$H/.claude/settings.json" "$TMP/bad.before"
-    install "$H" ADD_MT_RULES=yes; rc=$?
-    [ "$rc" -ne 0 ] || fail "install over permissions.$list $bad exits 0"
-    assert_contains "the failure names permissions.$list" "$(cat "$TMP/out")" "permissions.$list is not a list of strings"
-    cmp -s "$TMP/bad.before" "$H/.claude/settings.json" || fail "settings with permissions.$list $bad were rewritten"
-    uninstall "$H" REMOVE_MT_RULES=yes; rc=$?
-    [ "$rc" -ne 0 ] || fail "uninstall over permissions.$list $bad exits 0"
-    cmp -s "$TMP/bad.before" "$H/.claude/settings.json" || fail "uninstall rewrote settings with permissions.$list $bad"
-  done
-  check "a permissions.$list that is not a list of strings is left as it is"
+list=ask
+for bad in '"Bash(x)"' '[1]' '{}'; do
+  H=$TMP/bad-$list
+  rm -rf "$H"
+  new_home "$H"
+  mkdir -p "$H/.claude"
+  printf '{"permissions": {"%s": %s}}\n' "$list" "$bad" >"$H/.claude/settings.json"
+  cp "$H/.claude/settings.json" "$TMP/bad.before"
+  install "$H" ADD_MT_RULES=yes; rc=$?
+  [ "$rc" -ne 0 ] || fail "install over permissions.$list $bad exits 0"
+  assert_contains "the failure names permissions.$list" "$(cat "$TMP/out")" "permissions.$list is not a list of strings"
+  cmp -s "$TMP/bad.before" "$H/.claude/settings.json" || fail "settings with permissions.$list $bad were rewritten"
+  uninstall "$H" REMOVE_MT_RULES=yes; rc=$?
+  [ "$rc" -ne 0 ] || fail "uninstall over permissions.$list $bad exits 0"
+  cmp -s "$TMP/bad.before" "$H/.claude/settings.json" || fail "uninstall rewrote settings with permissions.$list $bad"
 done
+check "a permissions.$list that is not a list of strings is left as it is"
 
 # settings that are not JSON are left alone
 H=$TMP/malformed
