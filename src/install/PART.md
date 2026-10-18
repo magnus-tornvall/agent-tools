@@ -93,15 +93,3 @@ A new `mt` command gets its class in `side-effects.ts`; a test fails while a com
 
 Install reads no config: not the owner's `mt` config, which it never opens. Its places and answers
 come from the make variables above, each the owner's choice for that run.
-
-## Workarounds
-
-A settings file that still holds `Bash(mt get:*)`, `Bash(mt list)` or `Bash(mt shape:*)` has them
-replaced by `Bash(mt:*)` on install, and removed on uninstall. Workaround for settings an install
-before `Bash(mt:*)` wrote; remove when no such install is left.
-
-A settings file that still holds `Bash(mt oracle:*)` or `Bash(mt get oracle:*)` in
-`permissions.deny` has them removed on install and on uninstall, so an agent can load the oracle
-guide; the owner's other denies stay. Install asks about them in a y/N of their own, apart from the
-rules, on every run while they are there. Workaround for settings an install before `mt oracle` was
-removed wrote; remove when no such install is left.

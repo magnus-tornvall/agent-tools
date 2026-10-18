@@ -54,10 +54,10 @@ function fixture(): void {
   write(join(FIX, "guides", "ask.md"), "# ask\n\nSee `mt get door-rule`, then\nthe stance form, `mt get ask --ref stance`.\n");
   write(join(FIX, "guides", "ask", "stance.md"), "# stance\n");
   write(join(FIX, "guides", "door-rule.md"), "# door-rule\n");
-  write(join(FIX, "guides", "mvc.md"), "# mvc\n\nRead it with `mt config fix_rounds`, and `mt\nupdate` it.\n");
+  write(join(FIX, "guides", "idea.md"), "# idea\n\nRead it with `mt config fix_rounds`, and `mt\nupdate` it.\n");
   write(
-    join(FIX, "skills", "mvc", "SKILL.md"),
-    "---\ndescription: Settle a shape.\n---\n\nRun `mt get mvc` and follow what it prints.\n",
+    join(FIX, "skills", "idea", "SKILL.md"),
+    "---\ndescription: Settle an idea.\n---\n\nRun `mt get idea` and follow what it prints.\n",
   );
   write(
     join(FIX, "guides", "coordinate.md"),
@@ -108,42 +108,42 @@ describe("mt mentions", () => {
   });
 
   test("names the stub, line and mention of a renamed guide", () => {
-    renameSync(join(FIX, "guides", "mvc.md"), join(FIX, "guides", "mvc-old.md"));
+    renameSync(join(FIX, "guides", "idea.md"), join(FIX, "guides", "idea-old.md"));
     const { status, out } = lint(WITH_ORCA);
     expect(status).toBe(1);
-    expect(out).toBe("skills/mvc/SKILL.md:5: `mt get mvc`: mt get finds no such guide\n");
+    expect(out).toBe("skills/idea/SKILL.md:5: `mt get idea`: mt get finds no such guide\n");
   });
 
   test("names the guide, line and mention of a command mt's usage does not list", () => {
-    writeFileSync(join(FIX, "guides", "mvc.md"), "# mvc\n\nThen run `mt shape lint`.\n");
+    writeFileSync(join(FIX, "guides", "idea.md"), "# idea\n\nThen run `mt pin lint`.\n");
     const { status, out } = lint(WITH_ORCA);
     expect(status).toBe(1);
-    expect(out).toBe("guides/mvc.md:3: `mt shape lint`: mt has no command 'mt shape lint' in its usage\n");
+    expect(out).toBe("guides/idea.md:3: `mt pin lint`: mt has no command 'mt pin lint' in its usage\n");
   });
 
   test("still checks the guide of a mention whose ref is a placeholder", () => {
-    writeFileSync(join(FIX, "guides", "mvc.md"), "# mvc\n\nSee `mt get gone --ref <ref>`.\n");
+    writeFileSync(join(FIX, "guides", "idea.md"), "# idea\n\nSee `mt get gone --ref <ref>`.\n");
     const { status, out } = lint(WITH_ORCA);
     expect(status).toBe(1);
-    expect(out).toBe("guides/mvc.md:3: `mt get gone --ref <ref>`: mt get finds no such guide\n");
+    expect(out).toBe("guides/idea.md:3: `mt get gone --ref <ref>`: mt get finds no such guide\n");
   });
 
   test("fails a --ref=<ref> spelling, as mt rejects it", () => {
-    writeFileSync(join(FIX, "guides", "mvc.md"), "# mvc\n\nSee `mt get ask --ref=stance`.\n");
+    writeFileSync(join(FIX, "guides", "idea.md"), "# idea\n\nSee `mt get ask --ref=stance`.\n");
     const { status, out } = lint(WITH_ORCA);
     expect(status).toBe(1);
-    expect(out).toBe("guides/mvc.md:3: `mt get ask --ref=stance`: mt get rejects these arguments\n");
+    expect(out).toBe("guides/idea.md:3: `mt get ask --ref=stance`: mt get rejects these arguments\n");
   });
 
   test("fails an mt get mention with a word beyond the tool and ref, as mt rejects it", () => {
-    writeFileSync(join(FIX, "guides", "mvc.md"), "# mvc\n\nSee `mt get ask extra`.\n");
+    writeFileSync(join(FIX, "guides", "idea.md"), "# idea\n\nSee `mt get ask extra`.\n");
     const { status, out } = lint(WITH_ORCA);
     expect(status).toBe(1);
-    expect(out).toBe("guides/mvc.md:3: `mt get ask extra`: mt get rejects these arguments\n");
+    expect(out).toBe("guides/idea.md:3: `mt get ask extra`: mt get rejects these arguments\n");
   });
 
   test("runs no mt command but mt get: an mt publish mention publishes nothing", () => {
-    writeFileSync(join(FIX, "guides", "mvc.md"), '# mvc\n\nPublish it with `mt publish "a finding"`.\n');
+    writeFileSync(join(FIX, "guides", "idea.md"), '# idea\n\nPublish it with `mt publish "a finding"`.\n');
     const calls = join(TMP, "mt-calls");
     rmSync(calls, { force: true });
     renameSync(join(FIX, "cli", "mt"), join(FIX, "cli", "mt-real"));
@@ -224,17 +224,17 @@ describe("spec sections and fixed rules", () => {
   test("fails a home without a fixed rule and a fixed rule outside the homes, and passes the homes that carry one", () => {
     write(join(FIX, "AGENTS.md"), `# Charter\n\n## Fixed\n\n- Home: the door rule (\`mt get door-rule\`).\n- Home: each stance (\`mt get ask --ref <stance>\`).\n`);
     write(join(FIX, "guides", "ask", "stance.md"), `# stance\n\nA rule. ${FIXED}\n`);
-    write(join(FIX, "guides", "mvc.md"), `# mvc\n\nA stray. ${FIXED}\n`);
+    write(join(FIX, "guides", "idea.md"), `# idea\n\nA stray. ${FIXED}\n`);
     const { status, out } = lint(NO_ORCA);
     expect(out).toContain("AGENTS.md:5: `mt get door-rule`: the charter names it a home, but it carries no fixed rule\n");
-    expect(out).toContain("guides/mvc.md:3: a fixed rule outside the homes the charter names\n");
+    expect(out).toContain("guides/idea.md:3: a fixed rule outside the homes the charter names\n");
     expect(out).not.toContain("stance.md");
     expect(status).toBe(1);
   });
 
   test("a charter without a Fixed section checks no fixed rule", () => {
     write(join(FIX, "AGENTS.md"), "# Charter\n\nSee `mt get door-rule`.\n");
-    write(join(FIX, "guides", "mvc.md"), `# mvc\n\nA rule. ${FIXED}\n`);
+    write(join(FIX, "guides", "idea.md"), `# idea\n\nA rule. ${FIXED}\n`);
     expect(lint(NO_ORCA).status).toBe(0);
   });
 });

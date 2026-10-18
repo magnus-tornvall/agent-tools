@@ -277,78 +277,17 @@ assert_eq "settings with no permissions ask before mt update" "Bash(mt update:*)
 H=$TMP/settings
 new_home "$H"
 mkdir -p "$H/.claude"
-printf '{"model": "opus", "permissions": {"allow": ["Bash(git status)", "Bash(mt list)"], "deny": ["Bash(rm:*)"]}}\n' \
+printf '{"model": "opus", "permissions": {"allow": ["Bash(git status)"], "deny": ["Bash(rm:*)"]}}\n' \
   >"$H/.claude/settings.json"
 install "$H" ADD_MT_RULES=yes; rc=$?
 assert_eq "install over existing settings exits 0" 0 "$rc"
-assert_eq "existing rules stay first, the earlier mt rule is replaced" \
+assert_eq "existing rules stay first, the allow rule after them" \
   "$(printf 'Bash(git status)\nBash(mt:*)')" "$(allow_list "$H/.claude/settings.json")"
 assert_eq "other settings are kept" "opus Bash(rm:*)" "$(python3 -I -c '
 import json, sys
 s = json.load(open(sys.argv[1]))
 print(s["model"], s["permissions"]["deny"][0])' "$H/.claude/settings.json")"
 assert_eq "the denies that are there stay as they are" "Bash(rm:*)" "$(deny_list "$H/.claude/settings.json")"
-
-# the three rules an earlier install wrote are replaced, whatever else is listed
-H=$TMP/earlier
-new_home "$H"
-mkdir -p "$H/.claude"
-printf '{"permissions": {"allow": ["Bash(mt get:*)", "Bash(git status)", "Bash(mt list)", "Bash(mt shape:*)"], "ask": ["Bash(git push:*)"]}}\n' \
-  >"$H/.claude/settings.json"
-install "$H" ADD_MT_RULES=yes; rc=$?
-assert_eq "install over the earlier rules exits 0" 0 "$rc"
-assert_eq "the earlier rules are replaced" "$(printf 'Bash(git status)\nBash(mt:*)')" "$(allow_list "$H/.claude/settings.json")"
-assert_eq "the asks that are there stay first, the ask rule after them" "$(printf 'Bash(git push:*)\nBash(mt update:*)')" \
-  "$(ask_list "$H/.claude/settings.json")"
-printf '{"permissions": {"allow": ["Bash(mt get:*)"]}}\n' >"$H/.claude/settings.json"
-install_answering y "$H"
-assert_contains "the question names what is replaced" "$(cat "$TMP/out")" "remove Bash(mt get:*) from permissions.allow"
-assert_eq "one earlier rule is replaced too" "Bash(mt:*)" "$(allow_list "$H/.claude/settings.json")"
-
-# R11: the deny rules an earlier install wrote are removed when the owner says so, and the owner's stay
-H=$TMP/earlier-deny
-new_home "$H"
-mkdir -p "$H/.claude"
-printf '{"permissions": {"allow": ["Bash(mt:*)"], "ask": ["Bash(mt update:*)"], "deny": ["Bash(mt oracle:*)", "Bash(rm:*)", "Bash(mt get oracle:*)"]}}\n' \
-  >"$H/.claude/settings.json"
-cp "$H/.claude/settings.json" "$TMP/settings.before"
-install_answering n "$H"
-assert_contains "the earlier deny rules alone are asked about" "$(cat "$TMP/out")" \
-  "remove Bash(mt oracle:*), Bash(mt get oracle:*) from permissions.deny?"
-cmp -s "$TMP/settings.before" "$H/.claude/settings.json" || fail "declining removed the earlier deny rules"
-check "declining leaves the earlier deny rules"
-assert_contains "declining names the deny rules kept" "$(cat "$TMP/out")" \
-  "kept in permissions.deny: Bash(mt oracle:*), Bash(mt get oracle:*)"
-install_answering y "$H"; rc=$?
-assert_contains "the earlier deny rules are asked about again while they are there" "$(cat "$TMP/out")" \
-  "remove Bash(mt oracle:*), Bash(mt get oracle:*) from permissions.deny?"
-assert_eq "accepting the removal exits 0" 0 "$rc"
-assert_eq "both earlier deny rules are gone, the owner's stays" "Bash(rm:*)" "$(deny_list "$H/.claude/settings.json")"
-out=$(HOME=$H "$H/.local/bin/mt" get oracle); rc=$?
-assert_eq "mt get oracle exits 0" 0 "$rc"
-assert_eq "mt get oracle prints the oracle guide" "$(cat "$ROOT/guides/oracle.md")" "$out"
-
-# T6/F3: the earlier deny rules are asked about apart from the rules, each with its own y/N
-H=$TMP/earlier-deny-apart
-new_home "$H"
-mkdir -p "$H/.claude"
-printf '{"permissions": {"allow": ["Bash(mt:*)"], "deny": ["Bash(mt oracle:*)", "Bash(mt get oracle:*)"]}}\n' \
-  >"$H/.claude/settings.json"
-install_answering y,n "$H"; rc=$?
-assert_eq "accepting the rules and declining the removal exits 0" 0 "$rc"
-assert_contains "the rules are asked about without the deny rules" "$(cat "$TMP/out")" \
-  "add Bash(mt update:*) to permissions.ask? [y/N]"
-assert_contains "the deny rules are asked about on their own" "$(cat "$TMP/out")" \
-  "remove Bash(mt oracle:*), Bash(mt get oracle:*) from permissions.deny? [y/N]"
-assert_eq "the accepted ask rule is added" "Bash(mt update:*)" "$(ask_list "$H/.claude/settings.json")"
-assert_eq "the declined deny rules stay" "$(printf 'Bash(mt oracle:*)\nBash(mt get oracle:*)')" \
-  "$(deny_list "$H/.claude/settings.json")"
-printf '{"permissions": {"allow": ["Bash(mt:*)"], "deny": ["Bash(mt oracle:*)", "Bash(mt get oracle:*)"]}}\n' \
-  >"$H/.claude/settings.json"
-install_answering n,y "$H"; rc=$?
-assert_eq "declining the rules and accepting the removal exits 0" 0 "$rc"
-assert_eq "the declined ask rule is not added" "" "$(ask_list "$H/.claude/settings.json")"
-assert_eq "the accepted removal takes out both deny rules" "" "$(deny_list "$H/.claude/settings.json")"
 
 # settings from an install before the ask rule get it alone, and declining it says what that leaves
 H=$TMP/before-ask
@@ -363,8 +302,8 @@ check "declining leaves the settings without the ask rule"
 assert_contains "declining the ask rule says agents run mt update unasked" "$(cat "$TMP/out")" \
   "agents run mt update without being asked"
 
-# an ask or deny list that is not a list of strings is left alone
-for list in ask deny; do
+# an ask list that is not a list of strings is left alone
+for list in ask; do
   for bad in '"Bash(x)"' '[1]' '{}'; do
     H=$TMP/bad-$list
     rm -rf "$H"
@@ -418,21 +357,21 @@ check "a broken link in ~/.claude/skills outside the clone is kept"
 [ -L "$H/.agents/skills/someone-elses" ] || fail "a broken link outside the clone was removed"
 check "a broken link outside the clone is kept"
 
-# the oracle stub is gone, so a link to it from an earlier install is removed
-H=$TMP/oracle-link
+# a link into the clone to a stub that is gone is removed
+H=$TMP/gone-link
 new_home "$H"
 mkdir -p "$H/.agents/skills"
-ln -s "$ROOT/skills/oracle" "$H/.agents/skills/oracle"
+ln -s "$ROOT/skills/mt-gone" "$H/.agents/skills/mt-gone"
 install "$H"; rc=$?
-assert_eq "install over an oracle link exits 0" 0 "$rc"
-[ -L "$H/.agents/skills/oracle" ] && fail "install kept the oracle link"
-check "install leaves no oracle link"
+assert_eq "install over a link to a gone stub exits 0" 0 "$rc"
+[ -L "$H/.agents/skills/mt-gone" ] && fail "install kept the link to the gone stub"
+check "install leaves no link to a gone stub"
 
 # a real folder where a stub goes is left alone, and the rest still install
 H=$TMP/folder
 new_home "$H"
 mkdir -p "$H/.agents/skills/mt-ask"
-printf 'old mvc\n' >"$H/.agents/skills/mt-ask/SKILL.md"
+printf 'old stub\n' >"$H/.agents/skills/mt-ask/SKILL.md"
 install "$H"; rc=$?
 [ "$rc" -ne 0 ] || fail "install over a real skill folder exits 0"
 check "install over a real skill folder fails"
@@ -444,7 +383,7 @@ assert_eq "the other stubs are linked" "$ROOT/skills/mt-coordinate" "$(readlink 
 H=$TMP/claude-folder
 new_home "$H"
 mkdir -p "$H/.agents/skills" "$H/.claude/skills/mt-ask"
-printf 'old mvc\n' >"$H/.claude/skills/mt-ask/SKILL.md"
+printf 'old stub\n' >"$H/.claude/skills/mt-ask/SKILL.md"
 install "$H"; rc=$?
 [ "$rc" -ne 0 ] || fail "install over a real skill folder in ~/.claude/skills exits 0"
 check "install over a real skill folder in ~/.claude/skills fails"
@@ -575,17 +514,6 @@ uninstall "$H" REMOVE_MT_RULES=yes; rc=$?
 assert_eq "REMOVE_MT_RULES=yes exits 0" 0 "$rc"
 assert_eq "REMOVE_MT_RULES=yes removes the allow rule" "" "$(allow_list "$H/.claude/settings.json")"
 
-# uninstall removes the earlier rules too, and other asks stay
-H=$TMP/uninstall-earlier
-new_home "$H"
-mkdir -p "$H/.claude"
-printf '{"permissions": {"allow": ["Bash(mt get:*)", "Bash(git status)", "Bash(mt list)", "Bash(mt shape:*)"], "ask": ["Bash(git push:*)"]}}\n' \
-  >"$H/.claude/settings.json"
-uninstall "$H" REMOVE_MT_RULES=yes; rc=$?
-assert_eq "uninstall over the earlier rules exits 0" 0 "$rc"
-assert_eq "uninstall removes the earlier rules" "Bash(git status)" "$(allow_list "$H/.claude/settings.json")"
-assert_eq "uninstall keeps other asks" "Bash(git push:*)" "$(ask_list "$H/.claude/settings.json")"
-
 # R13: uninstall removes the ask rule, and the owner's asks stay
 H=$TMP/uninstall-ask
 new_home "$H"
@@ -595,15 +523,6 @@ uninstall "$H" REMOVE_MT_RULES=yes; rc=$?
 assert_eq "uninstall over the ask rule exits 0" 0 "$rc"
 assert_eq "uninstall removes the ask rule and keeps the owner's" "$(printf 'Bash(git push:*)\nBash(rm:*)')" \
   "$(ask_list "$H/.claude/settings.json")"
-
-# uninstall removes the deny rules an earlier install wrote, and the owner's denies stay
-H=$TMP/uninstall-deny
-new_home "$H"
-mkdir -p "$H/.claude"
-printf '{"permissions": {"deny": ["Bash(mt oracle:*)", "Bash(rm:*)", "Bash(mt get oracle:*)"]}}\n' >"$H/.claude/settings.json"
-uninstall "$H" REMOVE_MT_RULES=yes; rc=$?
-assert_eq "uninstall over the deny rules exits 0" 0 "$rc"
-assert_eq "uninstall removes both deny rules and keeps the owner's" "Bash(rm:*)" "$(deny_list "$H/.claude/settings.json")"
 
 # an mt that is not this clone's link stays
 H=$TMP/uninstall-foreign

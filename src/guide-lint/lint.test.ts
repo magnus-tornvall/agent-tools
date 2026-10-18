@@ -3,9 +3,9 @@ import { checkMtMention, checkOrcaMention, checkPlacement, fixedHomes, fixedLine
 
 const USAGE = `usage: mt get <tool> [--ref <ref>]   print the guide for a tool
        mt list                       list every tool
-       mt shape check <file>         check that a file is a shape
-       mt shape slice <file> --keys <key,...>
-                                     print only those keys
+       mt pin add <file>             keep a file at hand
+       mt pin drop <file> --all
+                                     let go of it
        mt --help                     show this usage
 `;
 
@@ -58,7 +58,7 @@ describe("spans", () => {
 
 describe("parseMtUsage", () => {
   test("takes the plain words before the column gap, not the description after it", () => {
-    expect(VERBS).toEqual([["get"], ["list"], ["shape", "check"], ["shape", "slice"]]);
+    expect(VERBS).toEqual([["get"], ["list"], ["pin", "add"], ["pin", "drop"]]);
   });
 
   test("a command word may hold a digit", () => {
@@ -109,15 +109,15 @@ describe("checkMtMention", () => {
     expect(is("mt get <name>")).toBe(true);
     expect(is("mt get <tool> [--ref <ref>]")).toBe(true);
     expect(is("mt get ask --ref <ref>")).toBe(false);
-    expect(is("mt shape check <file>")).toBe(false);
+    expect(is("mt pin add <file>")).toBe(false);
   });
 
   test("matches any other mention against the usage, whole or as a prefix", () => {
     expect(mtMention("mt list")).toBeNull();
-    expect(mtMention("mt shape check <file>")).toBeNull();
-    expect(mtMention("mt shape")).toBeNull();
+    expect(mtMention("mt pin add <file>")).toBeNull();
+    expect(mtMention("mt pin")).toBeNull();
     expect(mtMention("mt")).toBeNull();
-    expect(mtMention("mt shape lint")).toBe("mt has no command 'mt shape lint' in its usage");
+    expect(mtMention("mt pin lint")).toBe("mt has no command 'mt pin lint' in its usage");
     expect(mtMention("mt frob")).toBe("mt has no command 'mt frob' in its usage");
   });
 });
