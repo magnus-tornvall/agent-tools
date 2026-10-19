@@ -21,7 +21,7 @@ Ownership, Observable acceptance. Every worker is an Orca Task. The verbs a Run 
 
 - `orca orchestration worker-start` starts a Task from its `--spec` on one `--agent`, with its
   `--model` and `--effort`. `--worktree` places it in the work's worktree, `current`, or a new
-  one, `new-child`, which needs `--name`.
+  one, `new-child`, which needs `--name` and is created with the worker's agent.
 - The inbox and Task results, read with `orca orchestration check`, `orca orchestration inbox` and
   `orca orchestration task-list`, are the Run's durable record; the findings and the hand-off are
   rebuilt from them.
@@ -37,42 +37,59 @@ Ownership, Observable acceptance. Every worker is an Orca Task. The verbs a Run 
 
 ### Agents, models and efforts
 
+**Every worktree a Run creates starts with its agent, launched on the model and effort the Run
+chose.** A worktree created with its agent gets the behaviour Orca gives a new agent tab, which a
+bare `orca worktree create` skips; `orca orchestration worker-start` with `--worktree new-child`
+creates one so. The model and effort are named, never left to the agent's own default, so a Task
+runs on what the Run chose rather than on whatever the owner's agent config holds; the cost is that
+the Run picks a model for every Task, and a model id its provider retires fails the launch.
+
 Orca prints no list of the agents it launches, the model ids each takes or the efforts it accepts,
-and `--model` passes an opaque provider id through unchecked, so a Run picks from these, each seen
-to launch with the model and effort it asked for on Orca 1.4.227, and `opencode` on Orca 1.4.229
-with opencode 2.0.30. Workaround for Orca printing no agents, models or efforts; remove when a verb
-prints them.
+so a Run picks from these, each seen to launch with the model and the effort beside it on Orca
+1.4.229, with Claude Code 2.1.303, Copilot CLI 1.0.98 and opencode 2.0.30. Workaround for Orca
+printing no agents, models or efforts; remove when a verb prints them.
 
-| `--agent` | `--model` |
+| `--agent` | `--model`, with the effort it was seen on |
 |---|---|
-| `claude` | `opus`, `sonnet`, `haiku` |
-| `opencode` | `github-copilot/gpt-6.1-sol`, `github-copilot/grok-4.7`, `github-copilot/gemini-4-argon` |
-| `copilot` | `claude-opus-5.5`, `gpt-6.1-sol`, `grok-4.7` |
+| `claude` | `opus` (`xhigh`), `sonnet` (`high`, `medium`) |
+| `copilot` | `claude-opus-5.5` (`high`), `gpt-6.1-sol` (`xhigh`), `grok-4.7` (`medium`) |
+| `opencode` | `github-copilot/gpt-6.1-sol` (`xhigh`), `github-copilot/grok-4.7` (`medium`), `github-copilot/gemini-4-argon` (`high`) |
 
-`--effort` is `medium`, `high` or `xhigh`, and needs `--model` beside it: Orca refuses an effort
-on an agent's default model.
+`--effort` is `medium`, `high` or `xhigh`, and needs `--model` beside it. For `claude`, Orca checks
+the effort against the model before it launches anything, so a pairing the table does not show
+fails at once rather than running on another effort. `haiku` is left out: Orca refuses every effort
+on it, so it cannot launch with its effort named.
 
-`worker-start --agent copilot` refuses `--model` and launches Copilot's own default model. A
-Copilot worker on a chosen model starts its own terminal with `orca terminal create --command`,
-the command being `copilot --model <id> --reasoning-effort <level>`, answers the trust-the-folder
-prompt Copilot opens in a new worktree, which `orca terminal wait --for tui-idle` never sees past,
-and is then started on that terminal with `worker-start --terminal <handle>`.
-Workaround for Orca not passing a model to copilot; remove when `worker-start --agent copilot
---model` is accepted.
+Copilot and opencode take no model when their worktree is created, so their worktree is the one
+exception to the rule: it is created with no agent yet, and the worker's own terminal, started in
+it with `orca terminal create --command`, runs the agent on its model and effort and is then
+started as a Task with `worker-start --terminal <handle>`. That worktree misses what agent-first
+creation gives; the owner chose that over a Run not using these agents. No other worktree is
+created without its agent.
 
-`worker-start --agent opencode` takes `--model` only in a worktree that already exists and refuses
-`--effort`. An opencode worker on a chosen model and effort starts its own terminal with
-`orca terminal create --command`, the command being
-`OPENCODE_CONFIG_CONTENT='{"model":"<model>#<effort>"}' opencode --standalone`, and is then
-started on that terminal with `worker-start --terminal <handle>`. opencode's TUI takes no model
-flag, so the model reaches it only through that config. `--standalone` gives the terminal its own
-server, which reads the config, where the shared background service, started without it, would
-not. The model is named with its provider, so opencode must be signed in to that provider, here
-GitHub Copilot. The effort is one of the model's variants: `high` was seen on each opencode model above. A variant
-the model lacks is dropped without a word, so the TUI's status line,
-`Build · <model> GitHub Copilot · <effort>`, is what shows the effort took. Workaround for Orca not
-passing an effort to opencode; remove when `worker-start --agent opencode --model --effort` is
-accepted.
+- **Copilot.** `orca worktree create --agent copilot --model` is refused, "Agent copilot does not
+  support launch-time model selection" (1.4.229), and `worker-start --agent copilot` refuses
+  `--model` (1.4.227). The command is `copilot --model <id> --reasoning-effort <level>`. The
+  worker answers the trust-the-folder prompt Copilot opens in a new worktree, which
+  `orca terminal wait --for tui-idle` never sees past. Copilot's status line names the model but
+  not the effort; its `/model` picker marks the session's model with a tick and shows the effort
+  beside it. Workaround for Orca not passing a model to Copilot; remove when
+  `orca worktree create --agent copilot --model --effort` is accepted.
+- **opencode.** `orca worktree create --agent opencode --model` is refused, "OpenCode model
+  selection requires an existing worktree", and in a worktree that exists Orca refuses its effort
+  (1.4.229). The command is
+  `XDG_STATE_HOME="$(mktemp -d)" OPENCODE_CONFIG_CONTENT='{"model":"<model>#<effort>"}' opencode --standalone`.
+  opencode's TUI takes no model flag, so the model reaches it only through that config.
+  `--standalone` gives the terminal its own server, which reads the config, where the shared
+  background service, started without it, would not. The fresh state folder matters because
+  opencode remembers the effort last picked for a model, and that beats the config's:
+  `gpt-6.1-sol#medium` launched on `high`, the effort remembered for it, and with a fresh state
+  folder `gpt-6.1-sol#xhigh` took. The model is named with its provider, so opencode must be
+  signed in to that provider, here GitHub Copilot. The effort is one of the model's variants; a
+  variant the model lacks is dropped without a word, so the TUI's status line,
+  `Build · <model> GitHub Copilot · <effort>`, is what shows the effort took. Workaround for Orca
+  not passing a model and effort to opencode at worktree creation; remove when
+  `orca worktree create --agent opencode --model --effort` is accepted.
 
 ## Spec head
 
