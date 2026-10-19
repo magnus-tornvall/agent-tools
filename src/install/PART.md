@@ -26,8 +26,8 @@ machine.
   point into this clone, or to a stub link in `SKILLS_DIR`, and the rules install adds, so a skill
   or an `mt` that points elsewhere, and any other rule, stays.
 - **Fail safe.** What install cannot change without harm, it leaves as it is and fails naming it:
-  a real folder or file where a link would go, settings that are not JSON, or a `permissions.allow`,
-  `permissions.ask` or `permissions.deny` that is not a list of strings.
+  a real folder or file where a link would go, settings that are not JSON, or a `permissions.allow`
+  or `permissions.ask` that is not a list of strings.
 - **Observable end state.** Install is done when a login shell started from the owner's profile
   alone finds `mt` and Bun, the PATH an Orca worker gets, and it checks exactly that.
 
@@ -71,8 +71,8 @@ needs Bun 1.2.23 or later on PATH.
   keeping everything else in the file. `add` creates a missing file. It asks only when there is
   something to change, and exits 0 whether it changed the file, found nothing to change or was
   declined; declined, it prints one line naming what it left as it is. A file that is not a JSON
-  object, or whose `permissions` is not an object or whose `permissions.allow`, `permissions.ask`
-  or `permissions.deny` is not a list of strings, is left as it is: one line on stderr says which,
+  object, or whose `permissions` is not an object or whose `permissions.allow` or `permissions.ask`
+  is not a list of strings, is left as it is: one line on stderr says which,
   naming the rules to add by hand when the file is not a JSON object, and it exits 1. A usage error
   exits 2.
 - The rules are `ALLOW_RULES` and `ASK_RULES` in `side-effects.ts`: `Bash(mt:*)` in
@@ -93,15 +93,3 @@ A new `mt` command gets its class in `side-effects.ts`; a test fails while a com
 
 Install reads no config: not the owner's `mt` config, which it never opens. Its places and answers
 come from the make variables above, each the owner's choice for that run.
-
-## Workarounds
-
-A settings file that still holds `Bash(mt get:*)`, `Bash(mt list)` or `Bash(mt shape:*)` has them
-replaced by `Bash(mt:*)` on install, and removed on uninstall. Workaround for settings an install
-before `Bash(mt:*)` wrote; remove when no such install is left.
-
-A settings file that still holds `Bash(mt oracle:*)` or `Bash(mt get oracle:*)` in
-`permissions.deny` has them removed on install and on uninstall, so an agent can load the oracle
-guide; the owner's other denies stay. Install asks about them in a y/N of their own, apart from the
-rules, on every run while they are there. Workaround for settings an install before `mt oracle` was
-removed wrote; remove when no such install is left.

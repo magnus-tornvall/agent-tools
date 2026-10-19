@@ -54,7 +54,7 @@ cat >"$REPO/skills/mt-relay/SKILL.md" <<'SK'
 ---
 name: relay
 description: >-
-  Use when a shape should run as one
+  Use when a change should run as one
   driven Run, with review rounds.
 allowed-tools: Bash
 ---
@@ -122,7 +122,7 @@ out=$("$MT" list); rc=$?
 assert_eq "R3 list exits 0" 0 "$rc"
 assert_eq "R3 list has one line per guide" 4 "$(printf '%s\n' "$out" | wc -l | tr -d ' ')"
 assert_contains "R3 single-line description" "$out" "Use when deciding whether to ask or to carry on."
-assert_contains "R3 folded description joined" "$out" "Use when a shape should run as one driven Run, with review rounds."
+assert_contains "R3 folded description joined" "$out" "Use when a change should run as one driven Run, with review rounds."
 assert_contains "R3 quoted description unquoted" "$out" "Quoted description, single line"
 case $out in *"allowed-tools"*|*"must not be read"*) fail "R3 list read past the description" ;; esac
 check "R3 list stops at the description"

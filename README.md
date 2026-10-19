@@ -176,23 +176,16 @@ pull or on a machine that is half set up; it changes only what is missing or sta
 - links each stub skill that has a guide, `skills/mt-<tool>`, into `~/.agents/skills`, and links
   each into `~/.claude/skills` as a link to `~/.agents/skills/mt-<tool>`, so Claude Code finds it.
   With no `~/.agents/skills` folder it links the stubs straight into `~/.claude/skills` and does not
-  create `~/.agents`. It removes the links to a stub that is gone, so the unprefixed links an
-  earlier install made, such as `ask`, go with the first install after the rename;
+  create `~/.agents`. It removes the links to a stub that is gone;
 - asks whether to add `Bash(mt:*)` to `permissions.allow` and `Bash(mt update:*)` to
   `permissions.ask` in `~/.claude/settings.json`, so Claude Code agents run every `mt` command
   without a prompt but `mt update`, which reaches off the machine (see Contracts) and is asked
   first. Claude Code checks ask rules before allow rules, so the ask rule beats `Bash(mt:*)`, and it
   prompts even in auto mode; it matches the command as written, so `mt` by its path or inside
-  `sh -c` still runs unasked, and an agent that does not read these settings is not asked. A file
-  that still holds `Bash(mt get:*)`, `Bash(mt list)` or `Bash(mt shape:*)` from an earlier install
-  has them replaced. A yes keeps everything else in the file; it is not asked again once the rules
-  are there;
-- asks, in a y/N of its own, whether to remove `Bash(mt oracle:*)` and `Bash(mt get oracle:*)`
-  from `permissions.deny`, where an earlier install put them, so an agent can load the oracle guide.
-  Your other denies stay. Declining keeps them and changes no other rule, and every later install
-  or `mt update` asks again while they are there.
-  `ADD_MT_RULES=yes` or `ADD_MT_RULES=no` answers both questions without asking, and with no
-  terminal to ask on nothing is written;
+  `sh -c` still runs unasked, and an agent that does not read these settings is not asked. A yes
+  keeps everything else in the file; it is not asked again once the rules are there.
+  `ADD_MT_RULES=yes` or `ADD_MT_RULES=no` answers without asking, and with no terminal to ask on
+  nothing is written;
 - checks that a login shell started from your profile alone finds `mt` and Bun. Orca starts a
   worker in a terminal running your shell, so this is the PATH workers get.
 
@@ -202,8 +195,8 @@ A `SKILLS_DIR` override, for another agent, links the stubs into that folder alo
 `~/.claude/skills` as it is; `CLAUDE_SKILLS_DIR` moves Claude Code's folder when `SKILLS_DIR` is not
 set. A skill installed as a real folder, or a file where a stub goes, is left alone and the install
 fails, naming it: linking over it would write a stray link inside the folder, or replace the file.
-Settings that are not a JSON object, or whose `permissions` is not an object or whose `permissions.allow`,
-`permissions.ask` or `permissions.deny` is not a list of strings, are left alone too, and the
+Settings that are not a JSON object, or whose `permissions` is not an object or whose
+`permissions.allow` or `permissions.ask` is not a list of strings, are left alone too, and the
 install fails saying which; it names the rules to add by hand only when the settings are not JSON
 or not an object.
 
@@ -211,7 +204,7 @@ or not an object.
 into this clone, and every link in `~/.claude/skills` to such a link in `~/.agents/skills`, however
 it spells the path and even one made by hand, so a skill or `mt` installed some other way stays.
 With `~/.agents/skills` gone, it also removes the links in `~/.claude/skills` to it. It asks before
-removing the rules, and any of the earlier ones, from the settings, keeping every other rule;
+removing the rules from the settings, keeping every other rule;
 `REMOVE_MT_RULES=yes` or `=no` answers without asking. It leaves Bun, the clone and its
 `node_modules`, and your shell profile. Pass the same `BIN_DIR`, `SKILLS_DIR`, `CLAUDE_SKILLS_DIR`
 and `SETTINGS` you installed with.
@@ -266,7 +259,7 @@ mentions it checked and says how many placeholder mentions it skipped.
 It runs only `mt get` and `mt --help`. Without `orca` on PATH it checks the `mt` mentions only and
 says so in one line. It fails when `mt --help` prints no usage, when it finds no guides, and when
 `orca agent-context --json` exits non-zero, prints something that is not a JSON object, reports a
-schema version other than 1, or lists its commands in a shape the lint does not read (no `commands`
+schema version other than 1, or lists its commands in a form the lint does not read (no `commands`
 array, or a command without a string `command` and an array `path`), each as one line instead of
 one per mention.
 
