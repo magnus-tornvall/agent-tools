@@ -8,8 +8,9 @@ mid-Run. It reads no config.
 
 ## Principles
 
-- **Design by contract.** The Verbs, Spec head and A view for the owner sections are its contract:
-  what each verb takes, what every spec carries and how a view reaches the owner.
+- **Design by contract.** The Verbs, Spec head and A view for the owner sections, and the worker
+  key under Coordinating, are its contract: what each verb takes, what every spec carries, how a
+  view reaches the owner and what a worker's tab and worktree start with.
 - **Source criticism.** Known behaviour is true of the version stamped on it, and no other: a
   later Orca may have fixed it, so a line is relied on past its version only once seen again.
 
@@ -22,8 +23,6 @@ Ownership, Observable acceptance. Every worker is an Orca Task. The verbs a Run 
 - `orca orchestration worker-start` starts a Task from its `--spec` on one `--agent`, with its
   `--model` and `--effort`. `--worktree` places it in the work's worktree, `current`, or a new
   one, `new-child`, which needs `--name`.
-- `orca terminal create --title` and `orca terminal rename --terminal <handle> --title` each set
-  a tab's custom title, which Orca shows ahead of the title the program in the tab sets.
 - The inbox and Task results, read with `orca orchestration check`, `orca orchestration inbox` and
   `orca orchestration task-list`, are the Run's durable record; the findings and the hand-off are
   rebuilt from them.
@@ -118,10 +117,12 @@ worker's first command may run before it has read the line below.
   `new-child` worktree, start with `<run>·T<n>`, such as `84·T2`, `<run>` being the Run's issue
   number or else a short slug. That lets the owner trace a key to its worker or find one that is
   stuck, and keeps the `T2` of two live Runs apart. A `--worktree current` worker has no worktree
-  of its own, so only its tab carries the key. A terminal `worker-start` launches takes the key
-  with `orca terminal rename`; a worker that starts its own terminal can take it at
-  `orca terminal create --title`. Workaround for `worker-start` taking no tab title; remove when
-  it takes one.
+  of its own, so only its tab carries the key, and a worker run without a terminal, as the owner's
+  setting for new agent tabs may run one, has no tab to carry it.
+- **Every worker's terminal takes its key from `orca terminal rename --terminal <handle> --title`
+  after `worker-start`**, a terminal the worker started itself included, since a rename then holds
+  whether or not `worker-start --terminal` resets a title set at `orca terminal create --title`.
+  Workaround for `worker-start` taking no tab title; remove when it takes one.
 
 ## Working
 
@@ -185,14 +186,17 @@ saying these; remove each line when the skill says it or the tool no longer beha
 - `orca orchestration worker-start --worktree new-child` requires `--name`, and cuts the new
   worktree from main, not from the work branch the coordinator's worktree has checked out, so a
   judge placed there sees main until it checks out the work branch's commit. (1.4.224)
-- `orca terminal create --title` and `orca terminal rename --title` both set the tab's custom
-  title, which Orca's tab and sidebar show ahead of the program's own. A claude or opencode
-  terminal created with `--title` kept it once prompted, and a renamed tab held through Claude
-  Code's, opencode's and Copilot's own titles; clearing it showed theirs again
-  (`✳ Hello greeting`, `OpenCode`, `GitHub Copilot`). A tab with a custom title no longer shows
-  Claude Code's busy and idle glyph, which is only in its live title. (1.4.229)
-- `orca terminal show` and `orca terminal list` report `title` as the program's live title, not
-  the tab's custom title, so neither confirms the key a tab shows. (1.4.229)
+- `orca terminal create --title` and `orca terminal rename --title` both store the tab's
+  `customTitle`, which Orca's tab and sidebar label resolvers show in place of the program's own
+  title, as read in Orca's bundled code. The sidebar showed `tabkey·T2`, `T3`, `T5` and `T6` on
+  renamed Claude worker tabs, and a renamed tab held through Claude Code's, opencode's and
+  Copilot's own titles; clearing it showed theirs again (`✳ Hello greeting`, `OpenCode`,
+  `GitHub Copilot`). A tab with a custom title no longer shows Claude Code's busy and idle glyph,
+  which is only in its live title. (1.4.229)
+- The `title` that `orca terminal show` and `orca terminal list` report is no reliable view of a
+  tab's label: a renamed shell kept its custom title there through a later title the shell set,
+  but a renamed Claude worker reported Claude's live title while the sidebar showed its key. So
+  neither confirms the key a tab shows. (1.4.229)
 - A worktree `--name` keeps `·` in the name Orca shows and turns it and spaces into `-` in the
   path and branch: `tabkey·T0 probe` became `tabkey-T0-probe` and
   `magnus-tornvall/tabkey-T0-probe`. (1.4.229)
