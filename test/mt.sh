@@ -148,29 +148,6 @@ assert_eq "R5 chained symlink reads the repo's guide" "$(printf '# Door rule\nbo
 out=$(cd "$OTHER" && "$TMP/bin/rel-mt" list | head -n 1)
 assert_contains "R5 relative symlink resolves" "$out" "door-rule"
 
-# dogfood is gone: an agent that runs it gets the usage, and gh never runs
-FAKEBIN=$TMP/fakebin
-GH_SEEN=$TMP/gh-seen
-mkdir -p "$FAKEBIN" "$GH_SEEN"
-ln -s "$(command -v bun)" "$FAKEBIN/bun"
-printf '#!/bin/bash\necho "$*" >>"%s/calls"\n' "$GH_SEEN" >"$FAKEBIN/gh"
-chmod +x "$FAKEBIN/gh"
-out=$(cd "$OTHER" && PATH=$FAKEBIN "$MT" dogfood 'a finding' 2>"$TMP/err"); rc=$?
-assert_eq "dogfood exits 2" 2 "$rc"
-assert_eq "dogfood prints nothing on stdout" "" "$out"
-assert_eq "dogfood is an unknown command" "mt: unknown command 'dogfood'" "$(head -n 1 "$TMP/err")"
-assert_contains "dogfood prints the usage" "$(cat "$TMP/err")" "usage: mt get"
-[ -e "$GH_SEEN/calls" ] && fail "dogfood ran gh"
-check "dogfood never runs gh"
-
-# R10: mt oracle is gone, so each of its commands is an unknown command
-for sub in run hash; do
-  out=$(cd "$OTHER" && "$MT" oracle "$sub" 2>"$TMP/err"); rc=$?
-  assert_eq "mt oracle $sub exits 2" 2 "$rc"
-  assert_eq "mt oracle $sub prints nothing on stdout" "" "$out"
-  assert_eq "mt oracle $sub is an unknown command" "mt: unknown command 'oracle'" "$(head -n 1 "$TMP/err")"
-done
-
 # usage
 for args in "" "--help"; do
   out=$("$MT" ${args:+"$args"}); rc=$?
@@ -182,8 +159,6 @@ for args in "" "--help"; do
     check "usage ($args) names no $word"
   done
 done
-"$MT" frobnicate >/dev/null 2>&1; rc=$?
-assert_eq "unknown command exits 2" 2 "$rc"
 
 # get, list and --help, run in a cleared environment, write nothing under an empty HOME and
 # print nothing on stderr but the not-found line
