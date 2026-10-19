@@ -45,9 +45,11 @@ runs on what the Run chose rather than on whatever the owner's agent config hold
 the Run picks a model for every Task, and a model id its provider retires fails the launch.
 
 Orca prints no list of the agents it launches, the model ids each takes or the efforts it accepts,
-so a Run picks from these, each seen to launch with the model and the effort beside it on Orca
-1.4.229, with Claude Code 2.1.303, Copilot CLI 1.0.98 and opencode 2.0.30. Workaround for Orca
-printing no agents, models or efforts; remove when a verb prints them.
+and a `copilot` or `opencode` model id, named in the worker's own command below, is an opaque
+provider id Orca passes through unchecked, so a Run picks from these, each seen to launch with the
+model and the effort beside it on Orca 1.4.229, with Claude Code 2.1.303, Copilot CLI 1.0.98 and
+opencode 2.0.30. Workaround for Orca printing no agents, models or efforts; remove when a verb
+prints them.
 
 | `--agent` | `--model`, with the effort it was seen on |
 |---|---|
@@ -55,18 +57,20 @@ printing no agents, models or efforts; remove when a verb prints them.
 | `copilot` | `claude-opus-5.5` (`high`), `gpt-6.1-sol` (`xhigh`), `grok-4.7` (`medium`) |
 | `opencode` | `github-copilot/gpt-6.1-sol` (`xhigh`), `github-copilot/grok-4.7` (`medium`), `github-copilot/gemini-4-argon` (`high`) |
 
-`--effort` is `medium`, `high` or `xhigh`, and needs `--model` beside it. For `claude`, Orca checks
-the effort against the model before it launches anything, so a pairing the model does not support
-fails at once, never running on another effort; a pairing the table does not show may still
-launch, as `opus` on `medium` did. `haiku` is left out because the effort is always named: Orca
-refuses every effort on it, so it cannot launch with one. Workaround for Orca taking no effort for
-`haiku`; remove when Orca takes one and `haiku` is seen to launch on it.
+`--effort` is `medium`, `high` or `xhigh`, and needs `--model` beside it: Orca refuses an effort
+on an agent's default model. For `claude`, Orca checks the effort against the model before it
+launches anything, so a pairing the model does not support fails at once, never running on another
+effort; a pairing the table does not show may still launch, as `opus` on `medium` did. `haiku` is
+left out because the effort is always named: Orca refuses every effort on it, so it cannot launch
+with one. Workaround for Orca taking no effort for `haiku`; remove when Orca takes one and `haiku`
+is seen to launch on it.
 
 Copilot and opencode take no model when their worktree is created, so their worktree is the one
 exception to the rule: it is created with no agent yet, by `orca worktree create --name <name>`
 without `--agent`, and the worker's own terminal, started in it with
 `orca terminal create --command`, runs the agent on its model and effort and is then started as a
-Task with `worker-start --terminal <handle>`. That worktree misses what agent-first creation
+Task with `worker-start --terminal <handle> --worktree <that worktree>`, since a `--worktree` of
+`current` means the coordinator's own. That worktree misses what agent-first creation
 gives; the owner chose that over a Run not using these agents. No other worktree is created
 without its agent.
 
@@ -89,7 +93,9 @@ without its agent.
   `gpt-6.1-sol#medium` launched on `high`, the effort remembered for it, and with a fresh state
   folder `gpt-6.1-sol#xhigh` took. That folder outlives the worker, a leftover of each opencode
   Task, and every command the worker runs inherits `XDG_STATE_HOME`, so a tool that keeps its
-  state there would start empty too. The model is named with its provider, so opencode must be
+  state there would start empty too. On an Orca-managed opencode data account it also bypasses
+  that account: Orca owns such a pane only while `XDG_STATE_HOME` is the account's state folder
+  (read in Orca's code, not run). The model is named with its provider, so opencode must be
   signed in to that provider, here GitHub Copilot. The effort is one of the model's variants; a
   variant the model lacks is dropped without a word, so the TUI's status line,
   `Build · <model> GitHub Copilot · <effort>`, is what shows the effort took. Workaround for Orca
