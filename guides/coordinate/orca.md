@@ -56,16 +56,19 @@ printing no agents, models or efforts; remove when a verb prints them.
 | `opencode` | `github-copilot/gpt-6.1-sol` (`xhigh`), `github-copilot/grok-4.7` (`medium`), `github-copilot/gemini-4-argon` (`high`) |
 
 `--effort` is `medium`, `high` or `xhigh`, and needs `--model` beside it. For `claude`, Orca checks
-the effort against the model before it launches anything, so a pairing the table does not show
-fails at once rather than running on another effort. `haiku` is left out: Orca refuses every effort
-on it, so it cannot launch with its effort named.
+the effort against the model before it launches anything, so a pairing the model does not support
+fails at once, never running on another effort; a pairing the table does not show may still
+launch, as `opus` on `medium` did. `haiku` is left out because the effort is always named: Orca
+refuses every effort on it, so it cannot launch with one. Workaround for Orca taking no effort for
+`haiku`; remove when Orca takes one and `haiku` is seen to launch on it.
 
 Copilot and opencode take no model when their worktree is created, so their worktree is the one
-exception to the rule: it is created with no agent yet, and the worker's own terminal, started in
-it with `orca terminal create --command`, runs the agent on its model and effort and is then
-started as a Task with `worker-start --terminal <handle>`. That worktree misses what agent-first
-creation gives; the owner chose that over a Run not using these agents. No other worktree is
-created without its agent.
+exception to the rule: it is created with no agent yet, by `orca worktree create --name <name>`
+without `--agent`, and the worker's own terminal, started in it with
+`orca terminal create --command`, runs the agent on its model and effort and is then started as a
+Task with `worker-start --terminal <handle>`. That worktree misses what agent-first creation
+gives; the owner chose that over a Run not using these agents. No other worktree is created
+without its agent.
 
 - **Copilot.** `orca worktree create --agent copilot --model` is refused, "Agent copilot does not
   support launch-time model selection" (1.4.229), and `worker-start --agent copilot` refuses
@@ -84,7 +87,9 @@ created without its agent.
   background service, started without it, would not. The fresh state folder matters because
   opencode remembers the effort last picked for a model, and that beats the config's:
   `gpt-6.1-sol#medium` launched on `high`, the effort remembered for it, and with a fresh state
-  folder `gpt-6.1-sol#xhigh` took. The model is named with its provider, so opencode must be
+  folder `gpt-6.1-sol#xhigh` took. That folder outlives the worker, a leftover of each opencode
+  Task, and every command the worker runs inherits `XDG_STATE_HOME`, so a tool that keeps its
+  state there would start empty too. The model is named with its provider, so opencode must be
   signed in to that provider, here GitHub Copilot. The effort is one of the model's variants; a
   variant the model lacks is dropped without a word, so the TUI's status line,
   `Build · <model> GitHub Copilot · <effort>`, is what shows the effort took. Workaround for Orca
