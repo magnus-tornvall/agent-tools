@@ -39,13 +39,14 @@ Ownership, Observable acceptance. Every worker is an Orca Task. The verbs a Run 
 
 Orca prints no list of the agents it launches, the model ids each takes or the efforts it accepts,
 and `--model` passes an opaque provider id through unchecked, so a Run picks from these, each seen
-to launch with the model and effort it asked for on Orca 1.4.227. Workaround for Orca printing no
-agents, models or efforts; remove when a verb prints them.
+to launch with the model and effort it asked for on Orca 1.4.227, and `opencode` on Orca 1.4.229
+with opencode 2.0.30. Workaround for Orca printing no agents, models or efforts; remove when a verb
+prints them.
 
 | `--agent` | `--model` |
 |---|---|
 | `claude` | `opus`, `sonnet`, `haiku` |
-| `codex` | `gpt-6.1-sol`, `gpt-5.6-terra`, `gpt-6-luna` |
+| `opencode` | `github-copilot/gpt-6.1-sol`, `github-copilot/grok-4.7`, `github-copilot/gemini-4-argon` |
 | `copilot` | `claude-opus-5.5`, `gpt-6.1-sol`, `grok-4.7` |
 
 `--effort` is `medium`, `high` or `xhigh`, and needs `--model` beside it: Orca refuses an effort
@@ -58,6 +59,20 @@ prompt Copilot opens in a new worktree, which `orca terminal wait --for tui-idle
 and is then started on that terminal with `worker-start --terminal <handle>`.
 Workaround for Orca not passing a model to copilot; remove when `worker-start --agent copilot
 --model` is accepted.
+
+`worker-start --agent opencode` takes `--model` only in a worktree that already exists and refuses
+`--effort`. An opencode worker on a chosen model and effort starts its own terminal with
+`orca terminal create --command`, the command being
+`OPENCODE_CONFIG_CONTENT='{"model":"<model>#<effort>"}' opencode --standalone`, and is then
+started on that terminal with `worker-start --terminal <handle>`. opencode's TUI takes no model
+flag, so the model reaches it only through that config. `--standalone` gives the terminal its own
+server, which reads the config, where the shared background service, started without it, would
+not. The model is named with its provider, so opencode must be signed in to that provider, here
+GitHub Copilot. The effort is one of the model's variants: `high` was seen on each opencode model above. A variant
+the model lacks is dropped without a word, so the TUI's status line,
+`Build · <model> GitHub Copilot · <effort>`, is what shows the effort took. Workaround for Orca not
+passing an effort to opencode; remove when `worker-start --agent opencode --model --effort` is
+accepted.
 
 ## Spec head
 
