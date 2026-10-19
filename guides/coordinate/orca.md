@@ -22,15 +22,8 @@ Ownership, Observable acceptance. Every worker is an Orca Task. The verbs a Run 
 - `orca orchestration worker-start` starts a Task from its `--spec` on one `--agent`, with its
   `--model` and `--effort`. `--worktree` places it in the work's worktree, `current`, or a new
   one, `new-child`, which needs `--name`.
-- A worker is found from the key its reports use: its tab title, and the `--name` of a
-  `new-child` worktree, start with `<run>·T<n>`, such as `84·T2`, `<run>` being the Run's issue
-  number or else a short slug. That lets the owner trace a key to its worker or find one that is
-  stuck, and keeps the `T2` of two live Runs apart. A `--worktree current` worker has no worktree
-  of its own, so only its tab carries the key. The tab is titled with
-  `orca terminal rename --terminal <handle> --title`, on every agent: each agent's own title
-  replaces `orca terminal create --title`, and none replaces a rename. Workaround for
-  `worker-start` taking no tab title; remove when it takes one that the agent's titles leave in
-  place.
+- `orca terminal create --title` and `orca terminal rename --terminal <handle> --title` each set
+  a tab's custom title, which Orca shows ahead of the title the program in the tab sets.
 - The inbox and Task results, read with `orca orchestration check`, `orca orchestration inbox` and
   `orca orchestration task-list`, are the Run's durable record; the findings and the hand-off are
   rebuilt from them.
@@ -121,6 +114,14 @@ worker's first command may run before it has read the line below.
   recorded below for `orca worktree rm` and not yet observed for the UI, removing a worktree's
   branch with it; remove when a message to the owner can carry a file that outlives its worktree
   and Orca keeps or names commits that only a removed worktree held.
+- **A worker is found from the key its reports use**: its tab title, and the `--name` of a
+  `new-child` worktree, start with `<run>·T<n>`, such as `84·T2`, `<run>` being the Run's issue
+  number or else a short slug. That lets the owner trace a key to its worker or find one that is
+  stuck, and keeps the `T2` of two live Runs apart. A `--worktree current` worker has no worktree
+  of its own, so only its tab carries the key. A terminal `worker-start` launches takes the key
+  with `orca terminal rename`; a worker that starts its own terminal can take it at
+  `orca terminal create --title`. Workaround for `worker-start` taking no tab title; remove when
+  it takes one.
 
 ## Working
 
@@ -184,11 +185,14 @@ saying these; remove each line when the skill says it or the tool no longer beha
 - `orca orchestration worker-start --worktree new-child` requires `--name`, and cuts the new
   worktree from main, not from the work branch the coordinator's worktree has checked out, so a
   judge placed there sees main until it checks out the work branch's commit. (1.4.224)
-- `orca terminal create --title` lasts only until the program in the terminal sets a title, as
-  Claude Code does at start (`✳ Claude Code`). A title set with `orca terminal rename --title`
-  held through Claude Code's, opencode's and Copilot's own titles, and clearing it showed theirs
-  again (`✳ Hello greeting`, `OpenCode`, `GitHub Copilot`). A renamed tab no longer shows Claude
-  Code's busy and idle glyph. (1.4.229)
+- `orca terminal create --title` and `orca terminal rename --title` both set the tab's custom
+  title, which Orca's tab and sidebar show ahead of the program's own. A claude or opencode
+  terminal created with `--title` kept it once prompted, and a renamed tab held through Claude
+  Code's, opencode's and Copilot's own titles; clearing it showed theirs again
+  (`✳ Hello greeting`, `OpenCode`, `GitHub Copilot`). A tab with a custom title no longer shows
+  Claude Code's busy and idle glyph, which is only in its live title. (1.4.229)
+- `orca terminal show` and `orca terminal list` report `title` as the program's live title, not
+  the tab's custom title, so neither confirms the key a tab shows. (1.4.229)
 - A worktree `--name` keeps `·` in the name Orca shows and turns it and spaces into `-` in the
   path and branch: `tabkey·T0 probe` became `tabkey-T0-probe` and
   `magnus-tornvall/tabkey-T0-probe`. (1.4.229)
