@@ -22,6 +22,15 @@ Ownership, Observable acceptance. Every worker is an Orca Task. The verbs a Run 
 - `orca orchestration worker-start` starts a Task from its `--spec` on one `--agent`, with its
   `--model` and `--effort`. `--worktree` places it in the work's worktree, `current`, or a new
   one, `new-child`, which needs `--name`.
+- A worker is found from the key its reports use: its tab title, and the `--name` of a
+  `new-child` worktree, start with `<run>·T<n>`, such as `84·T2`, `<run>` being the Run's issue
+  number or else a short slug. That lets the owner trace a key to its worker or find one that is
+  stuck, and keeps the `T2` of two live Runs apart. A `--worktree current` worker has no worktree
+  of its own, so only its tab carries the key. The tab is titled with
+  `orca terminal rename --terminal <handle> --title`, on every agent: each agent's own title
+  replaces `orca terminal create --title`, and none replaces a rename. Workaround for
+  `worker-start` taking no tab title; remove when it takes one that the agent's titles leave in
+  place.
 - The inbox and Task results, read with `orca orchestration check`, `orca orchestration inbox` and
   `orca orchestration task-list`, are the Run's durable record; the findings and the hand-off are
   rebuilt from them.
@@ -175,6 +184,14 @@ saying these; remove each line when the skill says it or the tool no longer beha
 - `orca orchestration worker-start --worktree new-child` requires `--name`, and cuts the new
   worktree from main, not from the work branch the coordinator's worktree has checked out, so a
   judge placed there sees main until it checks out the work branch's commit. (1.4.224)
+- `orca terminal create --title` lasts only until the program in the terminal sets a title, as
+  Claude Code does at start (`✳ Claude Code`). A title set with `orca terminal rename --title`
+  held through Claude Code's, opencode's and Copilot's own titles, and clearing it showed theirs
+  again (`✳ Hello greeting`, `OpenCode`, `GitHub Copilot`). A renamed tab no longer shows Claude
+  Code's busy and idle glyph. (1.4.229)
+- A worktree `--name` keeps `·` in the name Orca shows and turns it and spaces into `-` in the
+  path and branch: `tabkey·T0 probe` became `tabkey-T0-probe` and
+  `magnus-tornvall/tabkey-T0-probe`. (1.4.229)
 - A spec that names a guide the work branch renames or removes still resolves mid-Run only because
   the installed `mt` serves the main clone's guides; once the change reaches main it fails.
   (`mt` 1b0dd76)
