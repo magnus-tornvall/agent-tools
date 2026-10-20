@@ -95,10 +95,14 @@ these do.
   that shows it, the fix and its door, and what became of every other: fixed and by which Task,
   dropped and why, ruled on, or open and with whom. Evidence that is not text is where they can
   check it, and still there when they do.
-- **Nothing a Task leaves behind goes unseen.** No worker sits stuck unnoticed, even one parked
-  where only a human can move it, and every commit the destination lacks, every process still
-  running and every worker whose report you accepted is named before anything that holds it is
-  torn down. Teardown is the owner's.
+- **Nothing a settled Task leaves behind is left for the owner, and nothing unsettled is lost.**
+  A Task is settled once its report is accepted, nothing more will be sent to its worker, since a
+  later change is a new Task, and nothing it holds awaits the owner: no commit the destination
+  lacks, no evidence they have not ruled on. A settled Task's worktree, branch, terminal and views
+  are removed, so that the owner never tidies work that is done and decided. Whatever still awaits
+  the owner, or could not be shown removed, is named in the hand-off. No worker sits stuck
+  unnoticed, even one parked where only a human can move it. Workaround for no platform tearing
+  down a settled Task; remove when the platform does.
 - **The hand-off lets the owner close the Run.** Besides the findings, it holds the platform and
   why; which sections of the spec each judge was given, so that a leak can be traced; each
   assumption you would not have reached from the intent and the owner's rulings alone; and the
@@ -108,8 +112,9 @@ these do.
 ## Guardrails
 
 - Never touch the base branch, never merge. Push only when the destination is a pull request.
-- Never remove a worktree or a branch, and never retry, stop or abandon a worker without the
-  owner's choice or the platform's positive proof that it is gone. Absence is not proof.
+- Never remove the work branch, the base branch or anything an unsettled Task holds, and never
+  retry, stop or abandon an unsettled worker without the owner's choice or the platform's
+  positive proof that it is gone. Absence is not proof.
 - Two Tasks that run the repo's code never share a worktree at once.
 - A judge is never pointed at, or placed where it would find, more of the intent than its
   perspective's reference gives it.

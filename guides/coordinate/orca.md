@@ -127,17 +127,19 @@ worker's first command may run before it has read the line below.
 
 ## Coordinating
 
-- **Every worker whose report you accept stays live**, success or failure, kept with
-  `orca orchestration worker-retain` and never released, until the owner deletes its worktree in
-  Orca's UI: its worktree may hold the only copy of its commits and its evidence, and teardown is
-  the owner's.
+- **A settled worker is torn down by the Run**: released with `orca orchestration worker-release`,
+  its terminal closed with `orca terminal close`, its `new-child` worktree removed with
+  `orca worktree rm`, which deletes its branch too, and the tabs opened for the owner's view
+  closed. Until then it is kept with `orca orchestration worker-retain`. A release that returns
+  `user_takeover` is the owner's: its terminal and worktree stay, named in the hand-off.
+  Workaround for Orca leaving a released worker's worktree, branch and terminal in place; remove
+  when release removes them.
 - **A worker parked on a prompt only a human can answer is found without a message**, so an
   empty wait is followed by a look at the live workers. Workaround for Orca sending no message
   for such a worker; remove when Orca reports one.
-- **Evidence that is not text, a process left running and commits the destination lacks are
-  named by the Task worktree that holds them**, and the hand-off says whether deleting that
-  worktree stops the process, so that the owner can check and keep what they need before removing
-  it. Workaround for Orca's messages carrying only text, keeping no file a Task wrote, and, as
+- **Evidence that is not text and commits the destination lacks are named by the Task worktree
+  that holds them**, and that worktree stays until the owner has ruled on what it holds.
+  Workaround for Orca's messages carrying only text, keeping no file a Task wrote, and, as
   recorded below for `orca worktree rm` and not yet observed for the UI, removing a worktree's
   branch with it; remove when a message to the owner can carry a file that outlives its worktree
   and Orca keeps or names commits that only a removed worktree held.
