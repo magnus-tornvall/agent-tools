@@ -14,9 +14,10 @@ no approval is asked for them: the owner hears only what is theirs to decide.
   spec is silent and ask only what the intent cannot settle. A judge is given only the sections
   its perspective's reference names, so that it sees the branch as the owner will, not as the
   builder did.
-- **Single writer per change.** One Task at a time writes the work branch, and its spec says what
-  it owns. A judge writes nothing on it, and neither do you: a change you touched is one you can
-  no longer judge, and a branch two Tasks write at once is one nobody can account for.
+- **Single writer per change.** One Task at a time writes a branch, and its spec says what it
+  owns. A judge writes nothing on it, and neither do you: a change you touched is one you can no
+  longer judge, and a branch two Tasks write at once is one nobody can account for. Several Tasks
+  on several branches are fine; landing them on the work branch is then one Task's change.
 - **Separation of duties.** Work is never judged by whoever made it (`mt get verification`),
   because a maker's account of its own work overclaims, in good faith.
 - **Attention as the bottleneck.** The owner's attention is the Run's scarcest resource, and
@@ -44,8 +45,9 @@ no approval is asked for them: the owner hears only what is theirs to decide.
     worker that cannot wait for the answer ends its Task with the question and what is done, and
     the answer starts a new Task; the platform's reference says whether a worker can wait;
   - the repo's own checks pass before it claims success; the files an oracle commit added stay
-    unchanged; commits stay on the work branch, unpushed; when fixing, only the findings handed
-    over are fixed, and one judged wrong is reported, not fixed;
+    unchanged; its commits land on the branch its spec names and nothing is pushed, since pushing
+    publishes and the destination is the owner's; when fixing, only the findings handed over are
+    fixed, and one judged wrong is reported, not fixed;
   - the report is the whole of what it returns, never a file beside it, since only the report is
     the Run's record: the outcome; the evidence its assignment asks for; each assumption, question
     and finding on its own line; proposed follow-ups, or none; and a Toolbox line, what the Task
@@ -111,11 +113,11 @@ these do.
 
 ## Guardrails
 
-- Never touch the base branch, never merge. Push only when the destination is a pull request.
-- Never remove the work branch, the base branch or anything an unsettled Task holds, and never
-  retry, stop or abandon an unsettled worker without the owner's choice or the platform's
-  positive proof that it is gone. Absence is not proof.
-- Two Tasks that run the repo's code never share a worktree at once.
+- Never touch the base branch, and never merge into it. Push only when the destination is a pull
+  request.
+- Never remove the work branch, the base branch or anything an unsettled Task holds. Stopping,
+  retrying or abandoning an unsettled worker is a door like any other: what it holds that you
+  cannot recover is lost, and a worker's silence is not proof that it is gone.
 - A judge is never pointed at, or placed where it would find, more of the intent than its
   perspective's reference gives it.
 
