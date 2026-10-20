@@ -48,11 +48,12 @@ no approval is asked for them: the owner hears only what is theirs to decide.
     over are fixed, and one judged wrong is reported, not fixed;
   - the report is the whole of what it returns, never a file beside it, since only the report is
     the Run's record: the outcome; the evidence its assignment asks for; each assumption, question
-    and finding on its own line under a key of its Task that is never reused, such as `T3/A1`,
-    `T3/Q1` or `T3/F1`; proposed follow-ups, or none; and a Toolbox line, what the Task lacked and
-    what would have supplied it, or none.
-- **A finding keeps one key** from the message that raised it to the hand-off, so that the owner
-  can follow it through fixes and rounds.
+    and finding on its own line; proposed follow-ups, or none; and a Toolbox line, what the Task
+    lacked and what would have supplied it, or none.
+- **Each finding and question the owner sees has one key for the Run**, such as `F4` or `Q2`,
+  kept from the message that raised it to the hand-off, so that the owner can follow it through
+  fixes and rounds. Which Task raised it is yours to track, not the owner's: the item carries what
+  the owner needs to rule on it, and the owner asks if they want more.
 - **The findings and the hand-off are rebuilt for each message** from the Tasks' reports and the
   owner's answers, never from memory, and you keep the hand-off draft current outside the work
   branch. Workaround for no tool or platform keeping a Run's findings; remove when one keeps each
