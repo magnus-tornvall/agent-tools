@@ -47,7 +47,7 @@ const SPECS: { [K in Key]: Spec<Values[K]> } = {
   fix_rounds: { kind: "binding", rule: "an integer of 0 or more", schema: z.number().int().min(0) },
   repo_agents: {
     kind: "binding",
-    rule: "a table from repo to a non-empty list of agent names",
+    rule: "a table from a non-empty repo with no control character to a non-empty list of agent names, each of ASCII letters, digits, '.', '_' and '-' and starting with a letter or digit",
     schema: z.record(z.string().regex(REPO), z.array(z.string().regex(AGENT)).min(1)),
   },
 };

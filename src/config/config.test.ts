@@ -58,7 +58,8 @@ function advisoryStandIn(): string {
   return join(root, "cli", "mt");
 }
 
-const REPO_AGENTS_RULE = "must be a table from repo to a non-empty list of agent names";
+const REPO_AGENTS_RULE =
+  "must be a table from a non-empty repo with no control character to a non-empty list of agent names, each of ASCII letters, digits, '.', '_' and '-' and starting with a letter or digit";
 
 const COMPLETE = 'fix_rounds = 1\nrepo_agents = { "git@github.com:acme/app.git" = ["claude"] }\n';
 
@@ -150,6 +151,9 @@ describe("mt config", () => {
       ['repo_agents = "claude"', "repo_agents", `${REPO_AGENTS_RULE}, not "claude"`],
       ['repo_agents = { "git@github.com:acme/app.git" = "claude" }', "repo_agents", `${REPO_AGENTS_RULE}, not {"git@github.com:acme/app.git":"claude"}`],
       ['repo_agents = { "git@github.com:acme/app.git" = ["claude", ""] }', "repo_agents", `${REPO_AGENTS_RULE}, not {"git@github.com:acme/app.git":["claude",""]}`],
+      ['repo_agents = { "x" = ["Claude Code"] }', "repo_agents", `${REPO_AGENTS_RULE}, not {"x":["Claude Code"]}`],
+      ['repo_agents = { "x" = ["acme/claude"] }', "repo_agents", `${REPO_AGENTS_RULE}, not {"x":["acme/claude"]}`],
+      ['repo_agents = { "x" = [".claude"] }', "repo_agents", `${REPO_AGENTS_RULE}, not {"x":[".claude"]}`],
       ['repo_agents = { "" = ["claude"] }', "repo_agents", `${REPO_AGENTS_RULE}, not {"":["claude"]}`],
       ['repo_agents = { "acme\\napp" = ["claude"] }', "repo_agents", `${REPO_AGENTS_RULE}, not {"acme\\napp":["claude"]}`],
       ['[repo_agents]\ngithub.com = ["claude"]', "repo_agents", `${REPO_AGENTS_RULE}, not {"github":{"com":["claude"]}}`],

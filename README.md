@@ -119,10 +119,11 @@ owner names another for that Run; when no listed agent can run a Task, the Run a
 it. A repo with no entry is unrestricted, so `repo_agents = {}` restricts none. Each repo is a
 quoted key: its `origin` URL exactly as `git remote get-url origin` prints it, with no tab, line
 break or other control character, so an SSH and an HTTPS clone of one repo are two entries. Each
-agent is named as Orca's `--agent` takes it; `mt` checks that a name is well formed, not that the
-platform knows it, so a misspelt name matches no agent and the Run asks. Nothing in `mt` or Orca
-stops a launch: the coordinator reads the key and obeys it. A `[repo_agents]` table goes below every
-other key, since TOML puts each key under that header into the table.
+agent is named as Orca's `--agent` takes it, in ASCII letters, digits, `.`, `_` and `-`, starting
+with a letter or digit; `mt` checks that form, not that the platform knows the name, so a misspelt
+name matches no agent and the Run asks. Nothing in `mt` or Orca stops a launch: the coordinator
+reads the key and obeys it. A `[repo_agents]` table goes below every other key, since TOML puts each
+key under that header into the table.
 
 No `mt` command reads `fix_rounds` or `repo_agents`; whatever coordinates unattended work, such as
 the coordinate guide, reads them through `mt config <key>`. For example:
