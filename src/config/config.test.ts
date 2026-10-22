@@ -44,8 +44,8 @@ function advisoryStandIn(): string {
   const source = readFileSync(new URL("./config.ts", import.meta.url).pathname, "utf8");
   const patched = source
     .replace(/^ {2}fix_rounds: \{ kind: "binding".*\},$/m, '$&\n  advice: { kind: "advisory", rule: "a number from 0 to 1", schema: z.number().min(0).max(1) },')
-    .replace('const KEYS: readonly Key[] = ["fix_rounds"];', 'const KEYS: readonly Key[] = ["fix_rounds", "advice"];');
-  if (!patched.includes('advice: { kind: "advisory"') || !patched.includes('"fix_rounds", "advice"]')) {
+    .replace('const KEYS: readonly Key[] = ["fix_rounds", "repo_agents"];', 'const KEYS: readonly Key[] = ["fix_rounds", "repo_agents", "advice"];');
+  if (!patched.includes('advice: { kind: "advisory"') || !patched.includes('"repo_agents", "advice"]')) {
     throw new Error("config.ts no longer has the lines the advisory stand-in adds advice after");
   }
   rmSync(root, { recursive: true, force: true });
@@ -58,7 +58,9 @@ function advisoryStandIn(): string {
   return join(root, "cli", "mt");
 }
 
-const COMPLETE = "fix_rounds = 1\n";
+const REPO_AGENTS_RULE = "must be a table from repo to a non-empty list of agent names";
+
+const COMPLETE = 'fix_rounds = 1\nrepo_agents = { "git@github.com:acme/app.git" = ["claude"] }\n';
 
 describe("mt config", () => {
   test("R2: prints the file's path, then each key with binding or advisory and its value, and exits 0", () => {
@@ -70,6 +72,7 @@ describe("mt config", () => {
       [
         CONFIG,
         "fix_rounds         binding   1",
+        'repo_agents        binding   {"git@github.com:acme/app.git":["claude"]}',
         "",
       ].join("\n"),
     );
@@ -86,7 +89,7 @@ describe("mt config", () => {
     const { code, stdout, stderr } = mt(["config"]);
     expect(stderr).toBe("");
     expect(code).toBe(1);
-    expect(stdout).toBe([CONFIG, "fix_rounds         binding   missing", ""].join("\n"));
+    expect(stdout).toBe([CONFIG, "fix_rounds         binding   missing", "repo_agents        binding   missing", ""].join("\n"));
   });
 
   test("a missing or invalid advisory key alone leaves mt config exiting 0", () => {
@@ -116,6 +119,7 @@ describe("mt config", () => {
       [
         CONFIG,
         "fix_rounds         binding   1",
+        'repo_agents        binding   {"git@github.com:acme/app.git":["claude"]}',
         "triage_confidence  unknown   mt has no such key",
         "",
       ].join("\n"),
@@ -141,6 +145,14 @@ describe("mt config", () => {
       ["fix_rounds = -1", "fix_rounds", "must be an integer of 0 or more, not -1"],
       ["fix_rounds = 1.5", "fix_rounds", "must be an integer of 0 or more, not 1.5"],
       ["fix_rounds = 9007199254740993", "fix_rounds", "must be an integer of 0 or more, not a number beyond ±9007199254740991, which mt cannot read exactly"],
+      ['repo_agents = { "git@github.com:acme/app.git" = [] }', "repo_agents", `${REPO_AGENTS_RULE}, not {"git@github.com:acme/app.git":[]}`],
+      ['repo_agents = ["claude"]', "repo_agents", `${REPO_AGENTS_RULE}, not ["claude"]`],
+      ['repo_agents = "claude"', "repo_agents", `${REPO_AGENTS_RULE}, not "claude"`],
+      ['repo_agents = { "git@github.com:acme/app.git" = "claude" }', "repo_agents", `${REPO_AGENTS_RULE}, not {"git@github.com:acme/app.git":"claude"}`],
+      ['repo_agents = { "git@github.com:acme/app.git" = ["claude", ""] }', "repo_agents", `${REPO_AGENTS_RULE}, not {"git@github.com:acme/app.git":["claude",""]}`],
+      ['repo_agents = { "" = ["claude"] }', "repo_agents", `${REPO_AGENTS_RULE}, not {"":["claude"]}`],
+      ['repo_agents = { "acme\\napp" = ["claude"] }', "repo_agents", `${REPO_AGENTS_RULE}, not {"acme\\napp":["claude"]}`],
+      ['[repo_agents]\ngithub.com = ["claude"]', "repo_agents", `${REPO_AGENTS_RULE}, not {"github":{"com":["claude"]}}`],
     ] as const) {
       config(`${toml}\n`);
       const { code, stderr } = mt(["config", key]);
@@ -170,6 +182,38 @@ describe("mt config", () => {
     expect(mt(["config", "fix_rounds"])).toEqual({ code: 0, stdout: "2\n", stderr: "" });
   });
 
+  test("mt config repo_agents prints one line per repo in the file's order, the repo then each of its agents, separated by tabs", () => {
+    config('fix_rounds = 1\n[repo_agents]\n"git@github.com:acme/app.git" = ["claude", "codex"]\n"/Users/me/My Repos/app" = ["copilot"]\n');
+    expect(mt(["config", "repo_agents"])).toEqual({
+      code: 0,
+      stdout: "git@github.com:acme/app.git\tclaude\tcodex\n/Users/me/My Repos/app\tcopilot\n",
+      stderr: "",
+    });
+  });
+
+  test("an empty repo_agents table restricts no repo: it is valid, and mt config repo_agents prints nothing", () => {
+    config("fix_rounds = 1\nrepo_agents = {}\n");
+    expect(mt(["config", "repo_agents"])).toEqual({ code: 0, stdout: "", stderr: "" });
+    const { code, stdout } = mt(["config"]);
+    expect(code).toBe(0);
+    expect(stdout.split("\n")).toContain("repo_agents        binding   {}");
+  });
+
+  test("a missing repo_agents is missing like any binding key, and mt config exits 1", () => {
+    config("fix_rounds = 1\n");
+    const { code, stdout } = mt(["config"]);
+    expect(code).toBe(1);
+    expect(stdout.split("\n")).toContain("repo_agents        binding   missing");
+    expect(mt(["config", "repo_agents"])).toEqual({ code: 1, stdout: "", stderr: `mt: config: repo_agents is missing from ${CONFIG}\n` });
+  });
+
+  test("an invalid repo_agents reads invalid on its line, saying why, and mt config exits 1", () => {
+    config('fix_rounds = 1\nrepo_agents = ["claude"]\n');
+    const { code, stdout } = mt(["config"]);
+    expect(code).toBe(1);
+    expect(stdout.split("\n")).toContain(`repo_agents        binding   invalid: ${REPO_AGENTS_RULE}, not ["claude"]`);
+  });
+
   test("R6: mt config colour exits 2 naming colour as an unknown key, whatever the config", () => {
     for (const toml of [null, COMPLETE, 'colour = "red"\n', "not = = toml\n"]) {
       rmSync(CONFIG_HOME, { recursive: true, force: true });
@@ -177,7 +221,7 @@ describe("mt config", () => {
       const { code, stdout, stderr } = mt(["config", "colour"]);
       expect(code).toBe(2);
       expect(stdout).toBe("");
-      expect(stderr).toStartWith("mt: unknown config key 'colour'; the keys are fix_rounds\nusage: mt config");
+      expect(stderr).toStartWith("mt: unknown config key 'colour'; the keys are fix_rounds, repo_agents\nusage: mt config");
     }
   });
 
@@ -195,7 +239,7 @@ describe("mt config", () => {
     expect(code).toBe(1);
     const lines = stdout.split("\n");
     expect(lines[0]).toBe(CONFIG);
-    for (const line of lines.slice(1, 2)) expect(line).toMatch(/ invalid: the file is not TOML: \S/);
+    for (const line of lines.slice(1, 3)) expect(line).toMatch(/ invalid: the file is not TOML: \S/);
     const single = mt(["config", "fix_rounds"]);
     expect(single.code).toBe(1);
     expect(single.stderr).toStartWith(`mt: config: fix_rounds is invalid in ${CONFIG}: the file is not TOML: `);

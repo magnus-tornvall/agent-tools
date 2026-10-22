@@ -105,6 +105,7 @@ The owner's explicit choice for a Run beats it.
 | key                 | kind     | value                                                                  |
 | ------------------- | -------- | ---------------------------------------------------------------------- |
 | `fix_rounds`        | binding  | fix rounds before the owner gets a finding, an integer from 0          |
+| `repo_agents`       | binding  | the agents a Run may launch, per repo: a table of non-empty lists      |
 
 A TOML float with an integer value, such as `fix_rounds = 2.0`, counts as that integer, since
 `Bun.TOML.parse` cannot tell them apart. `Bun.TOML.parse` also reads some values that are not
@@ -112,11 +113,25 @@ valid TOML as numbers: `-foo`, `+inf`, `-inf` and `-nan` as 0, `.7` as 0.7 and `
 `mt config` takes `fix_rounds = -foo` as a valid 0. The owner writes `fix_rounds` as a plain TOML
 number.
 
-No `mt` command reads `fix_rounds`; whatever coordinates unattended work, such as the
-coordinate guide, reads them through `mt config <key>`. For example:
+`repo_agents` keeps a Run in a customer's repo to the agents the customer allows. In a repo it
+lists, every agent a Run launches, workers and judges alike, is one listed for that repo, unless the
+owner names another for that Run; when no listed agent can run a Task, the Run asks before launching
+it. A repo with no entry is unrestricted, so `repo_agents = {}` restricts none. Each repo is a
+quoted key: its `origin` URL exactly as `git remote get-url origin` prints it, with no tab, line
+break or other control character, so an SSH and an HTTPS clone of one repo are two entries. Each
+agent is named as Orca's `--agent` takes it; `mt` checks that a name is well formed, not that the
+platform knows it, so a misspelt name matches no agent and the Run asks. Nothing in `mt` or Orca
+stops a launch: the coordinator reads the key and obeys it. A `[repo_agents]` table goes below every
+other key, since TOML puts each key under that header into the table.
+
+No `mt` command reads `fix_rounds` or `repo_agents`; whatever coordinates unattended work, such as
+the coordinate guide, reads them through `mt config <key>`. For example:
 
 ```toml
 fix_rounds = 1
+
+[repo_agents]
+"git@github.com:acme/app.git" = ["claude", "codex"]
 ```
 
 A binding key is one no agent overrides, and it has no default: when it is missing or invalid,
@@ -130,10 +145,10 @@ its value, `missing`, or `invalid: <why>`. A key `mt` does not know gets a line 
 read as missing without a word. A file that is not there leaves every key missing; one that cannot
 be read, or is not TOML, leaves every key invalid, saying why.
 
-`mt config <key>` prints that key's value alone, a list one item per line, and exits 0. It looks at
-that key only: a key missing or invalid prints `mt: config: <key> is missing from <path>` or `is
-invalid in <path>: <why>` on stderr and exits 1, and a key `mt` does not know is a usage error,
-exit 2.
+`mt config <key>` prints that key's value alone, a list one item per line and a table one entry per
+line, its name then its items separated by tabs, and exits 0. It looks at that key only: a key
+missing or invalid prints `mt: config: <key> is missing from <path>` or `is invalid in <path>:
+<why>` on stderr and exits 1, and a key `mt` does not know is a usage error, exit 2.
 
 ### Install
 

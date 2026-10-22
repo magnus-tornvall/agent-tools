@@ -7,8 +7,9 @@
  *   mt config          the file's path, then one line per key: its name, binding or advisory, and
  *                      its value, or missing, or invalid and why; a key mt does not know is named
  *                      too. Exits 1 when a binding key is missing or invalid or a key is unknown.
- *   mt config <key>    the key's value alone, a list one item per line; exits 1 naming the key when
- *                      it is missing or invalid, and 2 when mt has no such key.
+ *   mt config <key>    the key's value alone, a list one item per line, a table one entry per line,
+ *                      its name then its items separated by tabs; exits 1 naming the key when it is
+ *                      missing or invalid, and 2 when mt has no such key.
  *
  * Only a command that reads a key fails on it; nothing else reads config.
  */
@@ -31,15 +32,27 @@ interface Spec<T> {
 
 interface Values {
   fix_rounds: number;
+  repo_agents: Record<string, string[]>;
 }
 
 export type Key = keyof Values;
 
+const AGENT = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
+
+// A repo is printed on its own line with its agents after a tab, so it holds no control character:
+// a tab or a line break in it would be read as another field or another repo.
+const REPO = /^\P{Cc}+$/u;
+
 const SPECS: { [K in Key]: Spec<Values[K]> } = {
   fix_rounds: { kind: "binding", rule: "an integer of 0 or more", schema: z.number().int().min(0) },
+  repo_agents: {
+    kind: "binding",
+    rule: "a table from repo to a non-empty list of agent names",
+    schema: z.record(z.string().regex(REPO), z.array(z.string().regex(AGENT)).min(1)),
+  },
 };
 
-const KEYS: readonly Key[] = ["fix_rounds"];
+const KEYS: readonly Key[] = ["fix_rounds", "repo_agents"];
 
 function isKey(name: string): name is Key {
   return KEYS.some((key) => key === name);
@@ -130,14 +143,20 @@ function listing(config: Config): number {
   return code;
 }
 
+/** A value as `mt config <key>` prints it: a list one item per line, a table one entry per line. */
+function asLines(value: Values[Key]): string[] {
+  if (Array.isArray(value)) return value.map(String);
+  if (typeof value === "object") return Object.entries(value).map(([name, items]) => [name, ...items].join("\t"));
+  return [String(value)];
+}
+
 function single(config: Config, key: Key): number {
   const found = lookup(config, key);
   if (!found.ok) {
     process.stderr.write(`mt: config: ${key} is ${problem(config, found)}\n`);
     return 1;
   }
-  const { value } = found;
-  process.stdout.write(`${Array.isArray(value) ? value.join("\n") : String(value)}\n`);
+  process.stdout.write(asLines(found.value).map((line) => `${line}\n`).join(""));
   return 0;
 }
 
