@@ -100,7 +100,8 @@ The owner's config is one TOML file of standing policy for unattended work, valu
 holds, at `${XDG_CONFIG_HOME:-$HOME/.config}/mt/config.toml`. `mt --help` names that path and
 `mt config` prints it, so no consumer spells it out. Only the owner edits it; `mt` only reads it,
 and an agent proposes a change with evidence. There is one file per user and no per-repo override.
-The owner's explicit choice for a Run beats it.
+The owner's explicit choice for a Run beats it, an agent outside a repo's `repo_agents` list only
+once the owner confirms it.
 
 | key                 | kind     | value                                                                  |
 | ------------------- | -------- | ---------------------------------------------------------------------- |
@@ -115,7 +116,8 @@ number.
 
 `repo_agents` keeps a Run in a customer's repo to the agents the customer allows. In a repo it
 lists, every agent a Run launches, workers and judges alike, is one listed for that repo, unless the
-owner names another for that Run; when no listed agent can run a Task, the Run asks before launching
+owner names another for that Run and confirms it when the coordinator asks, naming the agents the
+list allows; when no listed agent can run a Task, the Run asks before launching
 it. A repo with no entry is unrestricted, so `repo_agents = {}` restricts none. Each repo is a
 quoted key: its `origin` URL exactly as `git remote get-url origin` prints it, with no tab, line
 break or other control character, so an SSH and an HTTPS clone of one repo are two entries. Each

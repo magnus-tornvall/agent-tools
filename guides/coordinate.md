@@ -64,24 +64,26 @@ no approval is asked for them: the owner hears only what is theirs to decide.
 ## Config
 
 You read `fix_rounds` and `repo_agents` with `mt config <key>`. Both are binding: neither has a
-default, no agent overrides either, and the owner's explicit choice for this Run beats both. When
-`mt config` reports either missing or invalid, ask the owner and start no Task until they answer.
+default, no agent overrides either, and the owner's explicit choice for this Run beats both, an
+agent outside a repo's `repo_agents` list only once the owner confirms it. When `mt config` reports
+either missing or invalid, ask the owner and start no Task until they answer.
 
 - **`fix_rounds`** is how many rounds of fixes run before a finding goes to the owner; at 0, no fix
   Task starts without the owner's choice.
 - **`repo_agents`** names, per repo, the agents a Run there may launch, because some repos belong
-  to customers who allow only certain agents on their code, and no platform knows it.
-  `mt config repo_agents` prints one line per listed repo: the repo, then its agents, separated by
-  tabs. The repo you run in is its `origin` URL as `git remote get-url origin` prints it, and an
-  agent is named as the platform launches it. Both match exactly, never by likeness, since a guess
-  could let in an agent the customer does not allow.
+  to customers who allow only certain agents on their code, and no platform knows it. The repo you
+  run in is its `origin` URL as `git remote get-url origin` prints it, and an agent is named as the
+  platform launches it. Both match exactly, never by likeness, since a guess could let in an agent
+  the customer does not allow.
   - In a listed repo, every agent the Run launches, workers and judges alike, is one listed for
     that repo, since a judge reads the customer's code as much as a worker does.
   - A repo with no entry is unrestricted, so that the owner lists only the repos that carry a
     restriction.
   - An agent the owner names for this Run beats the list, since the owner holds the customer's
-    terms and the list is only their standing word on them. One chosen for another Run, or a
-    platform's default, is no such choice.
+    terms and the list is only their standing word on them; one chosen for another Run, or a
+    platform's default, is no such choice. Before launching one the list leaves out, ask the owner
+    to confirm it, naming the agents the list allows for the repo, since the owner may have named
+    it without the restriction in mind, and code an agent has read cannot be taken back from it.
   - When no listed agent can run a Task, ask the owner before launching it on any agent, since
     code an agent has read cannot be taken back from it.
 
