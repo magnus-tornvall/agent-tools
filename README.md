@@ -100,11 +100,13 @@ The owner's config is one TOML file of standing policy for unattended work, valu
 holds, at `${XDG_CONFIG_HOME:-$HOME/.config}/mt/config.toml`. `mt --help` names that path and
 `mt config` prints it, so no consumer spells it out. Only the owner edits it; `mt` only reads it,
 and an agent proposes a change with evidence. There is one file per user and no per-repo override.
-The owner's explicit choice for a Run beats it.
+The owner's explicit choice for a Run beats it, an agent outside a repo's `repo_agents` list only
+once the owner confirms it.
 
 | key                 | kind     | value                                                                  |
 | ------------------- | -------- | ---------------------------------------------------------------------- |
 | `fix_rounds`        | binding  | fix rounds before the owner gets a finding, an integer from 0          |
+| `repo_agents`       | binding  | the agents a Run may launch, per repo: a table of non-empty lists      |
 
 A TOML float with an integer value, such as `fix_rounds = 2.0`, counts as that integer, since
 `Bun.TOML.parse` cannot tell them apart. `Bun.TOML.parse` also reads some values that are not
@@ -112,11 +114,27 @@ valid TOML as numbers: `-foo`, `+inf`, `-inf` and `-nan` as 0, `.7` as 0.7 and `
 `mt config` takes `fix_rounds = -foo` as a valid 0. The owner writes `fix_rounds` as a plain TOML
 number.
 
-No `mt` command reads `fix_rounds`; whatever coordinates unattended work, such as the
-coordinate guide, reads them through `mt config <key>`. For example:
+`repo_agents` keeps a Run in a customer's repo to the agents the customer allows. In a repo it
+lists, every agent a Run launches, workers and judges alike, is one listed for that repo, unless the
+owner names another for that Run and confirms it when the coordinator asks, naming the agents the
+list allows; when no listed agent can run a Task, the Run asks before launching
+it. A repo with no entry is unrestricted, so `repo_agents = {}` restricts none. Each repo is a
+quoted key: its `origin` URL exactly as `git remote get-url origin` prints it, with no tab, line
+break or other control character, so an SSH and an HTTPS clone of one repo are two entries. Each
+agent is named as Orca's `--agent` takes it, in ASCII letters, digits, `.`, `_` and `-`, starting
+with a letter or digit; `mt` checks that form, not that the platform knows the name, so a misspelt
+name matches no agent and the Run asks. Nothing in `mt` or Orca stops a launch: the coordinator
+reads the key and obeys it. A `[repo_agents]` table goes below every other key, since TOML puts each
+key under that header into the table.
+
+No `mt` command reads `fix_rounds` or `repo_agents`; whatever coordinates unattended work, such as
+the coordinate guide, reads them through `mt config <key>`. For example:
 
 ```toml
 fix_rounds = 1
+
+[repo_agents]
+"git@github.com:acme/app.git" = ["claude", "codex"]
 ```
 
 A binding key is one no agent overrides, and it has no default: when it is missing or invalid,
@@ -130,10 +148,10 @@ its value, `missing`, or `invalid: <why>`. A key `mt` does not know gets a line 
 read as missing without a word. A file that is not there leaves every key missing; one that cannot
 be read, or is not TOML, leaves every key invalid, saying why.
 
-`mt config <key>` prints that key's value alone, a list one item per line, and exits 0. It looks at
-that key only: a key missing or invalid prints `mt: config: <key> is missing from <path>` or `is
-invalid in <path>: <why>` on stderr and exits 1, and a key `mt` does not know is a usage error,
-exit 2.
+`mt config <key>` prints that key's value alone, a list one item per line and a table one entry per
+line, its name then its items separated by tabs, and exits 0. It looks at that key only: a key
+missing or invalid prints `mt: config: <key> is missing from <path>` or `is invalid in <path>:
+<why>` on stderr and exits 1, and a key `mt` does not know is a usage error, exit 2.
 
 ### Install
 
