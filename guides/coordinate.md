@@ -50,6 +50,8 @@ no approval is asked for them: the owner hears only what is theirs to decide.
     fixed, and one judged wrong is reported, not fixed;
   - a change worker judges its branch before it reports, since a report is a claim and what was
     observed is what turns it into evidence; a read-only review subagent of its own is its option;
+    that judgement adds to the judges and stands in for none, since a maker's account of its own
+    work still overclaims;
   - the report is the whole of what it returns, never a file beside it, since only the report is
     the Run's record: the outcome; from a change worker, one line per in-scope end state its spec
     carries, `observed` with what showed it, `unverified` with why, or `judged by reading` for one
