@@ -18,8 +18,8 @@ no approval is asked for them: the owner hears only what is theirs to decide.
   owns. A judge writes nothing on it, and neither do you: a change you touched is one you can no
   longer judge, and a branch two Tasks write at once is one nobody can account for. Several Tasks
   on several branches are fine; landing them on the work branch is then one Task's change.
-- **Separation of duties.** Work is never judged by whoever made it (`mt get verification`),
-  because a maker's account of its own work overclaims, in good faith.
+- **Separation of duties.** A maker's judgement of its own work never stands in for a judge's
+  (`mt get verification`), because a maker's account of its own work overclaims, in good faith.
 - **Attention as the bottleneck.** The owner's attention is the Run's scarcest resource, and
   yours is next. The door rule (`mt get door-rule`) says what reaches the owner; you answer
   everything else and record the answer, so that the owner can audit it instead of being asked.
@@ -50,8 +50,6 @@ no approval is asked for them: the owner hears only what is theirs to decide.
     fixed, and one judged wrong is reported, not fixed;
   - a change worker judges its branch before it reports, since a report is a claim and what was
     observed is what turns it into evidence; a read-only review subagent of its own is its option;
-    that judgement adds to the judges and stands in for none, since a maker's account of its own
-    work still overclaims;
   - the report is the whole of what it returns, never a file beside it, since only the report is
     the Run's record: the outcome; from a change worker, one line per in-scope end state its spec
     carries, `observed` with what showed it, `unverified` with why, or `judged by reading` for one
