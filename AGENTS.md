@@ -42,9 +42,9 @@ part. Only the owner changes a fixed rule.
   pass; evidence is as strong as each requirement; no oracle is tampered, each file the oracle
   commit added unchanged; nothing in the diff would stop a maintainer merging; nothing surprises
   the owner. Which Tasks meet them is composed. Home: the coordinate guide (`mt get coordinate`).
-- **A separate actor per verification perspective**, so work is never judged by whoever made it,
-  and a judge after fixes runs in a fresh context. Home: the verification guide
-  (`mt get verification`).
+- **A separate actor per verification perspective**, so a maker's judgement of its own work
+  never stands in for a judge's, and a judge after fixes runs in a fresh context. Home: the
+  verification guide (`mt get verification`).
 - **What each perspective is given and withholds** is its own fixed rule, so each judge is kept
   from what would anchor it. Home: that perspective's reference
   (`mt get verification --ref <perspective>`).
