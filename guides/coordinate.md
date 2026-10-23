@@ -48,10 +48,14 @@ no approval is asked for them: the owner hears only what is theirs to decide.
     unchanged; its commits land on the branch its spec names and nothing is pushed, since pushing
     publishes and the destination is the owner's; when fixing, only the findings handed over are
     fixed, and one judged wrong is reported, not fixed;
+  - a change worker judges its branch before it reports, since a report is a claim and what was
+    observed is what turns it into evidence; a read-only review subagent of its own is its option;
   - the report is the whole of what it returns, never a file beside it, since only the report is
-    the Run's record: the outcome; the evidence its assignment asks for; each assumption, question
-    and finding on its own line; proposed follow-ups, or none; and a Toolbox line, what the Task
-    lacked and what would have supplied it, or none.
+    the Run's record: the outcome; from a change worker, one line per in-scope end state its spec
+    carries, `observed` with what showed it, `unverified` with why, or `judged by reading` for one
+    no user can observe, since evidence written as a paragraph hides the end state it skipped;
+    each assumption, question and finding on its own line; proposed follow-ups, or none; and a
+    Toolbox line, what the Task lacked and what would have supplied it, or none.
 - **Each finding and question the owner sees has one key for the Run**, such as `F4` or `Q2`,
   kept from the message that raised it to the hand-off, so that the owner can follow it through
   fixes and rounds. Which Task raised it is yours to track, not the owner's: the item carries what
